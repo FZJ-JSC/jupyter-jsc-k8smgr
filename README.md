@@ -19,6 +19,8 @@ Next steps:
 
 ## Build
 
+geckodriver required
+
 ```
 git clone <this_repo>
 python3 -m venv venv
@@ -27,5 +29,6 @@ pip3 install -U pip
 pip3 install -r build-requirements.txt
 pip3 install -e custom
 
-...run tests
+set -a ; source .env ; set +a; jupyterhub -f jupyterhub_config.py
+pytest
 ```
