@@ -1,0 +1,15 @@
+{
+  "version": "1.4.2",
+  "configurations": [
+    {
+      "name": "JupyterHub",
+      "type": "python",
+      "request": "launch",
+      "no_preLaunchTask": "deletedb",
+      "envFile": "${workspaceFolder}/.env",
+      "program": "${workspaceFolder}/venv/bin/jupyterhub",
+      "justMyCode": false,
+      "args": []
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+.git
+.gitignore
+.vscode
+venv
+README.md
+LICENSE
+.dockerignore
+Dockerfile
+db.sqlite3
+build-requirements.txt
+functional_tests
+.pytest_cache
+pytest.ini
+**/__pycache__

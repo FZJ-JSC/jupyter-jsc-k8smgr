@@ -1,0 +1,4 @@
+jupyterhub==1.4.2
+notebook
+pytest
+selenium
