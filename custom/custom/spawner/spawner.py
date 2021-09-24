@@ -35,7 +35,6 @@ class BackendSpawner(Spawner):
         self.log.info("...long")
 
     async def progress(self):
-        self.log.debug("progress generator")
         spawn_future = self._spawn_future
         next_event = 0
 
@@ -50,7 +49,6 @@ class BackendSpawner(Spawner):
             len_events = len(events)
             if next_event < len_events:
                 for i in range(next_event, len_events):
-                    self.log.info("----- New event: {}".format(events[i]["progress"]))
                     event = events[i]
                     yield event
                     if event["failed"] == True:
