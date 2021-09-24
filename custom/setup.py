@@ -9,5 +9,5 @@ setup(
     author_email="author@gmail.com",
     description="Description of my package",
     packages=find_packages(),
-    install_requires=["jupyterhub == 1.4.2"],
+    install_requires=["jupyterhub==1.4.2", "oauthenticator==14.2.0"],
 )
