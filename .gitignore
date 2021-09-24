@@ -1,3 +1,4 @@
+.env_secret
 data2
 jupyterhub_cookie_secret
 jupyterhub.sqlite
