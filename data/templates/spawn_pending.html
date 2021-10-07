@@ -47,8 +47,8 @@
     var user = window.jhdata.user;
     // var user_active = window.jhdata.user_active;
     var i = 10;
-    var spawn_progress_update_url =
-      "{{ spawn_progress_update_url }}/{{ user.name }}/{{ spawner.name }}";
+    var spawn_progress_update_url = {% if spawner.name == "" %}
+      "{{ spawn_progress_update_url }}/{{ user.name }}" {% else %} "{{ spawn_progress_update_url }}/{{ user.name }}/{{ spawner.name }}" {% endif %};
 
     $("#cancel").click(function () {
       if (!$("#cancel").is("[disabled=disabled]")) {

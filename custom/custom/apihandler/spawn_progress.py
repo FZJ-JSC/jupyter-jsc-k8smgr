@@ -10,36 +10,6 @@ user_cancel_message = "Start cancelled by user."
 
 
 class SpawnProgressUpdateAPIHandler(APIHandler):
-    async def cancel_future(self, future):
-        if type(future) is asyncio.Task:
-            if future._state in ["PENDING"]:
-                try:
-                    future.cancel()
-                    await maybe_future(future)
-                except asyncio.CancelledError:
-                    pass
-                return True
-        return False
-
-    async def _stop(self, username, server_name, failed_event={}):
-        user = self.find_user(username)
-        spawner = user.spawners[server_name]
-        if not failed_event:
-            failed_event = {
-                "progress": 100,
-                "failed": True,
-                "html_message": "Cancelled.",
-            }
-        spawner.events.append(failed_event)
-        for i in range(0, 2):
-            if spawner.cancel_event_yielded:
-                break
-            else:
-                await asyncio.sleep(spawner.yield_wait_seconds)
-        if spawner._start_future:
-            await self.cancel_future(spawner._start_future)
-        await self.cancel_future(spawner._spawn_future)
-
     @admin_or_self
     def post(self, username, server_name=""):
         self.set_header("Cache-Control", "no-cache")
@@ -55,6 +25,9 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
             raise web.HTTPError(404)
         body = self.request.body.decode("utf8")
         event = json.loads(body) if body else {}
+
+        user = self.find_user(username)
+        spawner = user.spawners[server_name]
 
         if event and event.get("failed", False):
             if event.get("html_message", "") == user_cancel_message:
@@ -78,9 +51,7 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                         "event": event,
                     },
                 )
-            cancel_future = asyncio.ensure_future(
-                self._stop(username, server_name, event)
-            )
+            cancel_future = asyncio.ensure_future(spawner._cancel(event))
             self.set_header("Content-Type", "text/plain")
             self.set_status(204)
             return cancel_future

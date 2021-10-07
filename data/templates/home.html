@@ -1,5 +1,6 @@
 {% extends "page.html" %} {% if announcement_home %} {% set announcement =
 announcement_home %} {% endif %} {% block main %}
+{{ auth_state }}
 <div class="container">
   <div class="row">
     <div class="text-center">
@@ -115,7 +116,7 @@ announcement_home %} {% endif %} {% block main %}
     var user = window.jhdata.user;
 
     var spawn_progress_update_url =
-      "{{ spawn_progress_update_url }}/{{ user.name }}/";
+      "{{ spawn_progress_update_url }}/{{ user.name }}";
 
     $("#cancel").click(function () {
       if (!$("#cancel").is("[disabled=disabled]")) {
