@@ -19,4 +19,4 @@ RUN /src/patches/install_patches.sh
 
 # Add entrypoint
 COPY ./entrypoint.sh /src/entrypoint.sh
-CMD ["/src/entrypoint.sh"]
+ENTRYPOINT ["/src/entrypoint.sh"]
