@@ -5,11 +5,11 @@
       "name": "JupyterHub",
       "type": "python",
       "request": "launch",
-      "no_preLaunchTask": "deletedb",
-      "envFile": "${workspaceFolder}/.env",
-      "program": "${workspaceFolder}/venv/bin/jupyterhub",
-      "justMyCode": false,
-      "args": []
+      "program": "${workspaceFolder}/venvs/2.1.1/bin/jupyterhub",
+      "args": [
+        "-f",
+        "${workspaceFolder}/tests/local_tests/2.1.1/jupyterhub_config.py"
+      ]
     }
   ]
 }

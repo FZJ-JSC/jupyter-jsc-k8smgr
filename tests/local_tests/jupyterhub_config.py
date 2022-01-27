@@ -1,5 +1,5 @@
 import sys
-custom_path = "/src/jupyterhub-custom"
+custom_path = "<CUSTOM_PATH>"
 sys.path.insert(1, custom_path)
 
 from spawner import BackendSpawner

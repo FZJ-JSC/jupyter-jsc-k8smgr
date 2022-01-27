@@ -2,7 +2,7 @@ import asyncio
 import json
 
 from jupyterhub.apihandlers.base import APIHandler
-from jupyterhub.apihandlers.users import admin_or_self
+from jupyterhub.scopes import needs_scope
 from jupyterhub.utils import maybe_future
 from tornado import web
 
@@ -10,7 +10,7 @@ user_cancel_message = "Start cancelled by user."
 
 
 class SpawnProgressUpdateAPIHandler(APIHandler):
-    @admin_or_self
+    @needs_scope("admin:users")
     def post(self, username, server_name=""):
         self.set_header("Cache-Control", "no-cache")
         uuidcode = self.request.headers.get("uuidcode", "<no_uuidcode>")
