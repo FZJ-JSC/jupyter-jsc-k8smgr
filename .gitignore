@@ -1,3 +1,4 @@
+patches/jupyterhub*
 jupyterhub-proxy.pid
 .env_secret
 data2

@@ -1,0 +1,97 @@
+stages:
+  - unittest
+  - build
+  - functional-tests
+  - build-tag
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "devel"
+      variables:
+        RUN_UNIT_TESTS: "True"
+        BUILD_COMMIT_SHORT: "True"
+        RUN_FUNCTIONAL_TESTS: "True"
+    - if: $CI_COMMIT_TAG
+      variables:
+        RUN_UNIT_TESTS: "True"
+        BUILD_COMMIT_SHORT: "True"
+        RUN_FUNCTIONAL_TESTS: "True"
+    - when: never
+
+
+variables:
+  BACKEND_VERSION: "None"
+  UNICORE_SERVER_VERSION: "8.3.0-ljupyter-6"
+  TUNNELING_VERSION: "1.0.0-rc9"
+  TUNNELSERVICE_SSH_REMOTE_PRIVATE_KEY: $TUNNELSERVICE_SSH_REMOTE_PRIVATE_KEY
+  TUNNELSERVICE_SSH_TUNNEL_PRIVATE_KEY: $TUNNELSERVICE_SSH_TUNNEL_PRIVATE_KEY
+  LJUPYTER_SSH_TUNNEL_PUBLIC_KEY: $LJUPYTER_SSH_TUNNEL_PUBLIC_KEY
+  K8S_TEST_CLUSTER_CA_AUTH_DATA: $K8S_TEST_CLUSTER_CA_AUTH_DATA
+  K8S_TEST_CLUSTER_USER_TOKEN: $K8S_TEST_CLUSTER_USER_TOKEN
+  K8S_TEST_CLUSTER_SERVER: $K8S_TEST_CLUSTER_SERVER
+
+
+
+unittests:
+  when: manual
+  stage: unittest
+  image:
+    name: python:alpine3.14
+  before_script:
+    - apk add gcc build-base linux-headers openssh
+    - pip3 install -r ${CI_PROJECT_DIR}/build-requirements.txt
+  script:
+    - pytest -c ${CI_PROJECT_DIR}/tests/logs/pytest.ini
+    - pytest -c ${CI_PROJECT_DIR}/tests/services/pytest.ini
+  rules:
+    - if: $RUN_UNIT_TESTS == "True"
+
+build:
+  # when: manual
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --destination ${CI_REGISTRY_IMAGE}:latest
+  rules:
+    - if: $BUILD_COMMIT_SHORT == "True"
+
+functional-tests:
+  when: manual
+  stage: functional-tests
+  image:
+    name: python:3.9.9-slim
+    entrypoint: [""]
+  before_script:
+    - apt update && apt install -y uuid-runtime
+    - pip install -r ${CI_PROJECT_DIR}/tests/functional_tests/requirements.txt
+  script:
+    - export CA_AUTH_PATH="/tmp/k8s_ca.crt"
+    - echo -n "${K8S_TEST_CLUSTER_CA_AUTH_DATA}" | base64 -d > ${CA_AUTH_PATH}
+    - export TUNNEL_SUPERUSER_PASS=$(uuidgen)
+    - export TUNNEL_BACKEND_PASS=$(uuidgen)
+    - export BACKEND_SUPERUSER_PASS=$(uuidgen)
+    - export CREATE_JOB_DESCRIPTIONS_B64=$(bash ${CI_PROJECT_DIR}/tests/functional_tests/files/backend/create_job_descriptions_creation_script.sh)
+    - TUNNEL_BACKEND_BASIC_B64=$(echo -n "backend:${TUNNEL_BACKEND_PASS}" | base64 -w 0)
+    - export REMOTE_NODE_TOKEN="Basic ${TUNNEL_BACKEND_BASIC_B64}"
+    - BACKEND_SUPERUSER_BASIC_B64=$(echo -n "admin:${BACKEND_SUPERUSER_PASS}" | base64 -w 0)
+    - export BACKEND_SUPERUSER_TOKEN="Basic ${BACKEND_SUPERUSER_BASIC_B64}"
+    - pytest -c ${CI_PROJECT_DIR}/tests/functional_tests/pytest.ini
+  rules:
+    - if: $RUN_FUNCTIONAL_TESTS == "True"
+
+build-tag:
+  when: manual
+  stage: build-tag
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"auth\":\"$(echo -n ${CI_REGISTRY_USER}:${CI_REGISTRY_PASSWORD} | base64)\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG} --destination ${CI_REGISTRY_IMAGE}:latest
+  rules:
+    - if: $CI_COMMIT_TAG
