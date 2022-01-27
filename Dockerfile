@@ -1,9 +1,10 @@
-FROM jupyterhub/jupyterhub:2.1.1
+ARG JUPYTERHUB_VERSION=2.1.1
+ENV JUPYTERHUB_VERSION=$JUPYTERHUB_VERSION
+FROM jupyterhub/jupyterhub:${JUPYTERHUB_VERSION}
 RUN apt update && apt install -y git \
- && git clone -b 2.1.1 https://github.com/jupyterhub/jupyterhub.git /src/jupyterhub \
+ && git clone -b ${JUPYTERHUB_VERSION} https://github.com/jupyterhub/jupyterhub.git /src/jupyterhub \
  && rm -rf /src/jupyterhub/.git* \
  && apt remove -y git
-RUN apt update && apt install -y vim
 COPY ./patches /src/patches
 RUN /src/patches/install_patches.sh
 COPY ./custom /src/jupyterhub-custom
