@@ -6,19 +6,20 @@ if [[ -z ${1} ]]; then
 fi
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-if [[ -d ${DIR}/jupyterhub ]]; then
-    echo "Folder jupyterhub in patches already exists. Stop"
+mkdir -p ${DIR}/${1}
+if [[ -d ${DIR}/${1}/jupyterhub ]]; then
+    echo "Folder jupyterhub in patches/${1} already exists. Stop"
     exit 1
 fi
-if [[ -d ${DIR}/jupyterhub-patched ]]; then
-    echo "Folder jupyterhub-patched in patches already exists. Stop"
+if [[ -d ${DIR}/${1}/jupyterhub-patched ]]; then
+    echo "Folder jupyterhub-patched in patches/${1} already exists. Stop"
     exit 1
 fi
-git clone -b ${1} https://github.com/jupyterhub/jupyterhub.git ${DIR}/jupyterhub
+git clone -b ${1} https://github.com/jupyterhub/jupyterhub.git ${DIR}/${1}/jupyterhub
 
-for f in `ls ${DIR}/patch_files/*.patch`
+for f in `ls ${DIR}/${1}/patch_files/*.patch`
 do
-    patch -d ${DIR} -p1 < $f
+    patch -d ${DIR}/${1} -p1 < $f
 done
 
-cp -rp ${DIR}/jupyterhub ${DIR}/jupyterhub-patched
+cp -rp ${DIR}/${1}/jupyterhub ${DIR}/${1}/jupyterhub-patched

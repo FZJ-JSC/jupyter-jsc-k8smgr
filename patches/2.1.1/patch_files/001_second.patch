@@ -1,0 +1,12 @@
+diff -Naurx .git ../jupyterhub/jupyterhub/app.py ../jupyterhub-patched/jupyterhub/app.py
+--- ../jupyterhub/jupyterhub/app.py	2022-01-27 09:40:57.218720412 +0100
++++ ../jupyterhub-patched/jupyterhub/app.py	2022-01-27 09:41:15.503077106 +0100
+@@ -3147,7 +3147,7 @@
+             self.last_activity_callback = pc
+             pc.start()
+ 
+-        self.log.info("JupyterHub (patched) is now running at %s", self.proxy.public_url)
++        self.log.info("JupyterHub (patched-again) is now running at %s", self.proxy.public_url)
+         # Use atexit for Windows, it doesn't have signal handling support
+         if _mswindows:
+             atexit.register(self.atexit)
