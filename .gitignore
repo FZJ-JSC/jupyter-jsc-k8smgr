@@ -1,4 +1,5 @@
-tests/local_tests/*/
+tests/local_tests/*
+!tests/local_tests/start_local_container_setup
 patches/*/jupyterhub*
 jupyterhub-proxy.pid
 .env_secret
