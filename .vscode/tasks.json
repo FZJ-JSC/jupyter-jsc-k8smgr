@@ -1,0 +1,12 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "deletedb",
+        "command": "rm", // Could be any other shell command
+        "type": "shell",
+        "args": ["-f", "${workspaceFolder}/tests/local_tests/2.1.1/jupyterhub.sqlite"]
+      }
+    ]
+  }
+  

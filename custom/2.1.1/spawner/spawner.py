@@ -4,13 +4,14 @@ import json
 import uuid
 from asyncio.tasks import sleep
 
+
 from jupyterhub.spawner import Spawner
-from jupyterhub.utils import maybe_future
+from jupyterhub.utils import maybe_future, random_port
 from jupyterhub.utils import url_path_join
 from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
 from tornado.httpclient import HTTPResponse
-from traitlets import Integer
+from traitlets import Unicode
 
 
 class BackendException(Exception):
@@ -29,11 +30,27 @@ class BackendSpawner(Spawner):
     yield_wait_seconds = 1
     _start_future = None
 
-    id = Integer(
-        0,
+    id = Unicode(
+        "",
         help="""
         The backend id of the server spawned for current user.
         """,
+    )
+
+    backend_services_url = Unicode(
+        "",
+        help="""
+        URL to start/stop jobs via backend.
+        """,
+        config=True
+    )
+
+    backend_services_token = Unicode(
+        "",
+        help="""
+        Used to authenticate against backend to start/stop jobs.
+        """,
+        config=True
     )
 
     def status_update_url(self, server_name=""):
@@ -69,7 +86,7 @@ class BackendSpawner(Spawner):
     def clear_state(self):
         """Clear stored state about this spawner (id)"""
         super(BackendSpawner, self).clear_state()
-        self.id = 0
+        self.id = ""
 
     async def _start(self):
         try:
@@ -97,63 +114,73 @@ class BackendSpawner(Spawner):
 
     async def _start_job(self):
         uuidcode = uuid.uuid4().hex
+        self.port = random_port()
+        # Test setup
         headers = {
             "uuidcode": uuidcode,
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "Authorization": self.backend_services_token
         }
-        popen_kwargs = dict(start_new_session=True)
-        popen_kwargs["port"] = self.port
-        popen_kwargs["env"] = self.get_env()
-        popen_kwargs["args"] = self.get_args()
         auth_state = await self.user.get_auth_state()
-        popen_kwargs["auth_state"] = auth_state
-        popen_kwargs["auth_state"]["access_token"] = "ZGVtb3VzZXI6dGVzdDEyMw=="
+        if auth_state is None:
+            auth_state = {}
+        
+        # Test setup
         user_options = {
-            "service": "JupyterLab/JupyterLab",
+            "service": "JupyterLab/JupyterLab-no-tunnel",
             "system": "DEMO-SITE",
             "partition": "LoginNode",
             "project": "project1",
             "account": "demouser",
             "vo": "myvo",
         }
-        popen_kwargs["user_options"] = user_options
 
+        popen_kwargs = {
+            "auth_state": auth_state,
+            "env": self.get_env(),
+            "user_options": user_options
+        }
+        # Test setup
+        popen_kwargs["auth_state"]["access_token"] = "ZGVtb3VzZXI6dGVzdDEyMw=="
+        popen_kwargs["env"]["PORT"] = self.port
         req = HTTPRequest(
-            "http://127.0.0.1:9000/api/unicore/",
+            self.backend_services_url,
             method="POST",
             headers=headers,
             body=json.dumps(popen_kwargs),
         )
-        try:
-            resp = await self.user.authenticator.fetch(req, parse_json=False)
-        except Exception as e:
-            error = "Jupyter-JSC backend service could not start your service. Please contact support."
-            error_detail = str(e)
-            if isinstance(e, HTTPClientError):
-                if len(e.args) > 2:
-                    orig_response = e.args[2]
-                    if isinstance(orig_response, HTTPResponse):
-                        error_json = json.loads(orig_response.body.decode("utf-8"))
-                        error = error_json.get("error", error)
-                        error_detail = error_json.get("error_detail", error_detail)
-            self.log.exception(
-                "Exception while starting service",
-                extra={
-                    "uuidcode": uuidcode,
-                    "log_name": self._log_name,
-                    "user": self.user.name,
-                    "action": "start",
-                    "user_options": user_options,
-                },
-            )
-            raise BackendException(error, error_detail)
-        try:
-            self.id = int(resp.headers.get("Location"))
-        except Exception as e:
-            error = "Jupyter-JSC backend service could not start your service. Please contact support."
-            error_detail = str(e)
-            raise BackendException(error, error_detail)
+        max_start_attempts = 1
+        for i in range(0, max_start_attempts):
+            try:
+                resp = await self.user.authenticator.fetch(req, parse_json=True)
+                self.log.info("Server started.", extra={"uuidcode": uuidcode, "response": resp})
+                break
+            except Exception as e:
+                if i < max_start_attempts - 1:
+                    continue
+                error = "Jupyter-JSC backend service could not start your service."
+                error_detail = str(e)
+                if isinstance(e, HTTPClientError):
+                    if len(e.args) > 2:
+                        orig_response = e.args[2]
+                        if isinstance(orig_response, HTTPResponse):
+                            error_json = json.loads(orig_response.body.decode("utf-8"))
+                            error = error_json.get("error", error)
+                            error_detail = error_json.get("error_detail", error_detail)
+                self.log.exception(
+                    "Exception while starting service",
+                    extra={
+                        "uuidcode": uuidcode,
+                        "log_name": self._log_name,
+                        "user": self.user.name,
+                        "action": "start",
+                        "user_options": user_options,
+                    },
+                )
+                raise BackendException(error, error_detail)
+        self.id = uuidcode
+        return ("localhost", self.port)
         return "http://127.0.0.1:9999"
 
     def start(self):
@@ -176,7 +203,7 @@ class BackendSpawner(Spawner):
             "Accept": "application/json",
         }
         req = HTTPRequest(
-            "http://127.0.0.1:9000/api/unicore/{self.id}",
+            f"http://127.0.0.1:8090/api/services/{self.id}/",
             method="DELETE",
             headers=headers,
         )

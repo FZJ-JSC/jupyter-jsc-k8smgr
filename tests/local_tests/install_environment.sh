@@ -20,14 +20,16 @@ if [[ ! -d ${DIR}/${1} ]]; then
     mkdir -p ${DIR}/${1} 
 fi
 
-git clone -b ${1} https://github.com/jupyterhub/jupyterhub.git ${DIR}/${1}/jupyterhub
-
-for f in `ls ${BASE}/patches/${1}/patch_files/*.patch`
-do
-    patch -d ${DIR}/${1} -p1 < $f
-done
+if [[ ! -d ${BASE}/patches/${1}/jupyterhub-patched ]]; then
+    echo "patches/${1}/jupyterhub-patched does not exist. Will create it with patches/setup_patched_jhub.sh."
+    /bin/bash ${BASE}/patches/setup_patched_jhub.sh ${1}
+fi
 
 ${BASE}/venvs/${1}/bin/pip3 install -U pip
-${BASE}/venvs/${1}/bin/pip3 install -e ${DIR}/${1}/jupyterhub
-cp ${DIR}/jupyterhub_config.py ${DIR}/${1}/. 
-sed -i -e "s|<CUSTOM_PATH>|${BASE}/custom/${1}|g" ${DIR}/${1}/jupyterhub_config.py
+if [[ -f ${BASE}/custom/${1}/requirements.txt ]]; then
+    ${BASE}/venvs/${1}/bin/pip3 install -r ${BASE}/custom/${1}/requirements.txt
+fi
+${BASE}/venvs/${1}/bin/pip3 install -e ${BASE}/patches/${1}/jupyterhub-patched
+sed -e "s|<BASE_PATH>|${BASE}|g" -e "s|<VERSION>|${1}|g" ${DIR}/jupyterhub_config.py.template > ${DIR}/${1}/jupyterhub_config.py
+
+echo "You can start JupyterHub with vscode and use breakpoints in patches/${1}/jupyterhub-patched and custom/${1}"

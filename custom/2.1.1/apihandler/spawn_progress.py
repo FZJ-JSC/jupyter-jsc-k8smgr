@@ -10,13 +10,14 @@ user_cancel_message = "Start cancelled by user."
 
 
 class SpawnProgressUpdateAPIHandler(APIHandler):
-    @needs_scope("admin:users")
-    def post(self, username, server_name=""):
+    
+    @needs_scope("access:servers")
+    def post(self, user_name, server_name=""):
         self.set_header("Cache-Control", "no-cache")
         uuidcode = self.request.headers.get("uuidcode", "<no_uuidcode>")
         if server_name is None:
             server_name = ""
-        user = self.find_user(username)
+        user = self.find_user(user_name)
         if user is None:
             # no such user
             raise web.HTTPError(404)
@@ -24,9 +25,10 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
             # user has no such server
             raise web.HTTPError(404)
         body = self.request.body.decode("utf8")
+        self.log.info(body)
         event = json.loads(body) if body else {}
 
-        user = self.find_user(username)
+        user = self.find_user(user_name)
         spawner = user.spawners[server_name]
 
         if event and event.get("failed", False):
@@ -35,8 +37,8 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                     "APICall: SpawnUpdate",
                     extra={
                         "uuidcode": uuidcode,
-                        "log_name": f"{username}:{server_name}",
-                        "user": username,
+                        "log_name": f"{user_name}:{server_name}",
+                        "user": user_name,
                         "action": "cancel",
                     },
                 )
@@ -45,8 +47,8 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                     "APICall: SpawnUpdate",
                     extra={
                         "uuidcode": uuidcode,
-                        "log_name": f"{username}:{server_name}",
-                        "user": username,
+                        "log_name": f"{user_name}:{server_name}",
+                        "user": user_name,
                         "action": "failed",
                         "event": event,
                     },
@@ -60,8 +62,8 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                 "APICall: SpawnUpdate",
                 extra={
                     "uuidcode": uuidcode,
-                    "log_name": f"{username}:{server_name}",
-                    "user": username,
+                    "log_name": f"{user_name}:{server_name}",
+                    "user": user_name,
                     "action": "spawnupdate",
                     "event": event,
                 },

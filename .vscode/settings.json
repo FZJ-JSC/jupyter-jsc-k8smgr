@@ -17,5 +17,9 @@
     "./custom/tests",
     "-p",
     "*tests.py"
+  ],
+  "python.analysis.extraPaths": [
+    "./patches/2.1.1/jupyterhub-patched",
+    "./custom/2.1.1"
   ]
 }

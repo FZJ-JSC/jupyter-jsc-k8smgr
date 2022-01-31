@@ -5,11 +5,15 @@
       "name": "JupyterHub",
       "type": "python",
       "request": "launch",
+      "preLaunchTask": "deletedb",
       "program": "${workspaceFolder}/venvs/2.1.1/bin/jupyterhub",
       "args": [
         "-f",
         "${workspaceFolder}/tests/local_tests/2.1.1/jupyterhub_config.py"
-      ]
+      ],
+      "env": {
+        "JUPYTERHUB_CRYPT_KEY": "06e35ed347ec42859d52198b1773af86"
+      }
     }
   ]
 }
