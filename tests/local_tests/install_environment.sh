@@ -28,6 +28,11 @@ fi
 ${BASE}/venvs/${1}/bin/pip3 install -U pip
 if [[ -f ${BASE}/custom/${1}/requirements.txt ]]; then
     ${BASE}/venvs/${1}/bin/pip3 install -r ${BASE}/custom/${1}/requirements.txt
+    if grep -q nodeenv ${BASE}/custom/${1}/requirements.txt; then
+        ${BASE}/venvs/${1}/bin/nodeenv -p
+        ${BASE}/venvs/${1}/bin/npm install -g configurable-http-proxy
+    fi
+fi
 fi
 ${BASE}/venvs/${1}/bin/pip3 install -e ${BASE}/patches/${1}/jupyterhub-patched
 sed -e "s|<BASE_PATH>|${BASE}|g" -e "s|<VERSION>|${1}|g" ${DIR}/jupyterhub_config.py.template > ${DIR}/${1}/jupyterhub_config.py
