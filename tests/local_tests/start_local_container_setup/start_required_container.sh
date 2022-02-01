@@ -64,14 +64,27 @@ if [[ -z $BACKEND_JHUB_PASS ]]; then
     export BACKEND_JHUB_PASS=$(uuidgen)
 fi
 
-TUNNEL_BACKEND_BASIC_B64=$(echo -n "backend:${TUNNEL_BACKEND_PASS}" | base64 -w 0)
-export TUNNEL_BACKEND_BASIC="Basic ${TUNNEL_BACKEND_BASIC_B64}"
+# Get OS type for the base64 command
+# -w 0 is equivalent to -b 0, where the default break value is already 0 on MacOS
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    TUNNEL_BACKEND_BASIC_B64=$(echo -n "backend:${TUNNEL_BACKEND_PASS}" | base64)
+    export TUNNEL_BACKEND_BASIC="Basic ${TUNNEL_BACKEND_BASIC_B64}"
 
-TUNNEL_JHUB_BASIC_B64=$(echo -n "jupyterhub:${TUNNEL_JHUB_PASS}" | base64 -w 0)
-export TUNNEL_JHUB_BASIC="Basic ${TUNNEL_JHUB_BASIC_B64}"
+    TUNNEL_JHUB_BASIC_B64=$(echo -n "jupyterhub:${TUNNEL_JHUB_PASS}" | base64)
+    export TUNNEL_JHUB_BASIC="Basic ${TUNNEL_JHUB_BASIC_B64}"
 
-BACKEND_JHUB_BASIC_B64=$(echo -n "jupyterhub:${BACKEND_JHUB_PASS}" | base64 -w 0)
-export BACKEND_JHUB_BASIC="Basic ${BACKEND_JHUB_BASIC_B64}"
+    BACKEND_JHUB_BASIC_B64=$(echo -n "jupyterhub:${BACKEND_JHUB_PASS}" | base64)
+    export BACKEND_JHUB_BASIC="Basic ${BACKEND_JHUB_BASIC_B64}"
+else
+    TUNNEL_BACKEND_BASIC_B64=$(echo -n "backend:${TUNNEL_BACKEND_PASS}" | base64 -w 0)
+    export TUNNEL_BACKEND_BASIC="Basic ${TUNNEL_BACKEND_BASIC_B64}"
+
+    TUNNEL_JHUB_BASIC_B64=$(echo -n "jupyterhub:${TUNNEL_JHUB_PASS}" | base64 -w 0)
+    export TUNNEL_JHUB_BASIC="Basic ${TUNNEL_JHUB_BASIC_B64}"
+
+    BACKEND_JHUB_BASIC_B64=$(echo -n "jupyterhub:${BACKEND_JHUB_PASS}" | base64 -w 0)
+    export BACKEND_JHUB_BASIC="Basic ${BACKEND_JHUB_BASIC_B64}"
+fi
 
 
 # Start Unity
@@ -113,11 +126,13 @@ fi
 echo "Wait for django services to start ..."
 STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" http://localhost:${BACKEND_PORT}/api/health/)
 while [[ ! $STATUS_CODE -eq 200 ]]; do
+    sleep 2
     STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" http://localhost:${BACKEND_PORT}/api/health/)
 done
 
 STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" http://localhost:${TUNNEL_PORT}/api/health/)
 while [[ ! $STATUS_CODE -eq 200 ]]; do
+    sleep 2
     STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" http://localhost:${TUNNEL_PORT}/api/health/)
 done
 
