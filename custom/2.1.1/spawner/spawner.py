@@ -116,6 +116,8 @@ class BackendSpawner(Spawner):
         uuidcode = uuid.uuid4().hex
         self.port = random_port()
         # Test setup
+        import random
+        self.port = random.randint(30000,30010)
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -206,7 +208,7 @@ class BackendSpawner(Spawner):
         for i in range(0, max_poll_attempts):
             try:
                 resp = await self.user.authenticator.fetch(req, parse_json=True)
-                self.log.info(f"Server polled. -- 'uuidcode': {uuidcode}, 'response': {resp}")
+                # self.log.info(f"Server polled. -- 'uuidcode': {uuidcode}, 'response': {resp}")
                 break
             except Exception as e:
                 if i < max_poll_attempts - 1:

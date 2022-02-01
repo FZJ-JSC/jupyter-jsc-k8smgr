@@ -4,8 +4,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 FILES=${DIR}/files
 
 # Setup docker network
-NETWORK_NAME="host"
-# NETWORK_NAME="jhub-test-network"
+# NETWORK_NAME="host"
+NETWORK_NAME="jhub-test-network"
 NETWORK_EXISTS=$(docker network ls | grep $NETWORK_NAME | wc -l)
 if [[ $NETWORK_EXISTS -eq 0 ]]; then
     docker network create $NETWORK_NAME
@@ -13,12 +13,13 @@ fi
 
 # Define JupyterHub Version to prepare configuration
 export JUPYTERHUB_VERSION="2.1.1"
+export JUPYTERHUB_NAME="jupyterhub.gitlab.svc"
 
 # Define unity server
 export UNITY_NAME="unity.gitlab.svc"
 export UNITY_IMAGE="registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unity-test-server"
 export UNITY_VERSION="3.8.1-rc3"
-export UNITY_ALLOWED_CALLBACK_URLS="['http://localhost:8000/hub/oauth_callback']"
+export UNITY_ALLOWED_CALLBACK_URLS="['http://jupyterhub.gitlab.svc:8000/hub/oauth_callback']"
 
 # Define UNICORE server
 export UNICORE_NAME="unicore.gitlab.svc"
@@ -39,9 +40,9 @@ export TUNNEL_VERSION="1.0.0-rc10"
 export TUNNEL_PORT=8091
 
 if [[ $NETWORK_NAME == "host" ]]; then
-    ETC_HOSTS_LINES=$(grep $TUNNEL_NAME /etc/hosts | grep $BACKEND_NAME | grep $UNICORE_NAME | grep $UNITY_NAME | wc -l)
+    ETC_HOSTS_LINES=$(grep $TUNNEL_NAME /etc/hosts | grep $JUPYTERHUB_NAME | grep $BACKEND_NAME | grep $UNICORE_NAME | grep $UNITY_NAME | wc -l)
     if [[ $ETC_HOSTS_LINES -eq 0 ]]; then
-        echo "You have to add '127.0.0.1 $TUNNEL_NAME $BACKEND_NAME $UNICORE_NAME $UNITY_NAME' to your /etc/hosts file, if you want to use Network host"
+        echo "You have to add '127.0.0.1 $JUPYTERHUB_NAME $TUNNEL_NAME $BACKEND_NAME $UNICORE_NAME $UNITY_NAME' to your /etc/hosts file, if you want to use Network host"
         exit 0
     fi
 fi
@@ -83,7 +84,7 @@ fi
 
 # Start UNICORE
 sed -e "s/<tunnel_host>/${TUNNEL_NAME}/g" ${FILES}/unicore/manage_tunnel.sh.template > ${FILES}/unicore/manage_tunnel.sh
-docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
+docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --add-host ${JUPYTERHUB_NAME}:172.17.0.1 -p 30000-30010:30000-30010 --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
 
 if [[ ! $? -eq 0 ]]; then
     echo "Could not start UNICORE service. Test environment will not work"
@@ -92,7 +93,7 @@ fi
 
 # Start Backend
 sed -e "s/<tunnel_port>/${TUNNEL_PORT}/g" -e "s/<tunnel_name>/${TUNNEL_NAME}/g" -e "s/<unicore_name>/${UNICORE_NAME}/g" ${FILES}/backend/config.json.template > ${FILES}/backend/config.json
-docker rm -f ${BACKEND_NAME} &> /dev/null ; docker run --network ${NETWORK_NAME} -d -v ${FILES}/backend/uwsgi.ini:/home/backend/web/uwsgi.ini -v ${FILES}/backend/config.json:/tmp/config.json -v ${FILES}/backend/job_descriptions:/tmp/job_descriptions --env REMOTE_NODE_TOKEN="${TUNNEL_BACKEND_BASIC}" --env DEBUG="true" --env BACKEND_SUPERUSER_PASS=${BACKEND_SUPERUSER_PASS} --env JUPYTERHUB_USER_PASS=${BACKEND_JHUB_PASS} --env CONFIG_PATH=/tmp/config.json --name ${BACKEND_NAME} ${BACKEND_IMAGE}:${BACKEND_VERSION}
+docker rm -f ${BACKEND_NAME} &> /dev/null ; docker run --network ${NETWORK_NAME} -d -p ${BACKEND_PORT}:${BACKEND_PORT} -v ${FILES}/backend/uwsgi.ini:/home/backend/web/uwsgi.ini -v ${FILES}/backend/config.json:/tmp/config.json -v ${FILES}/backend/job_descriptions:/tmp/job_descriptions --env REMOTE_NODE_TOKEN="${TUNNEL_BACKEND_BASIC}" --env DEBUG="true" --env BACKEND_SUPERUSER_PASS=${BACKEND_SUPERUSER_PASS} --env JUPYTERHUB_USER_PASS=${BACKEND_JHUB_PASS} --env CONFIG_PATH=/tmp/config.json --name ${BACKEND_NAME} ${BACKEND_IMAGE}:${BACKEND_VERSION}
 
 if [[ ! $? -eq 0 ]]; then
     echo "Could not start backend service. Test environment will not work"
@@ -101,7 +102,7 @@ fi
 
 # Start Tunneling
 sed -e "s/<unicore_name>/${UNICORE_NAME}/g" ${FILES}/tunnel/ssh_config.template > ${FILES}/tunnel/ssh_config
-docker rm -f ${TUNNEL_NAME} &> /dev/null ; docker run --network ${NETWORK_NAME} -d --env DEBUG="true" --env SSHCONFIGFILE="/home/tunnel/.ssh/config" --env TUNNEL_SUPERUSER_PASS="${TUNNEL_SUPERUSER_PASS}" --env BACKEND_USER_PASS="${TUNNEL_BACKEND_PASS}" --env JUPYTERHUB_USER_PASS=${TUNNEL_JHUB_PASS} -v ${FILES}/tunnel/uwsgi.ini:/home/tunnel/web/uwsgi.ini --name ${TUNNEL_NAME} ${TUNNEL_IMAGE}:${TUNNEL_VERSION}
+docker rm -f ${TUNNEL_NAME} &> /dev/null ; docker run --add-host ${JUPYTERHUB_NAME}:172.17.0.1 --network ${NETWORK_NAME} -d -p ${TUNNEL_PORT}:${TUNNEL_PORT} --env DEBUG="true" --env SSHCONFIGFILE="/home/tunnel/.ssh/config" --env TUNNEL_SUPERUSER_PASS="${TUNNEL_SUPERUSER_PASS}" --env BACKEND_USER_PASS="${TUNNEL_BACKEND_PASS}" --env JUPYTERHUB_USER_PASS=${TUNNEL_JHUB_PASS} -v ${FILES}/tunnel/uwsgi.ini:/home/tunnel/web/uwsgi.ini --name ${TUNNEL_NAME} ${TUNNEL_IMAGE}:${TUNNEL_VERSION}
 
 if [[ ! $? -eq 0 ]]; then
     echo "Could not start tunneling service. Test environment will not work"
@@ -120,6 +121,7 @@ while [[ ! $STATUS_CODE -eq 200 ]]; do
     STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" http://localhost:${TUNNEL_PORT}/api/health/)
 done
 
+# Add files to Tunnel Service and set correct owner/permissions
 docker container exec ${TUNNEL_NAME} mkdir /home/tunnel/.ssh
 docker container exec ${TUNNEL_NAME} chmod 700 /home/tunnel/.ssh
 docker container exec ${TUNNEL_NAME} chown 1093:100 /home/tunnel/.ssh
