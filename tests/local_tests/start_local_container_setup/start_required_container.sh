@@ -97,7 +97,11 @@ fi
 
 # Start UNICORE
 sed -e "s/<tunnel_host>/${TUNNEL_NAME}/g" ${FILES}/unicore/manage_tunnel.sh.template > ${FILES}/unicore/manage_tunnel.sh
-docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --add-host ${JUPYTERHUB_NAME}:172.17.0.1 -p 30000-30010:30000-30010 --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --add-host ${JUPYTERHUB_NAME}:172.17.0.1 -p 30000-30010:30000-30010 --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
+else
+    docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --add-host host.docker.internal:172.17.0.1 --add-host ${JUPYTERHUB_NAME}:172.17.0.1 -p 30000-30010:30000-30010 --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
+fi
 
 if [[ ! $? -eq 0 ]]; then
     echo "Could not start UNICORE service. Test environment will not work"
