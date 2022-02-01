@@ -3,7 +3,6 @@
   {
   "DEMO-SITE":
   {
-    "backend_id_env_name": "JUPYTER_BACKEND_ID",
     "max_start_attempts": 0,
     "site_url": "https://<unicore_name>:9112/DEMO-SITE/rest/core",
     "remote_nodes": ["demo_site"],

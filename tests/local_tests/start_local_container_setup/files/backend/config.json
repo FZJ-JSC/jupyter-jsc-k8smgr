@@ -3,7 +3,6 @@
   {
   "DEMO-SITE":
   {
-    "backend_id_env_name": "JUPYTER_BACKEND_ID",
     "max_start_attempts": 0,
     "site_url": "https://unicore.gitlab.svc:9112/DEMO-SITE/rest/core",
     "remote_nodes": ["demo_site"],
@@ -66,7 +65,7 @@
             "set_queue": false
           },
           "environment_key": "Environment",
-          "skip_environments": []
+          "skip_environments": ["JUPYTERHUB_API_TOKEN", "JPY_API_TOKEN"]
         }
       }
     }

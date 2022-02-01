@@ -101,7 +101,7 @@ fi
 
 # Start Tunneling
 sed -e "s/<unicore_name>/${UNICORE_NAME}/g" ${FILES}/tunnel/ssh_config.template > ${FILES}/tunnel/ssh_config
-docker rm -f ${TUNNEL_NAME} &> /dev/null ; docker run --network ${NETWORK_NAME} -d --env DEBUG="true" --env SSHCONFIGFILE="/home/tunnel/.ssh/config" --env TUNNEL_SUPERUSER_PASS="${TUNNEL_SUPERUSER_PASS}" --env BACKEND_USER_PASS="${TUNNEL_BACKEND_PASS}" --env JUPYTERHUB_USER_PASS=${TUNNEL_JHUB_PASS} -v ${FILES}/tunnel/uwsgi.ini:/home/tunnel/web/uwsgi.ini -v ${FILES}/tunnel/remote_key:/home/tunnel/.ssh/remote -v ${FILES}/tunnel/tunnel_key:/home/tunnel/.ssh/tunnel -v ${FILES}/tunnel/ssh_config:/home/tunnel/.ssh/config -v ${FILES}/tunnel/authorized_keys:/home/tunnel/.ssh/authorized_keys --name ${TUNNEL_NAME} ${TUNNEL_IMAGE}:${TUNNEL_VERSION}
+docker rm -f ${TUNNEL_NAME} &> /dev/null ; docker run --network ${NETWORK_NAME} -d --env DEBUG="true" --env SSHCONFIGFILE="/home/tunnel/.ssh/config" --env TUNNEL_SUPERUSER_PASS="${TUNNEL_SUPERUSER_PASS}" --env BACKEND_USER_PASS="${TUNNEL_BACKEND_PASS}" --env JUPYTERHUB_USER_PASS=${TUNNEL_JHUB_PASS} -v ${FILES}/tunnel/uwsgi.ini:/home/tunnel/web/uwsgi.ini --name ${TUNNEL_NAME} ${TUNNEL_IMAGE}:${TUNNEL_VERSION}
 
 if [[ ! $? -eq 0 ]]; then
     echo "Could not start tunneling service. Test environment will not work"
@@ -119,6 +119,24 @@ STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GE
 while [[ ! $STATUS_CODE -eq 200 ]]; do
     STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" http://localhost:${TUNNEL_PORT}/api/health/)
 done
+
+docker container exec ${TUNNEL_NAME} mkdir /home/tunnel/.ssh
+docker container exec ${TUNNEL_NAME} chmod 700 /home/tunnel/.ssh
+docker container exec ${TUNNEL_NAME} chown 1093:100 /home/tunnel/.ssh
+docker cp ${FILES}/tunnel/remote_key ${TUNNEL_NAME}:/home/tunnel/.ssh/remote
+docker cp ${FILES}/tunnel/tunnel_key ${TUNNEL_NAME}:/home/tunnel/.ssh/tunnel
+docker cp ${FILES}/tunnel/ssh_config ${TUNNEL_NAME}:/home/tunnel/.ssh/config
+docker cp ${FILES}/tunnel/authorized_keys ${TUNNEL_NAME}:/home/tunnel/.ssh/authorized_keys
+
+docker container exec ${TUNNEL_NAME} chown 1093:100 /home/tunnel/.ssh/config
+docker container exec ${TUNNEL_NAME} chown 1093:100 /home/tunnel/.ssh/authorized_keys
+docker container exec ${TUNNEL_NAME} chown 1093:100 /home/tunnel/.ssh/tunnel
+docker container exec ${TUNNEL_NAME} chown 1093:100 /home/tunnel/.ssh/remote
+
+docker container exec ${TUNNEL_NAME} chmod 664 /home/tunnel/.ssh/config
+docker container exec ${TUNNEL_NAME} chmod 400 /home/tunnel/.ssh/authorized_keys
+docker container exec ${TUNNEL_NAME} chmod 400 /home/tunnel/.ssh/tunnel
+docker container exec ${TUNNEL_NAME} chmod 400 /home/tunnel/.ssh/remote
 
 STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "POST" -H "Content-Type: application/json" -H "Authorization: ${TUNNEL_JHUB_BASIC}" -d '{"handler": "stream", "configuration": {"formatter": "simple", "level": 5, "stream": "ext://sys.stdout"}}' http://localhost:${TUNNEL_PORT}/api/logs/handler/)
 if [[ ! $STATUS_CODE -eq 201 ]]; then

@@ -117,7 +117,6 @@ class BackendSpawner(Spawner):
         self.port = random_port()
         # Test setup
         headers = {
-            "uuidcode": uuidcode,
             "Content-Type": "application/json",
             "Accept": "application/json",
             "Authorization": self.backend_services_token
@@ -145,7 +144,7 @@ class BackendSpawner(Spawner):
         popen_kwargs["auth_state"]["access_token"] = "ZGVtb3VzZXI6dGVzdDEyMw=="
         popen_kwargs["env"]["PORT"] = self.port
         req = HTTPRequest(
-            self.backend_services_url,
+            f"{self.backend_services_url}?uuidcode={uuidcode}",
             method="POST",
             headers=headers,
             body=json.dumps(popen_kwargs),
@@ -154,7 +153,7 @@ class BackendSpawner(Spawner):
         for i in range(0, max_start_attempts):
             try:
                 resp = await self.user.authenticator.fetch(req, parse_json=True)
-                self.log.info("Server started.", extra={"uuidcode": uuidcode, "response": resp})
+                self.log.info(f"Server started. -- 'uuidcode': {uuidcode}, 'response': {resp}")
                 break
             except Exception as e:
                 if i < max_start_attempts - 1:
@@ -181,7 +180,6 @@ class BackendSpawner(Spawner):
                 raise BackendException(error, error_detail)
         self.id = uuidcode
         return ("localhost", self.port)
-        return "http://127.0.0.1:9999"
 
     def start(self):
         self.events = []
@@ -190,20 +188,70 @@ class BackendSpawner(Spawner):
         return self._start_future
 
     async def poll(self):
+        auth_state = await self.user.get_auth_state()
+        access_token = auth_state["access_token"]
+        # Debug
+        access_token = "ZGVtb3VzZXI6dGVzdDEyMw=="
+        uuidcode = uuid.uuid4().hex
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": self.backend_services_token
+        }
+        req = HTTPRequest(
+            f"{self.backend_services_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
+            headers=headers,
+        )
+        max_poll_attempts = 1
+        for i in range(0, max_poll_attempts):
+            try:
+                resp = await self.user.authenticator.fetch(req, parse_json=True)
+                self.log.info(f"Server polled. -- 'uuidcode': {uuidcode}, 'response': {resp}")
+                break
+            except Exception as e:
+                if i < max_poll_attempts - 1:
+                    continue
+                error = "Jupyter-JSC backend service could not poll your service."
+                error_detail = str(e)
+                if isinstance(e, HTTPClientError):
+                    if len(e.args) > 2:
+                        orig_response = e.args[2]
+                        if isinstance(orig_response, HTTPResponse):
+                            error_json = json.loads(orig_response.body.decode("utf-8"))
+                            error = error_json.get("error", error)
+                            error_detail = error_json.get("error_detail", error_detail)
+                self.log.exception(
+                    "Exception while starting service",
+                    extra={
+                        "uuidcode": uuidcode,
+                        "log_name": self._log_name,
+                        "user": self.user.name,
+                        "action": "poll",
+                    },
+                )
+                return None
+        if not resp.get("running", True):
+            return 0
         return None
 
     def stop(self):
         return asyncio.ensure_future(self._stop())
 
     async def _stop(self):
+        if not self.id:
+            return
         uuidcode = uuid.uuid4().hex
         headers = {
-            "uuidcode": uuidcode,
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "Authorization": self.backend_services_token
         }
+        auth_state = await self.user.get_auth_state()
+        access_token = auth_state["access_token"]
+        # Debug
+        access_token = "ZGVtb3VzZXI6dGVzdDEyMw=="
         req = HTTPRequest(
-            f"http://127.0.0.1:8090/api/services/{self.id}/",
+            f"{self.backend_services_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
             method="DELETE",
             headers=headers,
         )
