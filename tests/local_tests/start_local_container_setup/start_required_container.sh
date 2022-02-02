@@ -30,7 +30,7 @@ export UNICORE_EXTERNALURL="https://${UNICORE_NAME}:9112/DEMO-SITE/"
 # Define Backend server
 export BACKEND_NAME="backend.gitlab.svc"
 export BACKEND_IMAGE="registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/backend-relaunch"
-export BACKEND_VERSION="1.0.0-rc2"
+export BACKEND_VERSION="1.0.0-rc3"
 export BACKEND_PORT=8090
 
 # Define tunneling server

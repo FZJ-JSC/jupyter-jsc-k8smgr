@@ -33,6 +33,6 @@ else
 fi
 
 echo "Create patch file patches/${1}/patch_files/${PATCH_PREFIX}${PATCH_FILENAME}"
-cd ${DIR}/${1}/patch_files && diff -Naurx .git ../jupyterhub ../jupyterhub-patched > ${DIR}/${1}/patch_files/${PATCH_PREFIX}${PATCH_FILENAME}
+cd ${DIR}/${1}/patch_files && diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub ../jupyterhub-patched/jupyterhub > ${DIR}/${1}/patch_files/${PATCH_PREFIX}${PATCH_FILENAME}
 
 patch -d ${DIR}/${1} -p1 < ${DIR}/${1}/patch_files/${PATCH_PREFIX}${PATCH_FILENAME}

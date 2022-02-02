@@ -3,7 +3,36 @@ from oauthenticator.oauth2 import OAuthLoginHandler
 from oauthenticator.traitlets import Callable
 from traitlets import Dict
 from traitlets import Union
+from jupyterhub.handlers.login import LogoutHandler
 
+class BackendLogoutHandler(LogoutHandler):
+    async def backend_call(self):
+        arguments = self.request.query_arguments
+        user = self.current_user
+        if not user:
+            # log warning
+            return
+        custom_config = self.app.custom_config
+        jhub_user_id = user.orm_user.id
+        auth_state = await user.get_auth_state()
+        access_token = auth_state.get("access_token", None)
+        refresh_token = auth_state.get("refresh_token", None)
+        tokens = {}
+        if access_token:
+            tokens["access_token"] = access_token
+        if refresh_token:
+            tokens["refresh_token"] = refresh_token
+        body = {
+            "stop_services": arguments.get("stop_services", [b'false'])[0].decode().lower() == "true",
+            "tokens": tokens,
+            "jhub_user_id": jhub_user_id
+        }
+        
+        return await super().handle_logout()
+    
+    async def get(self):
+        await self.backend_call()
+        return await super().get()
 
 class CustomGenericLoginHandler(OAuthLoginHandler):
     def authorize_redirect(self, *args, **kwargs):
@@ -28,6 +57,8 @@ class CustomGenericLoginHandler(OAuthLoginHandler):
 
 class CustomGenericOAuthenticator(GenericOAuthenticator):
     login_handler = CustomGenericLoginHandler
+    logout_handler = BackendLogoutHandler
+    
 
     extra_params_allowed_runtime = Union(
         [Dict(), Callable()],
