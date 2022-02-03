@@ -13,7 +13,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
  token_aliases.update(common_aliases)
  aliases.update(common_aliases)
  
-+custom_config_timeout = os.environ.get("CUSTOM_CONFIG_CACHE_TIME", 60)
++custom_config_timeout = int(os.environ.get("CUSTOM_CONFIG_CACHE_TIME", 60))
 +
  flags = {}
  if isinstance(Application.flags, dict):
