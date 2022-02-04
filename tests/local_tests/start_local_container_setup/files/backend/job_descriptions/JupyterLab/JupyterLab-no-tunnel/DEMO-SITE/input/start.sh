@@ -23,13 +23,13 @@ sed -i -e "s|_port_|${PORT}|g" -e "s|_home_|${JUPYTER_JSC_HOME}|g" -e "s|_server
 
 sleep 1
 # curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 25, "failed": false, "html_message": "Msg 25"}' -X "POST" http://jupyterhub.gitlab.svc:8000/hub/api/users/progress/update/demo-user-1@example.com
-curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 25, "failed": false, "html_message": "Msg 25"}' -X "POST" http://host.docker.internal:8000/hub/api/users/progress/update/demo-user-1@example.com
+curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 25, "failed": false, "html_message": "Msg 25"}' -X "POST" http://host.docker.internal:8000/hub/api/${JUPYTERHUB_STATUS_URL}
 sleep 1
 # curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 50, "failed": false, "html_message": "Msg 50"}' -X "POST" http://jupyterhub.gitlab.svc:8000/hub/api/users/progress/update/demo-user-1@example.com
-curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 50, "failed": false, "html_message": "Msg 50"}' -X "POST" http://host.docker.internal:8000/hub/api/users/progress/update/demo-user-1@example.com
+curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 50, "failed": false, "html_message": "Msg 50"}' -X "POST" http://host.docker.internal:8000/hub/api/${JUPYTERHUB_STATUS_URL}
 sleep 1
 # curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 75, "failed": false, "html_message": "Msg 75"}' -X "POST" http://jupyterhub.gitlab.svc:8000/hub/api/users/progress/update/demo-user-1@example.com
-curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 75, "failed": false, "html_message": "Msg 75"}' -X "POST" http://host.docker.internal:8000/hub/api/users/progress/update/demo-user-1@example.com
+curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 75, "failed": false, "html_message": "Msg 75"}' -X "POST" http://host.docker.internal:8000/hub/api/${JUPYTERHUB_STATUS_URL}
 
 timeout 3d jupyterhub-singleuser --debug --config ${DIR}/config.py &
 child=$!

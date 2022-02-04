@@ -18,13 +18,13 @@ export JUPYTERHUB_NAME="jupyterhub.gitlab.svc"
 # Define unity server
 export UNITY_NAME="unity.gitlab.svc"
 export UNITY_IMAGE="registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unity-test-server"
-export UNITY_VERSION="3.8.1-rc7"
+export UNITY_VERSION="3.8.1-rc10"
 export UNITY_ALLOWED_CALLBACK_URLS="['http://jupyterhub.gitlab.svc:8000/hub/oauth_callback']"
 
 # Define UNICORE server
 export UNICORE_NAME="unicore.gitlab.svc"
 export UNICORE_IMAGE="registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unicore-test-server/unicore-server"
-export UNICORE_VERSION="8.3.0-ljupyter-10"
+export UNICORE_VERSION="8.3.0-ljupyter-13"
 export UNICORE_EXTERNALURL="https://${UNICORE_NAME}:9112/DEMO-SITE/"
 
 # Define Backend server
@@ -95,19 +95,6 @@ if [[ ! $? -eq 0 ]]; then
     exit 1
 fi
 
-# Start UNICORE
-sed -e "s/<tunnel_host>/${TUNNEL_NAME}/g" ${FILES}/unicore/manage_tunnel.sh.template > ${FILES}/unicore/manage_tunnel.sh
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --add-host ${JUPYTERHUB_NAME}:172.17.0.1 -p 30000-30010:30000-30010 --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
-else
-    docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --add-host host.docker.internal:172.17.0.1 --add-host ${JUPYTERHUB_NAME}:172.17.0.1 -p 30000-30010:30000-30010 --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
-fi
-
-if [[ ! $? -eq 0 ]]; then
-    echo "Could not start UNICORE service. Test environment will not work"
-    exit 1
-fi
-
 # Start Backend
 sed -e "s/<tunnel_port>/${TUNNEL_PORT}/g" -e "s/<tunnel_name>/${TUNNEL_NAME}/g" -e "s/<unicore_name>/${UNICORE_NAME}/g" -e "s/<unity_name>/${UNITY_NAME}/g" ${FILES}/backend/config.json.template > ${FILES}/backend/config.json
 docker rm -f ${BACKEND_NAME} &> /dev/null ; docker run --network ${NETWORK_NAME} -d -p ${BACKEND_PORT}:${BACKEND_PORT} -v ${FILES}/backend/uwsgi.ini:/home/backend/web/uwsgi.ini -v ${FILES}/backend/config.json:/tmp/config.json -v ${FILES}/backend/job_descriptions:/tmp/job_descriptions --env REMOTE_NODE_TOKEN="${TUNNEL_BACKEND_BASIC}" --env DEBUG="true" --env BACKEND_SUPERUSER_PASS=${BACKEND_SUPERUSER_PASS} --env JUPYTERHUB_USER_PASS=${BACKEND_JHUB_PASS} --env CONFIG_PATH=/tmp/config.json --name ${BACKEND_NAME} ${BACKEND_IMAGE}:${BACKEND_VERSION}
@@ -126,6 +113,26 @@ if [[ ! $? -eq 0 ]]; then
     exit 1
 fi
 
+
+echo "Wait for Unity service to start ..."
+STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" https://localhost:2443/home/)
+while [[ ! $STATUS_CODE -eq 200 ]]; do
+    sleep 2
+    STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" https://localhost:2443/home/)
+done
+
+# Start UNICORE
+sed -e "s/<tunnel_host>/${TUNNEL_NAME}/g" ${FILES}/unicore/manage_tunnel.sh.template > ${FILES}/unicore/manage_tunnel.sh
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --add-host ${JUPYTERHUB_NAME}:172.17.0.1 -p 30000-30010:30000-30010 --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
+else
+    docker rm -f ${UNICORE_NAME} &> /dev/null ; docker run --add-host host.docker.internal:172.17.0.1 --add-host ${JUPYTERHUB_NAME}:172.17.0.1 -p 9112:9112 -p 30000-30010:30000-30010 --network ${NETWORK_NAME} -d --env EXTERNALURL=${UNICORE_EXTERNALURL} -v ${FILES}/unicore/manage_tunnel.sh:/home/ljupyter/manage_tunnel.sh --name ${UNICORE_NAME} ${UNICORE_IMAGE}:${UNICORE_VERSION} 
+fi
+
+if [[ ! $? -eq 0 ]]; then
+    echo "Could not start UNICORE service. Test environment will not work"
+    exit 1
+fi
 
 echo "Wait for django services to start ..."
 STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" http://localhost:${BACKEND_PORT}/api/health/)
@@ -158,6 +165,10 @@ docker container exec ${TUNNEL_NAME} chmod 664 /home/tunnel/.ssh/config
 docker container exec ${TUNNEL_NAME} chmod 400 /home/tunnel/.ssh/authorized_keys
 docker container exec ${TUNNEL_NAME} chmod 400 /home/tunnel/.ssh/tunnel
 docker container exec ${TUNNEL_NAME} chmod 400 /home/tunnel/.ssh/remote
+
+docker cp ${UNITY_NAME}:/opt/unity/pki/unity-test-server.crt /tmp/unity-test-server.pem
+docker cp /tmp/unity-test-server.pem ${UNICORE_NAME}:/opt/unicore/certs/unity/unity-test-server.pem
+rm /tmp/unity-test-server.pem
 
 STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "POST" -H "Content-Type: application/json" -H "Authorization: ${TUNNEL_JHUB_BASIC}" -d '{"handler": "stream", "configuration": {"formatter": "simple", "level": 5, "stream": "ext://sys.stdout"}}' http://localhost:${TUNNEL_PORT}/api/logs/handler/)
 if [[ ! $STATUS_CODE -eq 201 ]]; then

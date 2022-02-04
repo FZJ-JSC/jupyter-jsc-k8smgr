@@ -18,7 +18,7 @@
         "certificate_path": false,
         "oidc": true,
         "timeout": 5,
-        "set_preferences": false
+        "set_preferences": true
       },
       "cleanup": {
         "enabled": true,
@@ -62,7 +62,7 @@
             "type_value": "normal",
             "resources_key": "Resources",
             "queue_key": "Queue",
-            "set_queue": false
+            "set_queue": true
           },
           "environment_key": "Environment",
           "skip_environments": ["JUPYTERHUB_API_TOKEN", "JPY_API_TOKEN"]

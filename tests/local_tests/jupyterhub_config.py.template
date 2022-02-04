@@ -39,7 +39,7 @@ c.CustomGenericOAuthenticator.token_url = "https://<UNITY_HOST>:2443/oauth2/toke
 c.CustomGenericOAuthenticator.tokeninfo_url = "https://<UNITY_HOST>:2443/oauth2/tokeninfo"
 c.CustomGenericOAuthenticator.userdata_url = "https://<UNITY_HOST>:2443/oauth2/userinfo"
 c.CustomGenericOAuthenticator.username_key = "email"
-c.CustomGenericOAuthenticator.scope = "single-logout;profile".split(";")
+c.CustomGenericOAuthenticator.scope = "single-logout;hpc_infos;x500;authenticator;eduperson_entitlement;username;profile".split(";")
 c.CustomGenericOAuthenticator.tls_verify = False
 
 

@@ -126,9 +126,9 @@ class BackendSpawner(Spawner):
         user_options = {
             "service": "JupyterLab/JupyterLab-no-tunnel",
             "system": "DEMO-SITE",
-            "partition": "LoginNode",
+            "partition": "debug",
             "project": "project1",
-            "account": "demouser",
+            "account": "demouser1",
             "vo": "myvo",
         }
 
@@ -152,6 +152,9 @@ class BackendSpawner(Spawner):
             validate_cert=req_prop["validate_cert"],
             ca_certs=req_prop["ca_certs"]
         )
+        # Todo:
+        # Test behaviour if start.sh is not present
+        # Run job with /bin/bash start2.sh , will never be there. But it should try at least 3 times to start
         max_start_attempts = 1
         for i in range(0, max_start_attempts):
             try:
