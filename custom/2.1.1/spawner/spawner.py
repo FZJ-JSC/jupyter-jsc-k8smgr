@@ -12,6 +12,7 @@ from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
 from tornado.httpclient import HTTPResponse
 from traitlets import Unicode
+from custom_utils.backend import backend_request_properties
 
 
 class BackendException(Exception):
@@ -118,14 +119,8 @@ class BackendSpawner(Spawner):
         # Test setup
         import random
         self.port = random.randint(30000,30010)
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": self.backend_services_token
-        }
+        
         auth_state = await self.user.get_auth_state()
-        if auth_state is None:
-            auth_state = {}
         
         # Test setup
         user_options = {
@@ -137,19 +132,25 @@ class BackendSpawner(Spawner):
             "vo": "myvo",
         }
 
+        env = self.get_env()
+        env["PORT"] = self.port
         popen_kwargs = {
             "auth_state": auth_state,
-            "env": self.get_env(),
+            "env": env,
             "user_options": user_options
         }
-        # Test setup
-        popen_kwargs["auth_state"]["access_token"] = "ZGVtb3VzZXI6dGVzdDEyMw=="
-        popen_kwargs["env"]["PORT"] = self.port
+        
+        custom_config = self.user.authenticator.custom_config
+        req_prop = backend_request_properties(custom_config, self.log)
+        
         req = HTTPRequest(
             f"{self.backend_services_url}?uuidcode={uuidcode}",
             method="POST",
-            headers=headers,
+            headers=req_prop["headers"],
             body=json.dumps(popen_kwargs),
+            request_timeout=req_prop["request_timeout"],
+            validate_cert=req_prop["validate_cert"],
+            ca_certs=req_prop["ca_certs"]
         )
         max_start_attempts = 1
         for i in range(0, max_start_attempts):
@@ -168,7 +169,7 @@ class BackendSpawner(Spawner):
                         if isinstance(orig_response, HTTPResponse):
                             error_json = json.loads(orig_response.body.decode("utf-8"))
                             error = error_json.get("error", error)
-                            error_detail = error_json.get("error_detail", error_detail)
+                            error_detail = error_json.get("detailed_error", error_detail)
                 self.log.exception(
                     "Exception while starting service",
                     extra={
@@ -190,19 +191,20 @@ class BackendSpawner(Spawner):
         return self._start_future
 
     async def poll(self):
+        uuidcode = uuid.uuid4().hex
+        custom_config = self.user.authenticator.custom_config
+        req_prop = backend_request_properties(custom_config, self.log)
+        
         auth_state = await self.user.get_auth_state()
         access_token = auth_state["access_token"]
-        # Debug
-        access_token = "ZGVtb3VzZXI6dGVzdDEyMw=="
-        uuidcode = uuid.uuid4().hex
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": self.backend_services_token
-        }
+        
         req = HTTPRequest(
             f"{self.backend_services_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
-            headers=headers,
+            method="GET",
+            headers=req_prop["headers"],
+            request_timeout=req_prop["request_timeout"],
+            validate_cert=req_prop["validate_cert"],
+            ca_certs=req_prop["ca_certs"]
         )
         max_poll_attempts = 1
         for i in range(0, max_poll_attempts):
@@ -221,7 +223,7 @@ class BackendSpawner(Spawner):
                         if isinstance(orig_response, HTTPResponse):
                             error_json = json.loads(orig_response.body.decode("utf-8"))
                             error = error_json.get("error", error)
-                            error_detail = error_json.get("error_detail", error_detail)
+                            error_detail = error_json.get("detailed_error", error_detail)
                 self.log.exception(
                     "Exception while starting service",
                     extra={
@@ -243,19 +245,19 @@ class BackendSpawner(Spawner):
         if not self.id:
             return
         uuidcode = uuid.uuid4().hex
-        headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Authorization": self.backend_services_token
-        }
+        custom_config = self.user.authenticator.custom_config
+        req_prop = backend_request_properties(custom_config, self.log)
+        
         auth_state = await self.user.get_auth_state()
         access_token = auth_state["access_token"]
-        # Debug
-        access_token = "ZGVtb3VzZXI6dGVzdDEyMw=="
+        
         req = HTTPRequest(
             f"{self.backend_services_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
             method="DELETE",
-            headers=headers,
+            headers=req_prop["headers"],
+            request_timeout=req_prop["request_timeout"],
+            validate_cert=req_prop["validate_cert"],
+            ca_certs=req_prop["ca_certs"]
         )
         try:
             await self.user.authenticator.fetch(req)
@@ -268,7 +270,7 @@ class BackendSpawner(Spawner):
                     if isinstance(orig_response, HTTPResponse):
                         error_json = json.loads(orig_response.body.decode("utf-8"))
                         error = error_json.get("error", error)
-                        error_detail = error_json.get("error_detail", error_detail)
+                        error_detail = error_json.get("detailed_error", error_detail)
             self.log.exception(
                 "Exception while stopping service",
                 extra={

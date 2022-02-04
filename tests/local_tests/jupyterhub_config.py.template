@@ -10,6 +10,7 @@ from apihandler import SpawnProgressUpdateAPIHandler
 from apihandler import user_cancel_message
 from customauthenticator import CustomGenericOAuthenticator
 
+c.JupyterHub.log_level = 10
 c.JupyterHub.custom_config_file = '<BASE_PATH>/tests/local_tests/<VERSION>/jupyterhub_custom_config.json'
 c.JupyterHub.db_url = 'sqlite:///<BASE_PATH>/tests/local_tests/<VERSION>/jupyterhub.sqlite'
 c.JupyterHub.pid_file = '<BASE_PATH>/tests/local_tests/<VERSION>/jupyterhub.pid'
@@ -26,6 +27,7 @@ c.BackendSpawner.backend_services_token = "<BACKEND_TOKEN>"
 
 c.JupyterHub.authenticator_class = CustomGenericOAuthenticator
 
+c.CustomGenericOAuthenticator.custom_config_file = '<BASE_PATH>/tests/local_tests/<VERSION>/jupyterhub_custom_config.json'
 c.CustomGenericOAuthenticator.enable_auth_state = True
 c.CustomGenericOAuthenticator.client_id = "oauth-client"
 c.CustomGenericOAuthenticator.client_secret = "oauth-pass1"

@@ -16,7 +16,7 @@
       "job_archive": "/tmp/job-archive",
       "transport": {
         "certificate_path": false,
-        "oidc": false,
+        "oidc": true,
         "timeout": 5,
         "set_preferences": false
       },
@@ -80,5 +80,14 @@
     "request_timeout": 10
   },
   "error_messages": {
+  },
+  "unity": {
+    "revoke": {
+      "url": "https://<unity_name>:2443/oauth2/revoke",
+      "certificate_path": false,
+      "request_timeout": 10,
+      "client_id": "oauth-client",
+      "expected_status_code": 200
+    }
   }
 }

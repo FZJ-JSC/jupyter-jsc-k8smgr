@@ -18,19 +18,19 @@ export JUPYTERHUB_NAME="jupyterhub.gitlab.svc"
 # Define unity server
 export UNITY_NAME="unity.gitlab.svc"
 export UNITY_IMAGE="registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unity-test-server"
-export UNITY_VERSION="3.8.1-rc3"
+export UNITY_VERSION="3.8.1-rc7"
 export UNITY_ALLOWED_CALLBACK_URLS="['http://jupyterhub.gitlab.svc:8000/hub/oauth_callback']"
 
 # Define UNICORE server
 export UNICORE_NAME="unicore.gitlab.svc"
 export UNICORE_IMAGE="registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unicore-test-server/unicore-server"
-export UNICORE_VERSION="8.3.0-ljupyter-8"
+export UNICORE_VERSION="8.3.0-ljupyter-10"
 export UNICORE_EXTERNALURL="https://${UNICORE_NAME}:9112/DEMO-SITE/"
 
 # Define Backend server
 export BACKEND_NAME="backend.gitlab.svc"
 export BACKEND_IMAGE="registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/backend-relaunch"
-export BACKEND_VERSION="1.0.0-rc3"
+export BACKEND_VERSION="1.0.0-rc4"
 export BACKEND_PORT=8090
 
 # Define tunneling server
@@ -109,7 +109,7 @@ if [[ ! $? -eq 0 ]]; then
 fi
 
 # Start Backend
-sed -e "s/<tunnel_port>/${TUNNEL_PORT}/g" -e "s/<tunnel_name>/${TUNNEL_NAME}/g" -e "s/<unicore_name>/${UNICORE_NAME}/g" ${FILES}/backend/config.json.template > ${FILES}/backend/config.json
+sed -e "s/<tunnel_port>/${TUNNEL_PORT}/g" -e "s/<tunnel_name>/${TUNNEL_NAME}/g" -e "s/<unicore_name>/${UNICORE_NAME}/g" -e "s/<unity_name>/${UNITY_NAME}/g" ${FILES}/backend/config.json.template > ${FILES}/backend/config.json
 docker rm -f ${BACKEND_NAME} &> /dev/null ; docker run --network ${NETWORK_NAME} -d -p ${BACKEND_PORT}:${BACKEND_PORT} -v ${FILES}/backend/uwsgi.ini:/home/backend/web/uwsgi.ini -v ${FILES}/backend/config.json:/tmp/config.json -v ${FILES}/backend/job_descriptions:/tmp/job_descriptions --env REMOTE_NODE_TOKEN="${TUNNEL_BACKEND_BASIC}" --env DEBUG="true" --env BACKEND_SUPERUSER_PASS=${BACKEND_SUPERUSER_PASS} --env JUPYTERHUB_USER_PASS=${BACKEND_JHUB_PASS} --env CONFIG_PATH=/tmp/config.json --name ${BACKEND_NAME} ${BACKEND_IMAGE}:${BACKEND_VERSION}
 
 if [[ ! $? -eq 0 ]]; then
@@ -179,6 +179,8 @@ TMP1=$(dirname ${DIR})
 TMP2=$(dirname ${TMP1})
 BASE_PATH=$(dirname ${TMP2})
 sed -e "s/<UNITY_HOST>/${UNITY_NAME}/g" -e "s/<BACKEND_TOKEN>/${BACKEND_JHUB_BASIC}/g" -e "s@<BASE_PATH>@${BASE_PATH}@g" -e "s/<VERSION>/${JUPYTERHUB_VERSION}/g" -e "s/<BACKEND_HOST>/${BACKEND_NAME}/g" -e "s/<BACKEND_PORT>/${BACKEND_PORT}/g" ${DIR}/../jupyterhub_config.py.template > ${DIR}/../${JUPYTERHUB_VERSION}/jupyterhub_config.py
+
+sed -e "s/<UNITY_HOST>/${UNITY_NAME}/g" -e "s/<BACKEND_TOKEN>/${BACKEND_JHUB_BASIC}/g" -e "s@<BASE_PATH>@${BASE_PATH}@g" -e "s/<VERSION>/${JUPYTERHUB_VERSION}/g" -e "s/<BACKEND_HOST>/${BACKEND_NAME}/g" -e "s/<BACKEND_PORT>/${BACKEND_PORT}/g" ${DIR}/../jupyterhub_custom_config.json.template > ${DIR}/../${JUPYTERHUB_VERSION}/jupyterhub_custom_config.json
 
 echo "JupyterHub configuration updated. You should restart JupyterHub."
 
