@@ -1,3 +1,6 @@
+tests/k8s_test_setup/*
+!tests/k8s_test_setup/templates
+!tests/k8s_test_setup/create_yaml_files.sh
 tests/local_tests/*
 !tests/local_tests/start_local_container_setup
 patches/*/jupyterhub*
