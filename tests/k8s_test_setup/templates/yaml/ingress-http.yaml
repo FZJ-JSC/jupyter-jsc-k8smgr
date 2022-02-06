@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  name: ingress-http-<ID>
+  namespace: <NAMESPACE>
+spec:
+  rules:
+  - host: backend-<ID>.gitlab.svc
+    http:
+      paths:
+      - backend:
+          service:
+            name: backend-<ID>
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  - host: tunnel-<ID>.gitlab.svc
+    http:
+      paths:
+      - backend:
+          service:
+            name: tunnel-<ID>
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix

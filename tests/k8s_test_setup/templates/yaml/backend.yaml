@@ -11,7 +11,7 @@ spec:
     - name: http
       port: 80
       protocol: TCP
-      targetPort: 8000
+      targetPort: 8080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -27,31 +27,72 @@ spec:
       labels:
         app: backend-<ID>
     spec:
+      securityContext:
+        fsGroup: 100
+      imagePullSecrets:
+      - name: gitlab-registry
       containers:
       - env:
+        - name: JOB_DESCRIPTIONS_TAR_GZ
+          value: "/tmp/job_descriptions.tar.gz"
         - name: CONFIG_PATH
           value: "/tmp/config.json"
-        - name: ADVERTISED_HOST
-          value: backend-<ID>.<NAMESPACE>.svc
         - name: DEBUG
           value: "true"
-        image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/backend-test-server:<UNITY_VERSION>
+        - name: BACKEND_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-drf-<ID>
+              key: backend_secret
+              optional: false
+        - name: REMOTE_NODE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tunnel-drf-<ID>
+              key: backend_basic
+              optional: false
+        - name: BACKEND_SUPERUSER_PASS
+          valueFrom:
+            secretKeyRef:
+              name: backend-drf-<ID>
+              key: superuser_pass
+              optional: false
+        - name: JUPYTERHUB_USER_PASS
+          valueFrom:
+            secretKeyRef:
+              name: backend-drf-<ID>
+              key: jupyterhub_pass
+              optional: false
+        image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/backend-relaunch:<BACKEND_VERSION>
         imagePullPolicy: Always
         name: backend-<ID>
         volumeMounts:
         - name: certs
-          mountPath: /opt/backend/pki/ca-root.pem
+          mountPath: /home/backend/ca-root.pem
           subPath: ca-root.pem
         - name: certs
-          mountPath: /opt/backend/pki/backend-test-server.key
+          mountPath: /home/backend/backend.key
           subPath: backend.key
         - name: certs
-          mountPath: /opt/backend/pki/backend-test-server.crt
+          mountPath: /home/backend/backend.crt
           subPath: backend.crt
         - name: certs
-          mountPath: /opt/backend/pki/demoKeystore.p12
+          mountPath: /home/backend/backend.p12
           subPath: backend.p12
+        - name: files
+          mountPath: /home/backend/web/uwsgi.ini
+          subPath: uwsgi.ini
+        - name: files
+          mountPath: /tmp/config.json
+          subPath: config.json
+        - name: files
+          mountPath: /tmp/job_descriptions.tar.gz
+          subPath: job_descriptions.tar.gz
       volumes:
+      - name: files
+        configMap:
+          defaultMode: 400
+          name: backend-files-<ID>
       - name: certs
         secret:
           defaultMode: 400

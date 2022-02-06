@@ -31,6 +31,8 @@ spec:
       labels:
         app: unicore-<ID>
     spec:
+      securityContext:
+        fsGroup: 100
       imagePullSecrets:
       - name: gitlab-registry
       containers:

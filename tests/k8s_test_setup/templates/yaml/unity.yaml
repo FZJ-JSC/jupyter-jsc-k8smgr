@@ -27,6 +27,10 @@ spec:
       labels:
         app: unity-<ID>
     spec:
+      securityContext:
+        fsGroup: 100
+      imagePullSecrets:
+      - name: gitlab-registry
       containers:
       - env:
         - name: ADVERTISED_HOST
