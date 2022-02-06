@@ -1,0 +1,10 @@
+{
+  "backend": {
+    "authentication_token": "<BACKEND_TOKEN>",
+    "request_timeout": 10,
+    "certificate_path": false,
+    "unity_revoke": {
+      "url": "http://<BACKEND_HOST>/api/unity/"
+    }
+  }
+}

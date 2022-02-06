@@ -37,8 +37,10 @@ spec:
       - name: gitlab-registry
       containers:
       - env:
+        - name: SSH_RO_PATH
+          value: "/tmp/ssh_ro"
         - name: UNITY_ADVERTISED_HOST
-          value: https://unity-<ID>.gitlab.svc
+          value: unity-<ID>.gitlab.svc
         - name: EXTERNALURL
           value: https://unicore-<ID>.gitlab.svc/DEMO-SITE/
         - name: DEBUG
@@ -52,7 +54,7 @@ spec:
           mountPath: /home/ljupyter/manage_tunnel.sh
         - name: files
           subPath: authorized_keys
-          mountPath: /home/ljupyter/.ssh/authorized_keys
+          mountPath: /tmp/ssh_ro/authorized_keys
         - name: certs
           mountPath: /opt/unicore/certs/gateway.key
           subPath: gateway.key
@@ -90,7 +92,7 @@ spec:
           mountPath: /opt/unicore/certs/ca-root.pem
           subPath: ca-root.pem
         - name: keypairs
-          mountPath: /home/ljupyter/.ssh/id_ed25519
+          mountPath: /tmp/ssh_ro/id_ed25519
           subPath: ljupyter
       volumes:
       - name: files

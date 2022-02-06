@@ -9,7 +9,7 @@ spec:
   type: ClusterIP
   ports:
     - name: http
-      port: 8080
+      port: 80
       protocol: TCP
       targetPort: 8080
     - name: ssh
@@ -37,6 +37,8 @@ spec:
       - name: gitlab-registry
       containers:
       - env:
+        - name: SSH_RO_PATH
+          value: "/tmp/ssh_ro"
         - name: SSHCONFIGFILE
           value: "/home/tunnel/.ssh/config"
         - name: DEBUG
@@ -70,31 +72,31 @@ spec:
         name: tunnel-<ID>
         volumeMounts:
         - name: certs
-          mountPath: /home/tunnel/ca-root.pem
+          mountPath: /tmp/ssh_ro/ca-root.pem
           subPath: ca-root.pem
         - name: certs
-          mountPath: /home/tunnel/tunnel.key
+          mountPath: /tmp/ssh_ro/tunnel.key
           subPath: tunnel.key
         - name: certs
-          mountPath: /home/tunnel/tunnel.crt
+          mountPath: /tmp/ssh_ro/tunnel.crt
           subPath: tunnel.crt
         - name: certs
-          mountPath: /home/tunnel/tunnel.p12
+          mountPath: /tmp/ssh_ro/tunnel.p12
           subPath: tunnel.p12
         - name: files
           mountPath: /home/tunnel/web/uwsgi.ini
           subPath: uwsgi.ini
         - name: files
-          mountPath: /home/tunnel/.ssh/config
+          mountPath: /tmp/ssh_ro/config
           subPath: config
         - name: files
-          mountPath: /home/tunnel/.ssh/authorized_keys
+          mountPath: /tmp/ssh_ro/authorized_keys
           subPath: authorized_keys
         - name: keypairs
-          mountPath: /home/tunnel/.ssh/tunnel
+          mountPath: /tmp/ssh_ro/tunnel
           subPath: tunnel
         - name: keypairs
-          mountPath: /home/tunnel/.ssh/remote
+          mountPath: /tmp/ssh_ro/remote
           subPath: remote
       volumes:
       - name: files

@@ -13,10 +13,11 @@ ID=${ID_LONG:0:8}
 NAMESPACE=${1}
 echo "Create yaml files and JupyterHub configurations for unique identifier: ${ID}"
 
+JUPYTERHUB_DEVEL_VERSION="2.1.1"
 UNITY_VERSION="3.8.1-k8s-1"
-UNICORE_VERSION="8.3.0-k8s-1"
+UNICORE_VERSION="8.3.0-5"
 BACKEND_VERSION="1.0.0-rc6"
-TUNNEL_VERSION="1.0.0-rc11"
+TUNNEL_VERSION="1.0.0-16"
 
 # Create KeyPairs
 mkdir -p ${DIR}/${ID}/certs
@@ -42,6 +43,8 @@ create_certificate "gateway" "unicore-gateway" "unicore-${ID}.${NAMESPACE}.svc" 
 create_certificate "unicorex" "unicore-unicorex" "unicore-${ID}.${NAMESPACE}.svc" 'the!njs'
 create_certificate "tsi" "unicore-tsi" "unicore-${ID}.${NAMESPACE}.svc" 'the!tsi'
 create_certificate "unity" "unity" "unity-${ID}.${NAMESPACE}.svc" 'the!unity' "unity-test-server"
+create_certificate "tunnel" "tunnel" "tunnel-${ID}.${NAMESPACE}.svc" 'the!tunnel' 
+create_certificate "backend" "backend" "backend-${ID}.${NAMESPACE}.svc" 'the!backend' 
 
 # Create KeyPairs
 mkdir -p ${DIR}/${ID}/keypairs
@@ -52,9 +55,10 @@ create_keypair "ljupyter"
 create_keypair "tunnel"
 create_keypair "remote"
 create_keypair "reservation"
+create_keypair "devel_port_forwarding"
 
 # Prepare input files for each services
-JUPYTERHUB_ALT_NAME="jupyterhub-${ID}.${NAMESPACE}.svc"
+JUPYTERHUB_ALT_NAME="proxy-public-${ID}.${NAMESPACE}.svc"
 TUNNEL_ALT_NAME="tunnel-${ID}.${NAMESPACE}.svc"
 BACKEND_ALT_NAME="backend-${ID}.${NAMESPACE}.svc"
 UNICORE_ALT_NAME="unicore-${ID}.${NAMESPACE}.svc"
@@ -65,12 +69,14 @@ REMOTE_PUBLIC_KEY="$(cat ${DIR}/${ID}/keypairs/remote.pub)"
 ESCAPED_RPK=$(printf '%s\n' "$REMOTE_PUBLIC_KEY" | sed -e 's/[\@&]/\\&/g')
 LJUPYTER_PUBLIC_KEY="$(cat ${DIR}/${ID}/keypairs/ljupyter.pub)"
 ESCAPED_LPK=$(printf '%s\n' "$LJUPYTER_PUBLIC_KEY" | sed -e 's/[\@&]/\\&/g')
+DEVEL_PORT_FORWARDING_PUBLIC_KEY="$(cat ${DIR}/${ID}/keypairs/devel_port_forwarding.pub)"
+ESCAPED_DPFPK=$(printf '%s\n' "$DEVEL_PORT_FORWARDING_PUBLIC_KEY" | sed -e 's/[\@&]/\\&/g')
 UNICORE_SSH_PORT="22"
 
-JUPYTERHUB_PORT="80"
+JUPYTERHUB_PORT="30800"
 
 cp -rp ${DIR}/templates/files ${DIR}/${ID}/.
-find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
+find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<DEVEL_PORT_FORWARDING_PUBLIC_KEY>@${ESCAPED_DPFPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
 tar -czf ${DIR}/${ID}/files/backend/job_descriptions.tar.gz -C ${DIR}/${ID}/files/backend/ job_descriptions
 
 # Create passwords / secrets for Django services
@@ -98,7 +104,7 @@ BACKEND_JHUB_BASIC=$(get_basic_token "jupyterhub" ${BACKEND_JHUB_PASS})
 # Prepare yaml files
 cp -rp ${DIR}/templates/yaml ${DIR}/${ID}/.
 
-find ${DIR}/${ID}/yaml -type f -exec sed -i '' -e "s@<UNITY_VERSION>@${UNITY_VERSION}@g" -e "s@<UNICORE_VERSION>@${UNICORE_VERSION}@g" -e "s@<TUNNEL_VERSION>@${TUNNEL_VERSION}@g" -e "s@<BACKEND_VERSION>@${BACKEND_VERSION}@g" -e "s@<_VERSION>@${_VERSION}@g" -e "s@<ID>@${ID}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" {} \; 2> /dev/null
+find ${DIR}/${ID}/yaml -type f -exec sed -i '' -e "s@<UNITY_VERSION>@${UNITY_VERSION}@g" -e "s@<UNICORE_VERSION>@${UNICORE_VERSION}@g" -e "s@<TUNNEL_VERSION>@${TUNNEL_VERSION}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<BACKEND_VERSION>@${BACKEND_VERSION}@g" -e "s@<_VERSION>@${_VERSION}@g" -e "s@<ID>@${ID}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" {} \; 2> /dev/null
 kubectl -n ${NAMESPACE} create configmap --dry-run=client unicore-files-${ID} --from-file=${DIR}/${ID}/files/unicore --output yaml > ${DIR}/${ID}/yaml/cm-unicore-files.yaml
 kubectl -n ${NAMESPACE} create configmap --dry-run=client backend-files-${ID} --from-file=${DIR}/${ID}/files/backend --output yaml > ${DIR}/${ID}/yaml/cm-backend-files.yaml
 kubectl -n ${NAMESPACE} create configmap --dry-run=client tunnel-files-${ID} --from-file=${DIR}/${ID}/files/tunnel --output yaml > ${DIR}/${ID}/yaml/cm-tunnel-files.yaml
@@ -110,5 +116,83 @@ kubectl -n ${NAMESPACE} create secret tls --dry-run=client --output yaml --cert=
 kubectl -n ${NAMESPACE} create secret tls --dry-run=client --output yaml --cert=${DIR}/${ID}/certs/gateway.crt --key=${DIR}/${ID}/certs/gateway.key tls-gateway-${ID} > ${DIR}/${ID}/yaml/tls-gateway.yaml
 
 
-echo "Add this to /etc/hosts:"
-echo "<IP> backend-${ID}.gitlab.svc tunnel-${ID}.gitlab.svc unity-${ID}.gitlab.svc unicore-${ID}.gitlab.svc"
+
+# Create JupyterHub setup
+cp -rp ${DIR}/templates/jupyterhub ${DIR}/${ID}/.
+find ${DIR}/${ID}/jupyterhub -type f -exec sed -i '' -e "s@<BASE_PATH>@${BASE}@g" -e "s@<ID>@${ID}@g" -e "s@<VERSION>@${JUPYTERHUB_DEVEL_VERSION}@g" -e "s@<BACKEND_HOST>@${BACKEND_ALT_NAME}@g" -e "s@<UNITY_HOST>@${UNITY_ALT_NAME}@g" -e "s@<BACKEND_TOKEN>@${BACKEND_JHUB_BASIC}@g" {} \; 2> /dev/null
+
+
+# Create vscode files
+create_vscode_file () {
+    if [[ -f ${1} ]]; then
+        cp ${1} ${1}.bkp
+    fi
+    if [[ -f ${1}.k8s_template ]]; then
+        sed -e "s@<ID>@${ID}@g" -e "s@<VERSION>@${JUPYTERHUB_DEVEL_VERSION}@g" ${1}.k8s_template > ${1}
+    fi
+}
+
+create_vscode_file "${BASE}/.vscode/launch.json"
+create_vscode_file "${BASE}/.vscode/settings.json"
+create_vscode_file "${BASE}/.vscode/tasks.json"
+
+while true; do
+    read -p "Do you want to deploy the created resources to the cluster? (y/n): " yn
+    case $yn in
+        [Yy]* ) kubectl -n ${NAMESPACE} apply -f ${DIR}/${ID}/yaml; break;;
+        [Nn]* ) echo "Add this to /etc/hosts:"; echo "<IP> backend-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"; exit 0;;
+        * ) echo "That's not yes or no";;
+    esac
+done
+
+echo "Waiting for ingress to setup address ..."
+COUNTER=30
+IP=$(kubectl -n ${NAMESPACE} get ingress ingress-http-${ID} --output=jsonpath={.status.loadBalancer.ingress[0].ip})
+while [[ ${IP} == "" ]]; do
+    let COUNTER-=1
+    sleep 4
+    IP=$(kubectl -n ${NAMESPACE} get ingress ingress-http-${ID} --output=jsonpath={.status.loadBalancer.ingress[0].ip})
+done
+
+if [[ $COUNTER -eq 0 ]]; then
+    echo "Received no external IP address for ingress resource ingress-http-${ID}"
+    kubectl -n ${NAMESPACE} get ingress ingress-http-${ID}
+    exit 1
+fi
+
+echo "${IP} backend-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"
+read -p "Add the line above to /etc/hosts and press Enter to continue: "
+
+wait_for_service () {
+    echo "Wait for ${1} ..."
+    COUNTER=30
+    STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" ${1})
+    while [[ ! $STATUS_CODE -eq 200 ]]; do
+        let COUNTER-=1
+        sleep 2
+        STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "GET" ${1})
+    done
+    if [[ $COUNTER -eq 0 ]]; then
+        echo "${1} not reachable after 60 seconds. Exit"
+        exit 1
+    fi
+}
+
+wait_for_service "https://unity-${ID}.${NAMESPACE}.svc/home/"
+wait_for_service "https://unicore-${ID}.${NAMESPACE}.svc/"
+wait_for_service "http://tunnel-${ID}.${NAMESPACE}.svc/api/"
+wait_for_service "http://backend-${ID}.${NAMESPACE}.svc/api/"
+
+echo "----------"
+echo "Everything's started. You can restart JupyterHub via vscode now."
+echo "Remember to delete the cluster resources at some point:"
+echo "kubectl -n ${NAMESPACE} delete -f ${ID}/yaml"
+echo "----------"
+
+
+# Prepare port forwarding from cluster to localhost
+echo "---------- Port forwarding from cluster to localhost ----------" 
+echo "kubectl -n ${NAMESPACE} port-forward svc/tunnel-${ID} 2222:2222"
+echo "ssh -oLogLevel=ERROR -oUserKnownHostsFile=/dev/null -oServerAliveInterval=30 -oExitOnForwardFailure=yes -oStrictHostKeyChecking=no -i ${DIR}/${ID}/keypairs/devel_port_forwarding -p 2222 tunnel@localhost -R 0.0.0.0:30800:0.0.0.0:8000 -N"
+echo "After these two commands, the pods in ${NAMESPACE} will find your local JupyterHub at http://proxy-public-${ID}.gitlab.svc:30800/hub/api/"
+echo "--------------------"

@@ -24,6 +24,6 @@ spec:
           service:
             name: tunnel-<ID>
             port:
-              number: 8080
+              number: 80
         path: /
         pathType: Prefix
