@@ -46,7 +46,6 @@ create_certificate "unity" "unity" "unity-${ID}.${NAMESPACE}.svc" 'the!unity' "u
 create_certificate "tunnel" "tunnel" "tunnel-${ID}.${NAMESPACE}.svc" 'the!tunnel' 
 create_certificate "backend" "backend" "backend-${ID}.${NAMESPACE}.svc" 'the!backend' 
 
- KeyPairs
 mkdir -p ${DIR}/${ID}/keypairs
 create_keypair () {
     ssh-keygen -f ${DIR}/${ID}/keypairs/${1} -t ed25519 -q -N ""

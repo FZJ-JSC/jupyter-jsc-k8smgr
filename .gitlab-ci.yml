@@ -85,6 +85,7 @@ functional-tests:
     - if: $RUN_FUNCTIONAL_TESTS == "True"
 
 build-tag:
+  when: manual
   stage: build-tag
   image:
     name: gcr.io/kaniko-project/executor:debug
