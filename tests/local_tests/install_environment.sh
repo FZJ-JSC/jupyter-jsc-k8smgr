@@ -29,8 +29,10 @@ ${BASE}/venvs/${1}/bin/pip3 install -U pip
 if [[ -f ${BASE}/custom/${1}/requirements.txt ]]; then
     ${BASE}/venvs/${1}/bin/pip3 install -r ${BASE}/custom/${1}/requirements.txt
     if grep -q nodeenv ${BASE}/custom/${1}/requirements.txt; then
-        ${BASE}/venvs/${1}/bin/nodeenv -p
-        ${BASE}/venvs/${1}/bin/npm install -g configurable-http-proxy
+        source ${BASE}/venvs/${1}/bin/activate
+        nodeenv -p
+        npm install -g configurable-http-proxy
+        deactivate
     fi
 fi
 
