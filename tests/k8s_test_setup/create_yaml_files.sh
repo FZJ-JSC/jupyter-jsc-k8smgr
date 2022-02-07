@@ -8,7 +8,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BASE_TESTS=$(dirname $DIR)
 BASE=$(dirname $BASE_TESTS)
 
-ID_LONG=$(uuidgen)
+ID_LONG=$(uuidgen | tr 'A-Z' 'a-z')
 ID=${ID_LONG:0:8}
 NAMESPACE=${1}
 echo "Create yaml files and JupyterHub configurations for unique identifier: ${ID}"
