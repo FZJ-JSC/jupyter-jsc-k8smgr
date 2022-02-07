@@ -183,6 +183,15 @@ wait_for_service "https://unicore-${ID}.${NAMESPACE}.svc/"
 wait_for_service "http://tunnel-${ID}.${NAMESPACE}.svc/api/"
 wait_for_service "http://backend-${ID}.${NAMESPACE}.svc/api/"
 
+STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "POST" -H "Content-Type: application/json" -H "Authorization: ${TUNNEL_JHUB_BASIC}" -d '{"handler": "stream", "configuration": {"formatter": "simple", "level": 5, "stream": "ext://sys.stdout"}}' http://${TUNNEL_ALT_NAME}/api/logs/handler/)
+if [[ ! $STATUS_CODE -eq 201 ]]; then
+    echo "Could not add stream handler to tunneling service. Status Code: $STATUS_CODE"
+fi
+STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "POST" -H "Content-Type: application/json" -H "Authorization: ${BACKEND_JHUB_BASIC}" -d '{"handler": "stream", "configuration": {"formatter": "simple", "level": 5, "stream": "ext://sys.stdout"}}' http://${BACKEND_ALT_NAME}/api/logs/handler/)
+if [[ ! $STATUS_CODE -eq 201 ]]; then
+    echo "Could not add stream handler to backend service. Status Code: $STATUS_CODE"
+fi
+
 echo "----------"
 echo "Everything's started. You can restart JupyterHub via vscode now."
 echo "Remember to delete the cluster resources at some point:"

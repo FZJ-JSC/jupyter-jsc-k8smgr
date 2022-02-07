@@ -5,7 +5,7 @@
         "label": "deletedb",
         "command": "rm", // Could be any other shell command
         "type": "shell",
-        "args": ["-f", "${workspaceFolder}/tests/k8s_test_setup/cf42ccc0/jupyterhub/jupyterhub.sqlite"]
+        "args": ["-f", "${workspaceFolder}/tests/k8s_test_setup/6295fee2/jupyterhub/jupyterhub.sqlite"]
       }
     ]
   }
