@@ -7,6 +7,16 @@ metadata:
   namespace: <NAMESPACE>
 spec:
   rules:
+  - host: jupyterhub-<ID>.<NAMESPACE>.svc
+    http:
+      paths:
+      - backend:
+          service:
+            name: jupyterhub-<ID>
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
   - host: backend-<ID>.<NAMESPACE>.svc
     http:
       paths:

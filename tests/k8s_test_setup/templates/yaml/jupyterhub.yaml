@@ -1,0 +1,74 @@
+apiVersion:  v1
+kind: Service
+metadata:
+  name: jupyterhub-<ID>
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: jupyterhub-<ID>
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8000
+    - name: ssh
+      port: 2222
+      protocol: TCP
+      targetPort: 2222
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyterhub-<ID>
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    matchLabels:
+      app: jupyterhub-<ID>
+  template:
+    metadata:
+      labels:
+        app: jupyterhub-<ID>
+    spec:
+      securityContext:
+        fsGroup: 100
+        runAsUser: 0
+      imagePullSecrets:
+      - name: gitlab-registry
+      containers:
+      - image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/jupyterhub-relaunch:<JUPYTERHUB_VERSION>
+        imagePullPolicy: Always
+        command: ["/src/entrypoint_devel.sh"]
+        name: jupyterhub-<ID>
+        volumeMounts:
+        - name: files
+          mountPath: /tmp/ssh/authorized_keys
+          subPath: authorized_keys
+        - name: files
+          mountPath: /tmp/home/create_patch.sh
+          subPath: create_patch.sh
+        - name: files
+          mountPath: /tmp/home/jupyterhub_custom_config.json
+          subPath: jupyterhub_custom_config.json
+        - name: files
+          mountPath: /tmp/home/jupyterhub_config.py
+          subPath: jupyterhub_config.py
+        - name: files
+          mountPath: /tmp/.vscode/settings.json
+          subPath: settings.json
+        - name: files
+          mountPath: /tmp/.vscode/tasks.json
+          subPath: tasks.json
+        - name: files
+          mountPath: /tmp/.vscode/launch.json
+          subPath: launch.json
+      volumes:
+      - name: files
+        configMap:
+          defaultMode: 400
+          name: jupyterhub-files-<ID>
+      - name: keypairs
+        secret:
+          defaultMode: 400
+          secretName: keypairs-<ID>
