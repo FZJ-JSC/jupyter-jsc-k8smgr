@@ -17,7 +17,7 @@ if [[ ! -d ${DIR}/${1}/patch_files ]]; then
     mkdir -p ${DIR}/${1}/patch_files
 fi
 
-NUMBER_OF_FILES=`ls ${DIR}/${1}/patch_files | wc -l`
+NUMBER_OF_FILES=`ls ${DIR}/${1}/patch_files | wc -l | sed 's/ //g'`
 if [[ $NUMBER_OF_FILES -lt 10 ]]; then
     PATCH_PREFIX="00${NUMBER_OF_FILES}_"
 elif [[ $NUMBER_OF_FILES -lt 100 ]]; then
