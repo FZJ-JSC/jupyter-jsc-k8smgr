@@ -1,0 +1,8 @@
+Host jupyterhub-<ID>
+    HostName localhost
+    User jupyterhub
+    IdentityFile <DIR>/<ID>/keypairs/jupyterhub_devel
+    Port 2222
+    LogLevel ERROR
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
