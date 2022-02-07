@@ -8,7 +8,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BASE_TESTS=$(dirname $DIR)
 BASE=$(dirname $BASE_TESTS)
 
-ID_LONG=$(uuidgen)
+ID_LONG=$(uuidgen | tr 'A-Z' 'a-z')
 ID=${ID_LONG:0:8}
 NAMESPACE=${1}
 echo "Create yaml files and JupyterHub configurations for unique identifier: ${ID}"
@@ -34,9 +34,9 @@ create_certificate () {
     openssl x509 -req -in ${DIR}/${ID}/certs/${SERVICE}.csr -CA ${DIR}/templates/certs/ca-root.pem -CAkey ${DIR}/templates/certs/ca.key -CAcreateserial -out ${DIR}/${ID}/certs/${SERVICE}.crt -days 365 -sha512 -extfile ${DIR}/${ID}/certs/${SERVICE}.cnf -extensions v3_req &> /dev/null
     # Create keystores with pass
     if [[ ${KEYSTORE_NAME} == "" ]]; then
-        openssl pkcs12 -export -in ${DIR}/${ID}/certs/${SERVICE}.crt -inkey ${DIR}/${ID}/certs/${SERVICE}.key --certfile ${DIR}/templates/certs/ca-root.pem -out ${DIR}/${ID}/certs/${SERVICE}.p12 -password pass:${KEYSTORE_PASS};
+        openssl pkcs12 -export -in ${DIR}/${ID}/certs/${SERVICE}.crt -inkey ${DIR}/${ID}/certs/${SERVICE}.key -certfile ${DIR}/templates/certs/ca-root.pem -out ${DIR}/${ID}/certs/${SERVICE}.p12 -password pass:${KEYSTORE_PASS};
     else
-        openssl pkcs12 -export -name ${KEYSTORE_NAME} -in ${DIR}/${ID}/certs/${SERVICE}.crt -inkey ${DIR}/${ID}/certs/${SERVICE}.key --certfile ${DIR}/templates/certs/ca-root.pem -out ${DIR}/${ID}/certs/${SERVICE}.p12 -password pass:${KEYSTORE_PASS};
+        openssl pkcs12 -export -name ${KEYSTORE_NAME} -in ${DIR}/${ID}/certs/${SERVICE}.crt -inkey ${DIR}/${ID}/certs/${SERVICE}.key -certfile ${DIR}/templates/certs/ca-root.pem -out ${DIR}/${ID}/certs/${SERVICE}.p12 -password pass:${KEYSTORE_PASS};
     fi
 }
 create_certificate "gateway" "unicore-gateway" "unicore-${ID}.${NAMESPACE}.svc" 'the!gateway'

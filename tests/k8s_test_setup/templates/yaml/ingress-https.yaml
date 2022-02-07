@@ -8,7 +8,7 @@ metadata:
   namespace: <NAMESPACE>
 spec:
   rules:
-  - host: unity-<ID>.gitlab.svc
+  - host: unity-<ID>.<NAMESPACE>.svc
     http:
       paths:
       - backend:
@@ -18,7 +18,7 @@ spec:
               number: 443
         path: /
         pathType: Prefix
-  - host: unicore-<ID>.gitlab.svc
+  - host: unicore-<ID>.<NAMESPACE>.svc
     http:
       paths:
       - backend:
@@ -30,8 +30,8 @@ spec:
         pathType: Prefix
   tls:
   - hosts:
-    - unity-<ID>.gitlab.svc
+    - unity-<ID>.<NAMESPACE>tlab.svc
     secretName: tls-unity-<ID>
   - hosts:
-    - unicore-<ID>.gitlab.svc
+    - unicore-<ID>.<NAMESPACE>.svc
     secretName: tls-gateway-<ID>
