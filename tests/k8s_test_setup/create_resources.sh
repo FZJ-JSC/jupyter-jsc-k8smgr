@@ -171,13 +171,6 @@ if [[ ! $STATUS_CODE -eq 201 ]]; then
     echo "Could not add stream handler to backend service. Status Code: $STATUS_CODE"
 fi
 
-echo "----------"
-echo "Everything's started. You can restart JupyterHub via vscode now."
-echo "Remember to delete the cluster resources at some point:"
-echo "kubectl -n ${NAMESPACE} delete -f ${ID}/yaml"
-echo "----------"
-
-
 # Prepare port forwarding from localhost to cluster
 echo "---------- Port forwarding from localhost to JupyterHub devel Container ----------" 
 mkdir -p ${DIR}/${ID}/pids
@@ -192,8 +185,9 @@ echo "Port forwarding established. localhost:2222 -> svc/jupyterhub-${ID}:2222 .
 mkdir -p ${DIR}/${ID}/rsync/jupyterhub-patched
 mkdir -p ${DIR}/${ID}/rsync/jupyterhub-custom
 RSYNC=$(which rsync)
-cp -p ${DIR}/templates/rsync.sh ${DIR}/${ID}/rsync/. &
-/bin/bash ${DIR}/${ID}/rsync/rsync.sh
+cp -p ${DIR}/templates/rsync.sh ${DIR}/${ID}/rsync/rsync.sh
+sed -i -e "s@<DIR>@${DIR}@g" -e "s@<ID>@${ID}@g" ${DIR}/${ID}/rsync/rsync.sh
+/bin/bash ${DIR}/${ID}/rsync/rsync.sh &
 PID=$!
 echo -n "${PID}" > ${DIR}/${ID}/pids/rsync.pid
 echo "${ID}/rsync/rsync.sh started. PID: ${PID}"
@@ -213,6 +207,6 @@ if [[ $RSYNC == "" ]]; then
     echo "8. !!! Any changes to jupyterhub-patched or jupyterhub-custom are not stored automatically. If you install 'rsync' locally, you can start syncing the repositories !!!"
     exit 0
 fi
-echo "8. /home/jupyterhub/jupyterhub-[custom|patched] will be synched every 60 seconds to ${ID}/rsync on your machine. So no need to panik if a pod crashes. Your changes are save"
+echo "8. /home/jupyterhub/jupyterhub-[custom|patched] will be synched every 60 seconds to ${ID}/rsync on your machine. So no need to panic if a pod crashes. Your changes are save"
 
 

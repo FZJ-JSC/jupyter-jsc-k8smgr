@@ -21,5 +21,6 @@ rm -r ${DIR}/${ID}/keypairs
 rm -r ${DIR}/${ID}/pids
 rm -r ${DIR}/${ID}/yaml
 
+echo "-----------------"
 echo "rsync folder not deleted. To do so: "
 echo "rm -r ${DIR}/${ID}"
