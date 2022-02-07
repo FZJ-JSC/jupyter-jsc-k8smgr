@@ -7,7 +7,7 @@ for f in /tmp/ssh/* ; do
 done
 chmod -R 400 /home/jupyterhub/.ssh/*
 
-apt update && apt install -y vim openssh-server libc6 libstdc++6 ca-certificates tar bash curl wget
+apt update && apt install -y vim rsync openssh-server libc6 libstdc++6 ca-certificates tar bash curl wget
 sed -i -r -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g" -e "s/^AllowTcpForwarding no/AllowTcpForwarding yes/g" -e "s/^#Port 22/Port 2222/g" /etc/ssh/sshd_config
 /etc/init.d/ssh start
 

@@ -75,7 +75,7 @@ UNICORE_SSH_PORT="22"
 JUPYTERHUB_PORT="30800"
 
 cp -rp ${DIR}/templates/files ${DIR}/${ID}/.
-find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<JUPYTERHUB_DEVEL_PUBLIC_KEY>@${ESCAPED_JHPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
+find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<DIR>@${DIR}@g" -e "s@<ID>@${ID}@g" -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<JUPYTERHUB_DEVEL_PUBLIC_KEY>@${ESCAPED_JDPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
 tar -czf ${DIR}/${ID}/files/backend/job_descriptions.tar.gz -C ${DIR}/${ID}/files/backend/ job_descriptions
 
 # Create passwords / secrets for Django services
@@ -119,7 +119,7 @@ while true; do
     read -p "Do you want to deploy the created resources to the cluster? (y/n): " yn
     case $yn in
         [Yy]* ) kubectl -n ${NAMESPACE} apply -f ${DIR}/${ID}/yaml; break;;
-        [Nn]* ) echo "Add this to /etc/hosts:"; echo "<IP> backend-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"; exit 0;;
+        [Nn]* ) echo "Add this to /etc/hosts:"; echo "<IP> jupyterhub-${ID}.${NAMESPACE}.svc backend-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"; exit 0;;
         * ) echo "That's not yes or no";;
     esac
 done
@@ -139,7 +139,7 @@ if [[ $COUNTER -eq 0 ]]; then
     exit 1
 fi
 
-echo "${IP} backend-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"
+echo "${IP} jupyterhub-${ID}.${NAMESPACE}.svc backend-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"
 read -p "Add the line above to /etc/hosts and press Enter to continue: "
 
 wait_for_service () {
@@ -178,11 +178,41 @@ echo "kubectl -n ${NAMESPACE} delete -f ${ID}/yaml"
 echo "----------"
 
 
-# Prepare port forwarding from cluster to localhost
+# Prepare port forwarding from localhost to cluster
 echo "---------- Port forwarding from localhost to JupyterHub devel Container ----------" 
-echo "kubectl -n ${NAMESPACE} port-forward svc/jupyterhub-${ID} 2222:2222"
+mkdir -p ${DIR}/${ID}/pids
+kubectl -n ${NAMESPACE} port-forward svc/jupyterhub-${ID} 2222:2222 1>/dev/null &
+PID=$!
+echo -n "${PID}" > ${DIR}/${ID}/pids/port-forward.pid
+echo "Port forwarding established. localhost:2222 -> svc/jupyterhub-${ID}:2222 . PID: ${PID}"
+
+
+
+# Start rsync
+mkdir -p ${DIR}/${ID}/rsync/jupyterhub-patched
+mkdir -p ${DIR}/${ID}/rsync/jupyterhub-custom
+RSYNC=$(which rsync)
+cp -p ${DIR}/templates/rsync.sh ${DIR}/${ID}/rsync/. &
+/bin/bash ${DIR}/${ID}/rsync/rsync.sh
+PID=$!
+echo -n "${PID}" > ${DIR}/${ID}/pids/rsync.pid
+echo "${ID}/rsync/rsync.sh started. PID: ${PID}"
+
+
 echo "---------- Run remote JupyterHub in VSCode (Remote-SSH plugin required) ----------" 
 echo "1. Open empty VSCode"
 echo "2. ctrl+shift+p -> Remote-SSH: Open SSH Configuration File"
 echo "  - Add this: ${DIR}/${ID}/files/jupyterhub/ssh_config"
-echo "3. ..."
+echo "3. ctrl+shift+p -> Remote-SSH: Connect to Host"
+echo "  - jupyterhub-${ID}" 
+echo "4. Install 'Python' extension via VSCode on jupyterhub-${ID}"
+echo "5. Open folder /home/jupyterhub"
+echo "6. Run JupyterHub in debug mode via VSCode"
+echo "7. Open http://jupyterhub-${ID}.${NAMESPACE}.svc in your Browser."
+if [[ $RSYNC == "" ]]; then
+    echo "8. !!! Any changes to jupyterhub-patched or jupyterhub-custom are not stored automatically. If you install 'rsync' locally, you can start syncing the repositories !!!"
+    exit 0
+fi
+echo "8. /home/jupyterhub/jupyterhub-[custom|patched] will be synched every 60 seconds to ${ID}/rsync on your machine. So no need to panik if a pod crashes. Your changes are save"
+
+
