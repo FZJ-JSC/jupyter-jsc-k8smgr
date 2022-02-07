@@ -1,0 +1,605 @@
+{%- extends hostname + "/page.html" -%}
+
+{%- block stylesheet -%}
+  {# Vertical Tabs #}
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-5-vertical-tabs@1.0.1/dist/b5vtabs.min.css"
+    integrity="sha256-2yiJIxF53wjxXJpWRIHMVx2h6gbxPA9qR4PZ77fmA2k="
+    crossorigin="anonymous"
+  />
+{%- endblock -%}
+
+{%- macro vertical_tab(title, key, active=false) -%}
+<li class="nav-item" role="presentation">
+  <a id="{{key}}-tab" class="nav-link {%- if active %} active{%- endif -%}" 
+    data-bs-toggle="tab" data-bs-target="#{{key}}" role="tab" aria-controls="{{key}}" aria-selected="true">
+    <span class="align-middle pb-1">{{ title }}</span>
+    <span id="{{key}}-tab-warning" class="badge rounded-pill bg-warning p-1 align-middle" style="display: none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation" viewBox="0 0 16 16">
+        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0L7.1 4.995z"/>
+      </svg>
+      <span class="visually-hidden">settings changed</span>
+    </span>
+  </a>
+</li>
+{%- endmacro -%}
+
+{%- macro tab_content(key, active=false, form=true) -%}
+<div class="tab-pane fade {%- if active %}show active{%- endif -%}" role="tabpanel"
+  aria-labelledby="{{key}}-tab" id="{{key}}">
+  {%- if form %}
+  <form id="{{key}}-form">
+    {{ caller() }}
+  </form>
+  {%- else -%}
+  {{ caller() }}
+  {%- endif %}
+</div>
+{%- endmacro -%}
+
+{%- macro form_div(label, key, sm=2) -%}
+{%- set key = key + "-" + label.lower() -%}
+<div id="{{key}}-select-div" class="row mb-3">
+  <label for="{{key}}-select" class="col-sm-{{sm}} col-form-label">
+    <span class="align-middle">{{ label }}</span>
+    <span id="{{key}}-warning" class="badge rounded-pill bg-warning p-1 align-middle" style="display: none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation" viewBox="0 0 16 16">
+        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0L7.1 4.995z"/>
+      </svg>
+      <span class="visually-hidden">settings changed</span>
+    </span>
+  </label>
+  <div class="col-sm-{{12-sm}}">
+    <select id="{{key}}-select" class="form-select" required></select>
+    <div class="invalid-feedback">
+      Please choose a {{ label.lower() }}.
+    </div>
+  </div>
+</div>
+{%- endmacro -%}
+
+{%- macro form_number_div(label, key) -%}
+{%- set key = key + "-" + label.lower() -%}
+<div id="{{key}}-input-div" class="row mb-3">
+  <label for="{{key}}-input" class="col-sm-5 col-form-label">    
+    <span id="{{key}}-text" class="align-middle">{{ label }}</span>
+    <span id="{{key}}-warning" class="badge rounded-pill bg-warning p-1 align-middle" style="display: none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation" viewBox="0 0 16 16">
+        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.553.553 0 0 1-1.1 0L7.1 4.995z"/>
+      </svg>
+      <span class="visually-hidden">settings changed</span>
+    </span>
+  </label>
+  <div class="col-sm-7">
+    <input type="number" id="{{key}}-input" class="form-control" value="-1">
+    <div class="invalid-feedback"></div>
+  </div>
+</div>
+{%- endmacro -%}
+
+{%- set name = "new_jupyterlab"%}
+{%- block main -%}
+<div class="p-4">
+  <div class="d-flex align-items-center fs-1 mb-3">
+    JupyterLab Options
+  </div>
+  <p>Configure your JupyterLab.</p>
+
+  <div class="card rounded-0">
+    <div class="card-body">
+      <div class="row mt-2">
+        {# Vertical tabs #}
+        <div class="col-md-3 col-xl-2">
+          <ul class="nav nav-tabs left-tabs" role="tablist">
+            {{ vertical_tab("Service", name + "-service", active=true) }}
+            {{ vertical_tab("Options", name + "-options") }}
+            {{ vertical_tab("Resources", name + "-resources") }}
+            {{ vertical_tab("Reservation", name + "-reservation") }}
+            {# {{ vertical_tab("Modules", name + "-modules") }} #}
+            {# {{ vertical_tab("Kernel", name + "-kernel") }} #}
+            </li>
+          </ul>
+        </div>
+
+        {# Vertical tab content #}
+        <div class="col-md-9 col-xl-10">
+          <div id="{{name}}-configuration" class="tab-content text-black">
+            {%- call tab_content(name + "-service", active=true) -%}
+            <div class="row mb-3">
+              <label for="{{name}}-name-input" class="col-sm-2 col-form-label">Name</label>
+              <div class="col-sm-10">
+                <input type="name" class="form-control" id="{{name}}-name-input" value="{{name}}" disabled>
+              </div>
+            </div>
+            {{ form_div("Type", name) }}
+            {%- endcall -%}
+            {%- call tab_content(name + "-options") -%}
+            {{ form_div("System", name) }}
+            {{ form_div("Account", name) }}
+            {{ form_div("Project", name) }}
+            {{ form_div("Partition", name) }}
+            {%- endcall -%}
+            {%- call tab_content(name + "-resources") -%}
+            <form id="{{name}}-resources-form">
+              {{ form_number_div("Nodes", name) }}
+              {{ form_number_div("GPUs", name) }}
+              {{ form_number_div("Runtime", name) }}
+            </form>
+            {%- endcall -%}
+            {%- call tab_content(name + "-reservation") -%}
+            {{ form_div("Reservation", name) }}
+            {%- endcall -%}
+            {%- call tab_content(name + "-modules") -%}
+            {%- endcall -%}
+            {%- call tab_content(name + "-kernel") -%}
+            {%- endcall -%}
+          </div>
+        </div>
+        {# End of vertical tab content #}
+
+        <div class="modal-footer mt-3"> {# Use modal footer for css purposes #}
+          <a role="button" class="btn btn-secondary" href="/hub/home">Cancel</a>
+          <button type="button" id="{{name}}-start-btn" class="btn btn-primary">Start</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{%- endblock -%} 
+
+
+
+{%- block script -%}
+<script>
+$(document).ready(function () {
+  updateOption1("{{name}}");
+})
+
+$("select[id*=type]").change(function() {
+  var id = $(this).attr("id").split('-')[0];
+  var option1 = $(this).val();
+  updateSystems(id, option1);
+});
+
+$("select[id*=system]").change(function() {
+  var id = $(this).attr("id").split('-')[0];
+  var option1 = $("select#" + id + "-type-select").val();
+  var system = $(this).val();
+  updateAccounts(id, option1, system);
+});
+
+$("select[id*=account]").change(function() {
+  var id = $(this).attr("id").split('-')[0];
+  var option1 = $("select#" + id + "-type-select").val();
+  var system = $("select#" + id + "-system-select").val();
+  var account = $(this).val();
+  updateProjects(id, option1, system, account);
+});
+
+$("select[id*=project]").change(function() {
+  var id = $(this).attr("id").split('-')[0];
+  var option1 = $("select#" + id + "-type-select").val();
+  var system = $("select#" + id + "-system-select").val();
+  var account = $("select#" + id + "-account-select").val();
+  var project = $(this).val();
+  updatePartitions(id, option1, system, account, project);
+});
+
+$("select[id*=partition]").change(function() {
+  var id = $(this).attr("id").split('-')[0];
+  var option1 = $("select#" + id + "-type-select").val();
+  var system = $("select#" + id + "-system-select").val();
+  var account = $("select#" + id + "-account-select").val();
+  var project = $("select#" + id + "-project-select").val();
+  var partition = $(this).val();
+  updateResources(id, option1, system, account, project, partition);
+});
+
+function updateSelect(select, id, value, old_value, values, tab_id="options") {
+  // For some systems (e.g. cloud), some options are not available
+  var na = false;
+  if ( select.html() == "" ) {
+    select.append("<option disabled>Not available</option>");
+    select.addClass("text-muted");
+    select.removeAttr("required");
+    na = true;
+  }
+
+  // Disable select when there is only one option
+  // Instead make div clickable to remove warning on select
+  if ( values.length == 1 || na ) {
+    select.addClass("disabled");
+    select.parent().click(function() {
+      var warning_id = select.attr("id").replace("-select", "-warning");
+      var warning = $("#" + warning_id);
+      var tab_warning = $("#" + id + "-" + tab_id + "-tab-warning");
+
+      select.removeClass("border-warning");
+      warning.hide();
+      tab_warning[0].dispatchEvent(new Event("change"));
+    })
+  } else {
+    select.removeClass("disabled");
+    select.parent().off("click");
+  }
+
+  // Value is only supplied when setting values from saved values when first loading or resetting
+  if ( !value ) {
+    updateSelectValue(id, old_value, values, select, tab_id);
+  } else {
+    if (value == "None") select.prop("selectedIndex", 0);
+    else select.val(value);
+  }
+}
+
+function updateSelectValue(id, old_value, values, select, tab_id="options") {
+  var warning_id = select.attr("id").replace("-select", "-warning");
+  var warning = $("#" + warning_id);
+  var tab_warning = $("#" + id + "-" + tab_id + "-tab-warning");
+
+  // No changes if option is not available (value.lenth == 0)
+  if (old_value == null && values.length == 0) {
+    select.prop("selectedIndex", 0);
+    return;
+  }
+
+  if ( values.includes(old_value) ) {
+    select.val(old_value);
+  } else {
+    {# select.val(values[0]); #}
+    select.prop("selectedIndex", 0);
+    select.addClass("border-warning");
+    warning.show();
+  }
+  select[0].dispatchEvent(new Event("change"));
+  tab_warning[0].dispatchEvent(new Event("change"));
+}
+
+function updateInput(id, old_value, value, min, max, input, tab_id="resources") {
+  var warning_id = input.attr("id").replace("-input", "-warning");
+  var warning = $("#" + warning_id);
+  var tab_warning = $("#" + id + "-" + tab_id + "-tab-warning");
+  var tab_link = tab_warning.parent();
+
+  if ( old_value != "" ) {
+    if ( old_value >= min && old_value <= max) {
+      input.val(old_value);
+    } else {
+      input.val(value);
+      input.addClass("border-warning");
+      warning.show();
+    }
+    // Moved change event to end of updateResources function
+    // so that the warning symbol will disappear if the tab gets disabled
+    // tab_warning[0].dispatchEvent(new Event("change"));
+  }
+  else if ( old_value == "" && tab_link.hasClass("disabled") ) {
+    input.val(value);
+    input.addClass("border-warning");
+    warning.show();
+    // tab_warning[0].dispatchEvent(new Event("change"));
+  }
+}
+
+function updateOption1(id, value=null) {
+  var select = $("select#" + id + "-type-select");
+  var values = []
+  var old_value = select.val();
+
+  select.html("");
+
+  {%- for option1 in spawner_options_form.get('dropdown_lists', {}).get('options', {}).keys() | unique %}
+  /* if ( user_options[id]["options_input"] == "{{option1}}" ) { // Maybe some custom styling for current selection
+    select.append('<option value="{{option1}}">{{ option1 }}</option>'); // class="fst-italic" #*/
+  // } else {
+    select.append('<option value="{{option1}}">{{ services_config.get("JupyterLab").get("options").get(option1).get("name") }}</option>');
+    values.push("{{option}}");
+  // }
+  {%- endfor %}
+  
+  updateSelect(select, id, value, old_value, values, tab_id="service")
+}
+
+function updateSystems(id, option1, value=null) {
+  var select = $("select#" + id + "-system-select");
+  var values = []
+  var old_value = select.val();
+
+  select.html("");
+  {%- for option1, systems_allowed in spawner_options_form.get("dropdown_lists", {}).get("options", {}).items() %}
+  if (option1 == {{ option1 | tojson }}) {
+    {%- for system in spawner_options_form.get("dropdown_lists", {}).get("systems", []) %}
+      {%- if system in systems_allowed.keys() %}
+      select.append('<option value="{{system}}">{{ system }}</option>');
+      values.push("{{system}}");
+      {%- endif %}
+    {%- endfor %}
+  }
+  {%- endfor %}
+
+  updateSelect(select, id, value, old_value, values);
+}
+
+function updateAccounts(id, option1, system, value=null) {
+  var select = $("select#" + id + "-account-select");
+  var values = []
+  var old_value = select.val();
+
+  select.html("");
+  select.removeClass("text-muted");
+  select.attr("required", true);
+  {%- for option1, systems_allowed in spawner_options_form.get("dropdown_lists", {}).get("options", {}).items() %}
+    {%- for system, accounts_allowed in systems_allowed.items() %}
+      {%- if spawner_options_form.get('dropdown_lists').get('accounts', {}).get(system, []) | length > 0 %} 
+
+      if (option1 == {{ option1 | tojson }} && system == {{ system | tojson }}) {
+        {%- for account in spawner_options_form.get('dropdown_lists', {}).get('accounts', {}).get(system, []) | unique | sort %}
+          {%- if account in accounts_allowed.keys() %}
+          select.append('<option value="{{account}}">{{ account }}</option>');
+          values.push("{{account}}");
+          {%- endif %}
+        {%- endfor %}
+      }
+
+      {%- endif %}
+    {%- endfor %}  
+  {%- endfor %}
+
+  updateSelect(select, id, value, old_value, values);
+}
+
+function updateProjects(id, option1, system, account, value=null) {
+  var select = $("select#" + id + "-project-select");
+  var values = []
+  var old_value = select.val();
+  
+  select.html("");
+  select.removeClass("text-muted");
+  select.attr("required", true);
+  {%- for option1, systems_allowed in spawner_options_form.get('dropdown_lists', {}).get('options', {}).items() %}
+    {%- for system, accounts_allowed in systems_allowed.items() %}
+      {%- for account, projects_allowed in accounts_allowed.items() %}
+        {%- if spawner_options_form.get('dropdown_lists').get('projects', {}).get(system, {}).get(account, []) | length > 0 %} 
+
+        if (option1 == {{ option1 | tojson }} && system == {{ system | tojson }} && account == {{ account | tojson }}) {
+          {%- for project in spawner_options_form.get('dropdown_lists', {}).get('projects', {}).get(system, {}).get(account, []) | unique | sort %}
+            {%- if project in projects_allowed.keys() %}
+            select.append('<option value="{{project}}">{{ project }}</option>');
+            values.push("{{project}}");
+            {%- endif %}
+          {%- endfor %}
+        }
+          
+        {%- endif %}
+      {%- endfor %} {# account #}
+    {%- endfor %} {# system #}
+  {%- endfor %} {# option1 #}
+
+  updateSelect(select, id, value, old_value, values);
+}
+
+function updatePartitions(id, option1, system, account, project, value=null) {
+  var select = $("select#" + id + "-partition-select");
+  var warning = $("#" + id + "-partition-warning");
+  var values = []
+  var old_value = select.val();
+
+  select.html("");
+  select.removeClass("text-muted");
+  select.attr("required", true);
+
+  // Distinguish between login and compute nodes
+  var login_nodes = []
+  var compute_nodes = []
+  {%- for option1, systems_allowed in spawner_options_form.get('dropdown_lists', {}).get('options', {}).items() %}
+    {%- for system, accounts_allowed in systems_allowed.items() %}
+      {%- for account, projects_allowed in accounts_allowed.items() %}
+        {%- for project, partitions_allowed in projects_allowed.items() %}
+          {%- if spawner_options_form.get('dropdown_lists').get('partitions', {}).get(system, {}).get(account, {}).get(project, []) | length > 0 %}
+          if (option1 == {{ option1 | tojson }} && system == {{ system | tojson }} && account == {{ account | tojson }} && project == {{ project | tojson }}) {
+            {%- for partition in spawner_options_form.get('dropdown_lists', {}).get('partitions', {}).get(system, {}).get(account, {}).get(project, []) | unique %}
+              {%- if partition in partitions_allowed.keys() %}
+              // select.append('<option value="{{partition}}">{{ partition }}</option>');
+              values.push("{{partition}}");
+
+              {%- if system in systems.get("UNICORE").keys() %}
+              var interactive_partitions = {{ systems.get("UNICORE").get(system).get("interactive_partitions", []) | tojson }}
+              {%- elif system in systems.get("K8s").keys() %}
+              var interactive_partitions = {{ systems.get("K8s").get(system).get("interactive_partitions", []) | tojson }}
+              {%- endif %}
+              if ( interactive_partitions.includes("{{partition}}") ) {
+                login_nodes.push("{{partition}}");
+              } else compute_nodes.push("{{partition}}");
+
+              {%- endif %}
+            {%- endfor %}
+          }
+          {%- endif %}
+        {%- endfor %} {# project #}
+      {%- endfor %} {# account #}
+    {%- endfor %} {# system #}
+  {%- endfor %} {# option1 #}
+
+  if (login_nodes.length > 0) {
+    select.append('<optgroup label="Login Nodes">');
+    login_nodes.forEach((x) => select.append(`<option value="${x}">${x}</option>`))
+    select.append('</optgroup>');
+  }
+  if (compute_nodes.length > 0) {
+    select.append('<optgroup label="Compute Nodes">');
+    compute_nodes.forEach((x) => select.append(`<option value="${x}">${x}</option>`))
+    select.append('</optgroup>');
+  }
+
+  updateSelect(select, id, value, old_value, values);
+}
+
+function updateResources(id, option1, system, account, project, partition, reservation=null) {
+  var nodes_input = $("input#" + id + "-nodes-input");
+  var gpus_input = $("input#" + id + "-gpus-input");
+  var runtime_input = $("input#" + id + "-runtime-input");
+  var reservation_select = $("select#" + id + "-reservation-select");
+  // Save old values
+  var old_resource_values = {
+    "nodes": nodes_input.val(),
+    "gpus": gpus_input.val(),
+    "runtime": runtime_input.val(),
+  }
+  var old_reservation_value = reservation_select.val();
+  var reservation_values = [];
+  // Reset all values
+  var resources = [nodes_input, gpus_input, runtime_input, reservation_select];
+  resources.forEach(function(resource) {
+    resource.val(null);
+    resource.removeAttr("required");
+  });
+  reservation_select.html("");
+  // Disable tabs
+  var resource_tab = $("#" + id + "-resources-tab");
+  var reservation_tab = $("#" + id + "-reservation-tab");
+  var should_show = false;
+  resource_tab.addClass("disabled");
+  reservation_tab.addClass("disabled");
+
+  {%- for option1, systems_allowed in spawner_options_form.get('dropdown_lists', {}).get('options', {}).items() %}
+    {%- for system, accounts_allowed in systems_allowed.items() %}
+      {%- for account, projects_allowed in accounts_allowed.items() %}
+        {%- for project, partitions_allowed in projects_allowed.items() %}
+          {%- for partition, reservations_allowed in partitions_allowed.items() %}
+
+          if (option1 == {{ option1 | tojson }} && system == {{ system | tojson }} && account == {{ account | tojson }} && project == {{ project | tojson }} && partition == {{ partition | tojson }}) {
+            {%- if "Nodes" in spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}) %}
+            var min = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("Nodes", {}).get("MINMAX", [0, 1])[0] }};
+            var max = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("Nodes", {}).get("MINMAX", [0, 1])[1] }};
+            var value = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("Nodes", {}).get("DEFAULT", 0) }};
+
+            $("#" + id + "-nodes-text").text("Nodes [" + min + "," + max + "]");
+            nodes_input.attr({"min": min, "max": max, "value": value});
+            nodes_input.val(value);
+            nodes_input.attr("required", true);
+            // Set message for invalid feedback
+            nodes_input.siblings(".invalid-feedback").text(`Please choose a number between ${min} and ${max}.`);
+            updateInput(id, old_resource_values["nodes"], value, min, max, nodes_input);
+            $("#" + id + "-nodes-input-div").show();
+            var should_show = true;
+            {%- else %}
+            $("#" + id + "-nodes-input-div").hide();
+            // Show warning even if the div is hidden 
+            // if we changed from an existing value to not having a value
+            if ( old_resource_values["nodes"] != "" ) {
+              $("#" + id + "-nodes-warning").show();
+            }
+            {%- endif %}
+
+
+            {%- if "GPUS" in spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}) %}
+            var min = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("GPUS", {}).get("MINMAX", [0, 1])[0] }};
+            var max = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("GPUS", {}).get("MINMAX", [0, 1])[1] }};
+            var value = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("GPUS", {}).get("DEFAULT", 0) }};
+
+            $("#" + id + "-gpus-text").text("GPUs [" + min + "," + max + "]");
+            gpus_input.attr({"min": min, "max": max, "value": value});
+            gpus_input.val(value);
+            gpus_input.attr("required", true);
+            // Set message for invalid feedback
+            gpus_input.siblings(".invalid-feedback").text(`Please choose a number between ${min} and ${max}.`);
+            $("#" + id + "-gpus-input-div").show();
+            var should_show = true;
+            updateInput(id, old_resource_values["gpus"], value, min, max, gpus_input);
+            {%- else %}
+            $("#" + id + "-gpus-input-div").hide();
+            // Show warning even if the div is hidden 
+            // if we changed from an existing value to not having a value
+            if ( old_resource_values["gpus"] != "" ) {
+              $("#" + id + "-gpus-warning").show();
+            }
+            {%- endif %}
+            
+
+            {%- if "Runtime" in spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}) %}
+            var min = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("Runtime", {}).get("MINMAX", [0, 1])[0] }};
+            var max = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("Runtime", {}).get("MINMAX", [0, 1])[1] }};
+            var value = {{ spawner_options_form.get('resources', {}).get(option1, {}).get(system, {}).get(partition, {}).get("Runtime", {}).get("DEFAULT", 0) }};
+            $("#" + id + "-runtime-text").text("Runtime (min) [" + min + "," + max + "]");
+            runtime_input.attr({"min": min, "max": max, "value": value});
+            runtime_input.val(value);
+            runtime_input.attr("required", true);
+            // Set message for invalid feedback
+            runtime_input.siblings(".invalid-feedback").text(`Please choose a number between ${min} and ${max}.`);
+            updateInput(id, old_resource_values["runtime"], value, min, max, runtime_input)
+            $("#" + id + "-runtime-input-div").show();
+            var should_show = true;
+            {%- else %}
+            $("#" + id + "-runtime-input-div").hide();
+            // Show warning even if the div is hidden 
+            // if we changed from an existing value to not having a value
+            if ( old_resource_values["runtime"] != "" ) {
+              $("#" + id + "-runtime-warning").show();
+            }
+            {%- endif %}
+
+            {%- if reservations_allowed | length > 0 and reservations_allowed != ["None"] %}
+              {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) | unique %}
+                {%- if reservation in reservations_allowed %}
+
+                  {%- if reservation == "None" %}
+                  $("#" + id + "-reservation-select").append('<option>{{reservation}}</option>');
+                  reservation_values.push("{{reservation}}");
+                  {%- else %}
+                    {# Check Reservation Info Dict for more information #}
+                    {%- for reservation_line in spawner_options_form.get('reservations', {}).get(system, []) %}
+                      {%- if reservation == reservation_line[0] %}
+                        {%- if reservation_line[14] == "INACTIVE" %}
+                          $("#" + id + "-reservation-select").append('<option disabled style="color: #6c757d;">{{reservation}} [INACTIVE]</option>');
+                          reservation_values.push("{{reservation}}");
+                        {%- else %}
+                          $("#" + id + "-reservation-select").append('<option>{{reservation}}</option>');
+                          reservation_values.push("{{reservation}}");
+                        {%- endif %}
+                      {%- endif %}
+                    {%- endfor %}
+                  {%- endif %}
+
+                {%- endif %} {# reservation in reservations_allowed #}
+              {%- endfor %}    
+                    
+              reservation_select.attr("required", true);
+              $("#" + id + "-reservation-select-div").show();
+              reservation_tab.removeClass("disabled");
+
+              if ( reservation != "None" ) {
+                  updateSelectValue(id, old_reservation_value, reservation_values, reservation_select, tab_id="reservation");
+              } else {
+                reservation_select.val(reservation);
+              }
+
+            {%- else %}
+              $("#" + id + "-reservation-select-div").hide();
+            {%- endif %} {# reservations_allowed #}
+
+          } {# end of comparison of options (option == option) #}
+
+          {%- endfor %} {# partitions #}
+        {%- endfor %} {# project #}
+      {%- endfor %} {# account #}
+    {%- endfor %} {# system #}
+  {%- endfor %} {# option1 #}
+
+  // Only check at end if we should enable the tab so that the 
+  // updateInput function gets the correct value for disabled
+  if (should_show) {
+    resource_tab.removeClass("disabled");
+  }
+  // Dispatch update event at the very end so that the warning
+  // symbol disappears if the tab is disabled
+  var resources_tab_warning = $("#" + id + "-resources-tab-warning");
+  resources_tab_warning[0].dispatchEvent(new Event("change"));
+  var reservation_tab_warning = $("#" + id + "-reservation-tab-warning");
+  reservation_tab_warning[0].dispatchEvent(new Event("change"));
+}
+</script>
+
+<script src='{{static_url("js/spawn-depth-1.js", include_version=False) }}' type="text/javascript" charset="utf-8"></script>
+{%- endblock script -%}
