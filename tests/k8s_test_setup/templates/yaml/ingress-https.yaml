@@ -30,7 +30,7 @@ spec:
         pathType: Prefix
   tls:
   - hosts:
-    - unity-<ID>.<NAMESPACE>tlab.svc
+    - unity-<ID>.<NAMESPACE>.svc
     secretName: tls-unity-<ID>
   - hosts:
     - unicore-<ID>.<NAMESPACE>.svc
