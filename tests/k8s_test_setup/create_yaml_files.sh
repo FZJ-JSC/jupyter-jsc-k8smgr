@@ -103,7 +103,7 @@ BACKEND_JHUB_BASIC=$(get_basic_token "jupyterhub" ${BACKEND_JHUB_PASS})
 # Prepare yaml files
 cp -rp ${DIR}/templates/yaml ${DIR}/${ID}/.
 
-find ${DIR}/${ID}/yaml -type f -exec sed -i '' -e "s@<UNITY_VERSION>@${UNITY_VERSION}@g" -e "s@<UNICORE_VERSION>@${UNICORE_VERSION}@g" -e "s@<TUNNEL_VERSION>@${TUNNEL_VERSION}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<BACKEND_VERSION>@${BACKEND_VERSION}@g" -e "s@<_VERSION>@${_VERSION}@g" -e "s@<DIR>@${DIR}@g" -e "s@<BACKEND_JHUB_BASIC>@${BACKEND_JHUB_BASIC}@g" -e "s@<ID>@${ID}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" {} \; 2> /dev/null
+find ${DIR}/${ID}/yaml -type f -exec sed -i '' -e "s@<JUPYTERHUB_VERSION>@${JUPYTERHUB_VERSION}@g" -e "s@<UNITY_VERSION>@${UNITY_VERSION}@g" -e "s@<UNICORE_VERSION>@${UNICORE_VERSION}@g" -e "s@<TUNNEL_VERSION>@${TUNNEL_VERSION}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<BACKEND_VERSION>@${BACKEND_VERSION}@g" -e "s@<_VERSION>@${_VERSION}@g" -e "s@<DIR>@${DIR}@g" -e "s@<BACKEND_JHUB_BASIC>@${BACKEND_JHUB_BASIC}@g" -e "s@<ID>@${ID}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" {} \; 2> /dev/null
 kubectl -n ${NAMESPACE} create configmap --dry-run=client unicore-files-${ID} --from-file=${DIR}/${ID}/files/unicore --output yaml > ${DIR}/${ID}/yaml/cm-unicore-files.yaml
 kubectl -n ${NAMESPACE} create configmap --dry-run=client backend-files-${ID} --from-file=${DIR}/${ID}/files/backend --output yaml > ${DIR}/${ID}/yaml/cm-backend-files.yaml
 kubectl -n ${NAMESPACE} create configmap --dry-run=client tunnel-files-${ID} --from-file=${DIR}/${ID}/files/tunnel --output yaml > ${DIR}/${ID}/yaml/cm-tunnel-files.yaml
