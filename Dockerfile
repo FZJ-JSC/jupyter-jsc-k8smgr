@@ -11,6 +11,9 @@ RUN adduser --uid 1000 --ingroup users --gecos "" --disabled-password jupyterhub
 COPY --chown=jupyterhub:users ./custom/${JUPYTERHUB_VERSION} /src/jupyterhub-custom
 RUN pip3 install -r /src/jupyterhub-custom/requirements.txt
 
+# Add static files and templates
+COPY --chown=jupyterhub:users ./static/${JUPYTERHUB_VERSION} /src/jupyterhub-static
+
 # Install patches for specific JupyterHub Version
 RUN apt update && apt install -y git \
  && git clone -b ${JUPYTERHUB_VERSION} https://github.com/jupyterhub/jupyterhub.git /src/jupyterhub \

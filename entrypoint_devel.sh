@@ -24,6 +24,7 @@ pip install -e /src/jupyterhub-patched/
 
 ln -s /src/jupyterhub-patched /home/jupyterhub/jupyterhub-patched
 ln -s /src/jupyterhub-custom /home/jupyterhub/jupyterhub-custom
+ln -s /src/jupyterhub-static /home/jupyterhub/jupyterhub-static
 
 while true; do
     sleep 30
