@@ -9,7 +9,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 +        static_url = super().static_url(path, include_host, **kwargs)
 +        base_path, path = static_url.split('static')
 +        file_path = url_path_join(base_path, 'static', self.request.host, path)
-+        if not os.path.isfile(filepath):
++        if not os.path.isfile(file_path):
 +            file_path = url_path_join(base_path, 'static', 'default', path)
 +        return file_path
 +
