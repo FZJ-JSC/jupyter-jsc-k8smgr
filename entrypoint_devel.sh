@@ -22,6 +22,9 @@ chown -R jupyterhub:users /home/jupyterhub
 cp -rp /src/jupyterhub /src/jupyterhub-patched
 pip install -e /src/jupyterhub-patched/
 
+ln -s /src/jupyterhub-patched /home/jupyterhub/jupyterhub-patched
+ln -s /src/jupyterhub-custom /home/jupyterhub/jupyterhub-custom
+
 while true; do
     sleep 30
 done

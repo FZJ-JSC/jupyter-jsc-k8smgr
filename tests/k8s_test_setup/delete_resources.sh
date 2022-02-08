@@ -8,9 +8,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 ID=${1}
 
 kubectl delete -f ${DIR}/${ID}/yaml 2> /dev/null
-if [[ -f ${DIR}/${ID}/pids/port-forward.pid ]]; then
-    kill -9 $(cat ${DIR}/${ID}/pids/port-forward.pid)
-fi
+stop_port_forward_svc () {
+    if [[ -f ${DIR}/${ID}/pids/port-forward_${1}.pid ]]; then
+        kill -9 $(cat ${DIR}/${ID}/pids/port-forward_${1}.pid)
+    fi
+}
+stop_port_forward_svc "jupyterhub"
+stop_port_forward_svc "tunnel"
+stop_port_forward_svc "backend"
 if [[ -f ${DIR}/${ID}/pids/rsync.pid ]]; then
     kill -9 $(cat ${DIR}/${ID}/pids/rsync.pid)
 fi
