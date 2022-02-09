@@ -12,6 +12,7 @@ if [[ ${DEVEL,,} == "true" ]]; then
 
     apt update && apt install -y vim rsync openssh-server libc6 libstdc++6 ca-certificates tar bash curl wget
     sed -i -r -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g" -e "s/^AllowTcpForwarding no/AllowTcpForwarding yes/g" -e "s/^#Port 22/Port 2222/g" /etc/ssh/sshd_config
+    mkdir -p /run/sshd
     /usr/sbin/sshd -f /etc/ssh/sshd_config -E /home/jupyterhub/sshd.log
 
     if [[ -d /tmp/.vscode ]]; then
