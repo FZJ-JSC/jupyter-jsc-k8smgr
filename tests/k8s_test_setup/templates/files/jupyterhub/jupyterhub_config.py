@@ -51,13 +51,13 @@ c.CustomGenericOAuthenticator.tls_verify = False
 # http://localhost:8000/hub/oauth_login?extra_param_key1=value1
 
 
-c.JupyterHub.template_paths = ["data/templates"]
+c.JupyterHub.template_paths = ["/home/jupyterhub/jupyterhub-static/templates"]
 c.JupyterHub.template_vars = {
     "spawn_progress_update_url": "users/progress/update",
     "user_cancel_message": user_cancel_message,
     "hostname": "localhost:8000"
 }
-c.JupyterHub.data_files_path = 'data'
+c.JupyterHub.data_files_path = '/home/jupyterhub/jupyterhub-static/data'
 
 c.JupyterHub.extra_handlers = [
     ("/api/users/progress/update/([^/]+)", SpawnProgressUpdateAPIHandler),
