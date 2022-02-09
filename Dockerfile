@@ -6,7 +6,6 @@ ENV JUPYTERHUB_VERSION=$JUPYTERHUB_VERSION
 
 RUN adduser --uid 1000 --ingroup users --gecos "" --disabled-password jupyterhub
 
-
 # Add custom files
 COPY --chown=jupyterhub:users ./custom/${JUPYTERHUB_VERSION} /src/jupyterhub-custom
 RUN pip3 install -r /src/jupyterhub-custom/requirements.txt
@@ -26,6 +25,5 @@ RUN /src/patches/install_patches.sh
 
 # Add entrypoint
 COPY --chown=jupyterhub:users ./entrypoint.sh /src/.
-COPY --chown=jupyterhub:users ./entrypoint_devel.sh /src/.
 USER jupyterhub
 ENTRYPOINT ["/src/entrypoint.sh"]

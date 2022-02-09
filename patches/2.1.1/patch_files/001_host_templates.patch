@@ -1,6 +1,6 @@
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/handlers/base.py ../jupyterhub-patched/jupyterhub/handlers/base.py
---- ../jupyterhub/jupyterhub/handlers/base.py	2022-02-08 20:03:24.730996125 +0100
-+++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-02-08 20:06:50.933582733 +0100
+--- ../jupyterhub/jupyterhub/handlers/base.py	2022-02-07 11:16:10.000000000 +0100
++++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-02-07 12:03:49.000000000 +0100
 @@ -5,6 +5,7 @@
  import functools
  import json
@@ -9,14 +9,12 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
  import random
  import re
  import time
-@@ -1221,7 +1222,10 @@
+@@ -1221,7 +1222,8 @@
              key = 'jinja2_env_sync'
          else:
              key = 'jinja2_env'
 -        return self.settings[key].get_template(name)
 +        host_template = os.path.join(self.request.host, name)
-+        if not os.path.isfile(host_template):
-+            host_template = os.path.join("default", name)
 +        return self.settings[key].get_template(host_template)
  
      def render_template(self, name, sync=False, **ns):

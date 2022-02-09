@@ -39,8 +39,14 @@ spec:
       containers:
       - image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/jupyterhub-relaunch:<JUPYTERHUB_VERSION>
         imagePullPolicy: Always
-        command: ["/src/entrypoint_devel.sh"]
         name: jupyterhub-<ID>
+        env:
+        - name: DEVEL
+          value: "true"
+        - name: STATIC_FILES_SRC
+          value: "/home/jupyterhub/jupyterhub-static/static/default"
+        - name: STATIC_FILES_DEST
+          value: "/home/jupyterhub/jupyterhub-static/static/<JUPYTERHUB_ALT_NAME>"
         volumeMounts:
         - name: files
           mountPath: /tmp/ssh/authorized_keys

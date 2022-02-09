@@ -1,17 +1,14 @@
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/handlers/base.py ../jupyterhub-patched/jupyterhub/handlers/base.py
---- ../jupyterhub/jupyterhub/handlers/base.py	2022-02-08 20:07:00.309509406 +0100
-+++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-02-08 20:10:38.555676045 +0100
-@@ -1209,6 +1209,14 @@
+--- ../jupyterhub/jupyterhub/handlers/base.py	2022-02-07 12:10:50.000000000 +0100
++++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-02-07 13:31:20.000000000 +0100
+@@ -1209,6 +1209,11 @@
              "<a href='{home}'>home page</a>.".format(home=home)
          )
  
 +    def static_url(self, path, include_host=None, **kwargs) -> str:
 +        static_url = super().static_url(path, include_host, **kwargs)
 +        base_path, path = static_url.split('static')
-+        file_path = url_path_join(base_path, 'static', self.request.host, path)
-+        if not os.path.isfile(file_path):
-+            file_path = url_path_join(base_path, 'static', 'default', path)
-+        return file_path
++        return url_path_join(base_path, 'static', self.request.host, path)
 +
      def get_template(self, name, sync=False):
          """
