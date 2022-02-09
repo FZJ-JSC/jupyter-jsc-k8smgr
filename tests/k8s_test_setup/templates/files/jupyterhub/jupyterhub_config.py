@@ -57,7 +57,7 @@ c.JupyterHub.template_vars = {
     "user_cancel_message": user_cancel_message,
     "hostname": "<JUPYTERHUB_ALT_NAME>"
 }
-c.JupyterHub.data_files_path = '/home/jupyterhub/jupyterhub-static/data'
+c.JupyterHub.data_files_path = '/home/jupyterhub/jupyterhub-static'
 
 c.JupyterHub.extra_handlers = [
     ("/api/users/progress/update/([^/]+)", SpawnProgressUpdateAPIHandler),
