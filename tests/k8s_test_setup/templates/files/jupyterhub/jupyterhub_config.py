@@ -55,7 +55,7 @@ c.JupyterHub.template_paths = ["/home/jupyterhub/jupyterhub-static/templates"]
 c.JupyterHub.template_vars = {
     "spawn_progress_update_url": "users/progress/update",
     "user_cancel_message": user_cancel_message,
-    "hostname": "localhost:8000"
+    "hostname": "<JUPYTERHUB_ALT_NAME>"
 }
 c.JupyterHub.data_files_path = '/home/jupyterhub/jupyterhub-static/data'
 

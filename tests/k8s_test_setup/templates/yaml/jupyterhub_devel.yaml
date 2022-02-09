@@ -47,6 +47,10 @@ spec:
           value: "/home/jupyterhub/jupyterhub-static/static/default"
         - name: STATIC_FILES_DEST
           value: "/home/jupyterhub/jupyterhub-static/static/<JUPYTERHUB_ALT_NAME>"
+        - name: TEMPLATE_FILES_SRC
+          value: "/home/jupyterhub/jupyterhub-static/templates/default"
+        - name: TEMPLATE_FILES_DEST
+          value: "/home/jupyterhub/jupyterhub-static/templates/<JUPYTERHUB_ALT_NAME>"
         volumeMounts:
         - name: files
           mountPath: /tmp/ssh/authorized_keys

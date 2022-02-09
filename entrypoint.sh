@@ -29,8 +29,14 @@ if [[ ${DEVEL,,} == "true" ]]; then
     ln -s /src/jupyterhub-static /home/jupyterhub/jupyterhub-static
 
     if [[ -n ${STATIC_FILES_SRC} && -n ${STATIC_FILES_DEST} ]]; then
-        mkdir -p $(dirname ${STATIC_FILES_DEST})
+        STATIC_FILES_DEST_DIR=$(dirname ${STATIC_FILES_DEST})
+        mkdir -p ${STATIC_FILES_DEST_DIR}
         ln -s ${STATIC_FILES_SRC} ${STATIC_FILES_DEST}
+        cp -rp /src/jupyterhub-patched/share/jupyterhub/static/* ${STATIC_FILES_DEST_DIR}/.
+    fi
+    if [[ -n ${TEMPLATE_FILES_SRC} && -n ${TEMPLATE_FILES_DEST} ]]; then
+        mkdir -p $(dirname ${TEMPLATE_FILES_DEST})
+        ln -s ${TEMPLATE_FILES_SRC} ${TEMPLATE_FILES_DEST}
     fi
 
     chown -R jupyterhub:users /home/jupyterhub
