@@ -30,7 +30,7 @@ c.CustomGenericOAuthenticator.custom_config_file = '/home/jupyterhub/jupyterhub_
 c.CustomGenericOAuthenticator.enable_auth_state = True
 c.CustomGenericOAuthenticator.client_id = "oauth-client"
 c.CustomGenericOAuthenticator.client_secret = "oauth-pass1"
-c.CustomGenericOAuthenticator.oauth_callback_url = "http://localhost:8000/hub/oauth_callback"
+c.CustomGenericOAuthenticator.oauth_callback_url = "http://jupyterhub-<ID>.<NAMESPACE>.svc/hub/oauth_callback"
 c.CustomGenericOAuthenticator.authorize_url = (
     "https://unity-<ID>.<NAMESPACE>.svc/oauth2-as/oauth2-authz"
 )
