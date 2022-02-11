@@ -9,7 +9,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
  import random
  import re
  import time
-@@ -1221,7 +1222,8 @@
+@@ -1221,7 +1222,16 @@
              key = 'jinja2_env_sync'
          else:
              key = 'jinja2_env'
