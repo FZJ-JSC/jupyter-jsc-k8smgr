@@ -32,7 +32,6 @@ if [[ ${DEVEL,,} == "true" ]]; then
         STATIC_FILES_DEST_DIR=$(dirname ${STATIC_FILES_DEST})
         mkdir -p ${STATIC_FILES_DEST_DIR}
         ln -s ${STATIC_FILES_SRC} ${STATIC_FILES_DEST}
-        cp -rp /src/jupyterhub-patched/share/jupyterhub/static/* ${STATIC_FILES_DEST_DIR}/.
     fi
     if [[ -n ${TEMPLATE_FILES_SRC} && -n ${TEMPLATE_FILES_DEST} ]]; then
         mkdir -p $(dirname ${TEMPLATE_FILES_DEST})
