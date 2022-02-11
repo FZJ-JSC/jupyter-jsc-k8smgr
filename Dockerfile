@@ -11,7 +11,7 @@ COPY --chown=jupyterhub:users ./custom/${JUPYTERHUB_VERSION} /src/jupyterhub-cus
 RUN pip3 install -r /src/jupyterhub-custom/requirements.txt
 
 # Add static files and templates
-COPY --chown=jupyterhub:users ./static/${JUPYTERHUB_VERSION} /src/jupyterhub-static
+COPY --chown=jupyterhub:users ./share/${JUPYTERHUB_VERSION} /src/jupyterhub-static
 
 # Install patches for specific JupyterHub Version
 RUN apt update && apt install -y git \

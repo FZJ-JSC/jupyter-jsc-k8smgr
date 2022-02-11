@@ -112,10 +112,10 @@ BACKEND_JHUB_BASIC=$(get_basic_token "jupyterhub" ${BACKEND_JHUB_PASS})
 cp -rp ${DIR}/templates/yaml ${DIR}/${ID}/.
 
 select_yaml_file () {
-    if [[ ${1,,} == "true" ]]; then
-        mv ${DIR}/${ID}/yaml/${2,,}_devel.yaml ${DIR}/${ID}/yaml/${2,,}.yaml
+    if [[ ${1} == "true" ]]; then
+        mv ${DIR}/${ID}/yaml/${2}_devel.yaml ${DIR}/${ID}/yaml/${2}.yaml
     else
-        rm ${DIR}/${ID}/yaml/${2,,}_devel.yaml
+        rm ${DIR}/${ID}/yaml/${2}_devel.yaml
     fi
 }
 select_yaml_file ${DEVEL_JUPYTERHUB} "jupyterhub"
@@ -180,7 +180,7 @@ wait_for_service "https://${UNITY_ALT_NAME}/home/"
 wait_for_service "https://${UNICORE_ALT_NAME}/"
 
 wait_for_drf_service () {
-    if [[ ! ${3,,} == "true" ]]; then
+    if [[ ! ${3} == "true" ]]; then
         wait_for_service ${1}/api/health/
         STATUS_CODE=$(curl --write-out '%{http_code}' --silent --output /dev/null -X "POST" -H "Content-Type: application/json" -H "Authorization: ${2}" -d '{"handler": "stream", "configuration": {"formatter": "simple", "level": 5, "stream": "ext://sys.stdout"}}' ${1}/api/logs/handler/)
         if [[ ! $STATUS_CODE -eq 201 ]]; then
@@ -201,13 +201,13 @@ forward_port () {
     echo -n "${PID}" > ${DIR}/${ID}/pids/port-forward_${1}.pid
 }
 
-if [[ ${DEVEL_JUPYTERHUB,,} == "true" ]]; then
+if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
     forward_port "jupyterhub" "2222"
 fi
-if [[ ${DEVEL_TUNNEL,,} == "true" ]]; then
+if [[ ${DEVEL_TUNNEL} == "true" ]]; then
     forward_port "tunnel" "2223"
 fi
-if [[ ${DEVEL_BACKEND,,} == "true" ]]; then
+if [[ ${DEVEL_BACKEND} == "true" ]]; then
     forward_port "backend" "2224"
 fi
 
@@ -220,14 +220,14 @@ if [[ $RSYNC == "" ]]; then
     exit 0
 fi
 cp -p ${DIR}/templates/rsync.sh ${DIR}/${ID}/rsync/rsync.sh
-sed -i -e "s@<DIR>@${DIR}@g" -e "s@<ID>@${ID}@g" ${DIR}/${ID}/rsync/rsync.sh
+sed -i -e "s!<DIR>!${DIR}!g" -e "s!<ID>!${ID}!g" ${DIR}/${ID}/rsync/rsync.sh
 /bin/bash ${DIR}/${ID}/rsync/rsync.sh &
 PID=$!
 echo -n "${PID}" > ${DIR}/${ID}/pids/rsync.pid
 echo "${ID}/rsync/rsync.sh started. PID: ${PID}"
 
 
-if [[ ${DEVEL_JUPYTERHUB,,} == "true" ]]; then
+if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
     echo "---------- Run remote JupyterHub in VSCode (Remote-SSH plugin required) ----------" 
     echo "1. Open empty VSCode"
     echo "2. ctrl+shift+p -> Remote-SSH: Open SSH Configuration File"
