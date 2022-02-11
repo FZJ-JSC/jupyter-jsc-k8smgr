@@ -14,7 +14,15 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
          else:
              key = 'jinja2_env'
 -        return self.settings[key].get_template(name)
-+        host_template = os.path.join(self.request.host, name)
++        host = self.request.host
++        template_paths = self.settings['template_path']
++        exists = False
++        for path in template_paths:
++            if os.path.isfile(os.path.join(path, host, name)):
++                exists = True
++        if not exists:
++            host = 'default'    
++        host_template = os.path.join(host, name)
 +        return self.settings[key].get_template(host_template)
  
      def render_template(self, name, sync=False, **ns):
