@@ -4,6 +4,12 @@ FROM jupyterhub/jupyterhub:${JUPYTERHUB_VERSION}
 ARG JUPYTERHUB_VERSION=2.1.1
 ENV JUPYTERHUB_VERSION=$JUPYTERHUB_VERSION
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      python3-m2crypto \
+      && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN adduser --uid 1000 --ingroup users --gecos "" --disabled-password jupyterhub
 
 # Add custom files
