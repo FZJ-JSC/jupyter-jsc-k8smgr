@@ -87,7 +87,7 @@ class TwoFAAPIHandler(APIHandler):
         self.set_header("Content-Type", "text/plain")
         self.set_status(200)
 
-      @web.authenticated
+    @web.authenticated
     async def delete(self):
         user = self.current_user
         if user:
