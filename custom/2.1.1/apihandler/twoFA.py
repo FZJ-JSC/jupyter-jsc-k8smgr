@@ -6,11 +6,11 @@ from datetime import datetime
 from datetime import timedelta
 from tornado import web
 
-from utils.twoFA_mail import send_user_mail
-from utils.twoFA_mail import send_user_mail_delete
-from utils.twoFA_orm import TwoFAORM
-from utils.twoFA_unity import add_user_2fa
-from utils.twoFA_unity import delete_user_2fa
+from .utils.twoFA_mail import send_user_mail
+from .utils.twoFA_mail import send_user_mail_delete
+from .utils.twoFA_orm import TwoFAORM
+from .utils.twoFA_unity import add_user_2fa
+from .utils.twoFA_unity import delete_user_2fa
 from jupyterhub.apihandlers.base import APIHandler
 from jupyterhub.handlers.base import BaseHandler
 from jupyterhub.utils import url_path_join
