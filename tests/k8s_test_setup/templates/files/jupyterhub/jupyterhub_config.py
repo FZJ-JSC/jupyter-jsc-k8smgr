@@ -59,7 +59,17 @@ c.JupyterHub.template_vars = {
 }
 c.JupyterHub.data_files_path = '/home/jupyterhub/jupyterhub-static'
 
+
+from handler import page_handlers
+
 c.JupyterHub.extra_handlers = [
+    # PageHandlers
+    (r"/links", page_handlers.LinksHandler),
+    (r"/2FA", page_handlers.TwoFAHandler),
+    (r"/imprint", page_handlers.ImprintHandler),
+    (r"/privacy", page_handlers.DPSHandler),
+    (r"/terms", page_handlers.ToSHandler),
+    # APIHandlers
     ("/api/users/progress/update/([^/]+)", SpawnProgressUpdateAPIHandler),
     ("/api/users/progress/update/([^/]+)/([^/]+)", SpawnProgressUpdateAPIHandler),
 ]
