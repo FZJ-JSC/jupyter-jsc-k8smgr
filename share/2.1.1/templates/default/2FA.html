@@ -96,18 +96,7 @@
     {%- endif %}
   }
 
-  function setTextContainerHeight() {
-    let headerHeight = $("#header").outerHeight();
-    let footerHeight = $("#footer").outerHeight();
-    let h1Height = $("#twofa-page>div.row").outerHeight()
-    let h = headerHeight + footerHeight + h1Height;
-    $(".text-container").css({ height: 'calc(92vh - ' + h + 'px' });
-  }
-
-  $(window).resize(setTextContainerHeight);
-
   $(document).ready(function () {
-    setTextContainerHeight();
     var user = window.jhdata.user;
     var user_active = window.jhdata.user_active;
     var code = window.jhdata_code.code;
@@ -176,6 +165,6 @@
   });
 </script>
 
-<script src='{{static_url("jupyter-jsc-devel/js/pages/2FA.js", include_version=False) }}' type="text/javascript"
+<script src='{{static_url("js/2FA.js", include_version=False) }}' type="text/javascript"
   charset="utf-8"></script>
 {%- endblock -%}
