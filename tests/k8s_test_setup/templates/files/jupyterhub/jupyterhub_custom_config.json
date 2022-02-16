@@ -6,5 +6,37 @@
     "unity_revoke": {
       "url": "http://backend-<ID>.<NAMESPACE>.svc/api/unity/"
     }
+  },
+  "vos": {
+    "default": {
+      "authenticators": [],
+      "usernames": [],
+      "admin": false,
+      "weight": 1,
+      "Systems": {},
+      "Services": {
+        "JupyterLab": {
+          "JupyterLab": {
+            "max_per_user": 5
+          }
+        }
+      },
+      "description": "Default group"
+    },
+    "admin": {
+      "authenticators": [],
+      "usernames": ["jhub-admin@fz-juelich.de"],
+      "admin": true,
+      "weight": 2,
+      "Systems": {},
+      "Services": {
+        "JupyterLab": {
+          "JupyterLab": {
+            "max_per_user": 5
+          }
+        }
+      },
+      "description": "Admin group"
+    }
   }
 }
