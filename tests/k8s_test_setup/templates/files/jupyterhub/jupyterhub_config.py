@@ -61,7 +61,7 @@ c.JupyterHub.data_files_path = '/home/jupyterhub/jupyterhub-static'
 
 
 from handler import page_handlers
-from apihandler import twoFA
+from apihandler import twoFA, vo
 
 c.JupyterHub.extra_handlers = [
     # PageHandlers
@@ -70,13 +70,12 @@ c.JupyterHub.extra_handlers = [
     (r"/imprint", page_handlers.ImprintHandler),
     (r"/privacy", page_handlers.DPSHandler),
     (r"/terms", page_handlers.ToSHandler),
+    (r"/groups", page_handlers.VOHandler),
     # APIHandlers
     ("/api/users/progress/update/([^/]+)", SpawnProgressUpdateAPIHandler),
     ("/api/users/progress/update/([^/]+)/([^/]+)", SpawnProgressUpdateAPIHandler),
     (r"/api/2FA", twoFA.TwoFAAPIHandler),
     (r"/2FA/([^/]+)", twoFA.TwoFACodeHandler),
+    (r"/api/vo/([^/]+)", vo.VOAPIHandler),
+    (r"/api/votoken/([^/]+)", vo.VOTokenAPIHandler),
 ]
-
-
-
-

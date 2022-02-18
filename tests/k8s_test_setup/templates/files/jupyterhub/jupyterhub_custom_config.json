@@ -9,7 +9,7 @@
   },
   "vos": {
     "default": {
-      "authenticators": [],
+      "authenticators": ["ldap"],
       "usernames": [],
       "admin": false,
       "weight": 1,
