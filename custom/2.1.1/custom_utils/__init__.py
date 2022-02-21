@@ -1,1 +1,1 @@
-from .vo import get_vos
+from .config import *

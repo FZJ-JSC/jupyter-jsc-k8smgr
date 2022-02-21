@@ -13,6 +13,7 @@ from tornado.httpclient import HTTPRequest
 from tornado.httpclient import HTTPResponse
 from traitlets import Unicode
 from custom_utils.backend import backend_request_properties
+from custom_utils.options_form import get_options_form, get_options_from_form
 
 
 class BackendException(Exception):
@@ -118,10 +119,10 @@ class BackendSpawner(Spawner):
         self.port = random_port()
         # Test setup
         import random
-        self.port = random.randint(30000,30010)
-        
+        self.port = random.randint(30000, 30010)
+
         auth_state = await self.user.get_auth_state()
-        
+
         # Test setup
         user_options = {
             "service": "JupyterLab/JupyterLab-no-tunnel",
@@ -139,10 +140,10 @@ class BackendSpawner(Spawner):
             "env": env,
             "user_options": user_options
         }
-        
+
         custom_config = self.user.authenticator.custom_config
         req_prop = backend_request_properties(custom_config, self.log)
-        
+
         req = HTTPRequest(
             f"{self.backend_services_url}?uuidcode={uuidcode}",
             method="POST",
@@ -159,7 +160,8 @@ class BackendSpawner(Spawner):
         for i in range(0, max_start_attempts):
             try:
                 resp = await self.user.authenticator.fetch(req, parse_json=True)
-                self.log.info(f"Server started. -- 'uuidcode': {uuidcode}, 'response': {resp}")
+                self.log.info(
+                    f"Server started. -- 'uuidcode': {uuidcode}, 'response': {resp}")
                 break
             except Exception as e:
                 if i < max_start_attempts - 1:
@@ -170,9 +172,11 @@ class BackendSpawner(Spawner):
                     if len(e.args) > 2:
                         orig_response = e.args[2]
                         if isinstance(orig_response, HTTPResponse):
-                            error_json = json.loads(orig_response.body.decode("utf-8"))
+                            error_json = json.loads(
+                                orig_response.body.decode("utf-8"))
                             error = error_json.get("error", error)
-                            error_detail = error_json.get("detailed_error", error_detail)
+                            error_detail = error_json.get(
+                                "detailed_error", error_detail)
                 self.log.exception(
                     "Exception while starting service",
                     extra={
@@ -197,10 +201,10 @@ class BackendSpawner(Spawner):
         uuidcode = uuid.uuid4().hex
         custom_config = self.user.authenticator.custom_config
         req_prop = backend_request_properties(custom_config, self.log)
-        
+
         auth_state = await self.user.get_auth_state()
         access_token = auth_state["access_token"]
-        
+
         req = HTTPRequest(
             f"{self.backend_services_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
             method="GET",
@@ -224,9 +228,11 @@ class BackendSpawner(Spawner):
                     if len(e.args) > 2:
                         orig_response = e.args[2]
                         if isinstance(orig_response, HTTPResponse):
-                            error_json = json.loads(orig_response.body.decode("utf-8"))
+                            error_json = json.loads(
+                                orig_response.body.decode("utf-8"))
                             error = error_json.get("error", error)
-                            error_detail = error_json.get("detailed_error", error_detail)
+                            error_detail = error_json.get(
+                                "detailed_error", error_detail)
                 self.log.exception(
                     "Exception while starting service",
                     extra={
@@ -250,10 +256,10 @@ class BackendSpawner(Spawner):
         uuidcode = uuid.uuid4().hex
         custom_config = self.user.authenticator.custom_config
         req_prop = backend_request_properties(custom_config, self.log)
-        
+
         auth_state = await self.user.get_auth_state()
         access_token = auth_state["access_token"]
-        
+
         req = HTTPRequest(
             f"{self.backend_services_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
             method="DELETE",
@@ -271,9 +277,11 @@ class BackendSpawner(Spawner):
                 if len(e.args) > 2:
                     orig_response = e.args[2]
                     if isinstance(orig_response, HTTPResponse):
-                        error_json = json.loads(orig_response.body.decode("utf-8"))
+                        error_json = json.loads(
+                            orig_response.body.decode("utf-8"))
                         error = error_json.get("error", error)
-                        error_detail = error_json.get("detailed_error", error_detail)
+                        error_detail = error_json.get(
+                            "detailed_error", error_detail)
             self.log.exception(
                 "Exception while stopping service",
                 extra={
@@ -334,3 +342,23 @@ class BackendSpawner(Spawner):
         cancelled = await self.cancel_future(self._spawn_future)
         if not cancelled:
             await self.user.stop(self.name)
+
+    async def options_form(self, spawner):
+        query_options = {}
+        for key, byte_list in spawner.handler.request.query_arguments.items():
+            query_options[key] = [bs.decode('utf8') for bs in byte_list]
+        service = query_options.get("service", "JupyterLab")
+        if type(service) == list:
+            service = service[0]
+        services = self.user.authenticator.custom_config.get("services")
+        if service in services.keys():
+            return await get_options_form(spawner, service, services[service].get("options", {}))
+        raise NotImplementedError(f"{service} unknown")
+
+    async def options_from_form(self, formdata):
+        custom_config = self.user.authenticator.custom_config
+        service = formdata.get("service_input", [""])[0]
+        if service in custom_config.get("services").keys():
+            return await get_options_from_form(formdata, custom_config)
+        raise NotImplementedError(
+            "{} unknown".format(formdata.get("service_input")))
