@@ -6,9 +6,9 @@ custom_path = "/src/jupyterhub-custom"
 sys.path.insert(1, custom_path)
 
 from spawner import BackendSpawner
-from apihandler import SpawnProgressUpdateAPIHandler
+from apihandler import SpawnProgressUpdateAPIHandler, SpawnProgressStatusAPIHandler
 from apihandler import user_cancel_message
-from customauthenticator import CustomGenericOAuthenticator
+from customauthenticator import CustomGenericOAuthenticator, BackendLogoutHandler
 
 c.JupyterHub.log_level = 10
 c.JupyterHub.custom_config_file = '/home/jupyterhub/jupyterhub_custom_config.json'
@@ -19,6 +19,7 @@ c.ConfigurableHTTPProxy.pid_file = '/home/jupyterhub/jupyterhub-proxy.pid'
 
 c.JupyterHub.cleanup_proxy = True
 c.JupyterHub.default_url = "/hub/home"
+c.JupyterHub.allow_named_servers = True
 
 c.JupyterHub.spawner_class = BackendSpawner
 c.BackendSpawner.http_timeout = 900
@@ -62,7 +63,6 @@ c.JupyterHub.data_files_path = '/home/jupyterhub/jupyterhub-static'
 
 from handler import page_handlers
 from apihandler import twoFA, vo
-from customauthenticator import BackendLogoutHandler
 
 c.JupyterHub.extra_handlers = [
     # PageHandlers
@@ -74,8 +74,10 @@ c.JupyterHub.extra_handlers = [
     (r"/groups", page_handlers.VOHandler),
     (r"/signout", BackendLogoutHandler),
     # APIHandlers
-    ("/api/users/progress/update/([^/]+)", SpawnProgressUpdateAPIHandler),
-    ("/api/users/progress/update/([^/]+)/([^/]+)", SpawnProgressUpdateAPIHandler),
+    (r"/api/users/progress/update/([^/]+)", SpawnProgressUpdateAPIHandler),
+    (r"/api/users/progress/update/([^/]+)/([^/]+)", SpawnProgressUpdateAPIHandler),
+    (r"/api/users/progress/status/([^/]+)", SpawnProgressStatusAPIHandler),
+    (r"/api/users/progress/status/([^/]+)/([^/]+)", SpawnProgressStatusAPIHandler),
     (r"/api/2FA", twoFA.TwoFAAPIHandler),
     (r"/2FA/([^/]+)", twoFA.TwoFACodeHandler),
     (r"/api/vo/([^/]+)", vo.VOAPIHandler),

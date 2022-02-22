@@ -10,7 +10,7 @@ user_cancel_message = "Start cancelled by user."
 
 
 class SpawnProgressUpdateAPIHandler(APIHandler):
-    
+
     @needs_scope("access:servers")
     def post(self, user_name, server_name=""):
         self.set_header("Cache-Control", "no-cache")
@@ -78,3 +78,22 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
             self.write("Bad Request - No event in request body.")
             self.set_status(400)
             return
+
+
+class SpawnProgressStatusAPIHandler(APIHandler):
+    @needs_scope("access:servers")
+    async def get(self, username, server_name):
+        user = self.find_user(username)
+        if user is None:
+            # no such user
+            raise web.HTTPError(404)
+        if server_name not in user.spawners:
+            # user has no such server
+            raise web.HTTPError(404)
+        spawner = user.spawners[server_name]
+        data = {
+            "events": spawner.events,
+            "active": spawner.active,
+            "ready": spawner.ready
+        }
+        self.write(json.dumps(data))
