@@ -213,6 +213,10 @@ require(["jquery", "jhapi", "utils"], function (
 
   function startNewServer() {
     $(this).attr("disabled", true);
+    var button = $(this);
+    var spinner = $(this).children().first();
+    var alert = $(this).siblings(".alert");
+    spinner.removeClass("d-none");
 
     // askForNotificationPermission();
 
@@ -238,6 +242,8 @@ require(["jquery", "jhapi", "utils"], function (
     try {
       $("form[id*=new_jupyterlab]").submit();
       var newTab = window.open("about:blank");
+      alert.children("span").text(`Waiting for ${name} to start...`);
+      alert.removeClass("alert-danger").addClass("show alert-dark");
       api.start_named_server(user, name, {
         data: JSON.stringify(options),
         success: function () {
@@ -245,11 +251,16 @@ require(["jquery", "jhapi", "utils"], function (
           var myModal = $("#new_jupyterlab-dialog");
           var modal = bootstrap.Modal.getInstance(myModal);
           modal.hide();
-          $(this).removeAttr("disabled");
+          button.removeAttr("disabled");
+          spinner.addClass("d-none");
+          alert.removeClass("show");
           location.reload();
         },
         error: function (xhr, textStatus, errorThrown) {
-          // Handle error in modal
+          spinner.addClass("d-none");
+          button.removeAttr("disabled");
+          alert.removeClass("alert-dark").addClass("show alert-danger");
+          alert.children("span").text(`Could not start ${name}. Error: ${xhr.status} ${errorThrown}`);
         }
       });
     } catch (e) {
