@@ -1,3 +1,4 @@
+from audioop import adpcm2lin
 from oauthenticator.generic import GenericOAuthenticator
 from oauthenticator.oauth2 import OAuthLoginHandler
 from oauthenticator.traitlets import Callable
@@ -6,16 +7,20 @@ from traitlets import Union
 from traitlets import Unicode
 from jupyterhub.handlers.login import LogoutHandler
 
+import re
 import os
 import uuid
 import json
-from tornado.httpclient import HTTPRequest
+from tornado.httpclient import HTTPRequest, HTTPClientError
 from custom_utils.backend import backend_request_properties
+from custom_utils import get_vos
 from datetime import datetime
 from datetime import timedelta
 
+
 class TimedCacheProperty(object):
     '''decorator to create get only property; values are fetched once per `timeout`'''
+
     def __init__(self, timeout):
         self._timeout = timedelta(seconds=timeout)
         self._func = None
@@ -33,20 +38,24 @@ class TimedCacheProperty(object):
         self._func = func
         return self
 
+
 class BackendLogoutHandler(LogoutHandler):
     async def backend_call(self):
         user = self.current_user
         if not user:
-            self.log.debug("Could not receive current user in backend logout call.")
+            self.log.debug(
+                "Could not receive current user in backend logout call.")
             return
         custom_config = user.authenticator.custom_config
-        backend_revoke_url = custom_config.get("backend", {}).get("unity_revoke", {}).get("url", None)
+        backend_revoke_url = custom_config.get("backend", {}).get(
+            "unity_revoke", {}).get("url", None)
         if not backend_revoke_url:
-            self.log.critical("backend.unity_revoke.url in custom_config not defined. Cannot revoke Unity tokens.")
-            return        
+            self.log.critical(
+                "backend.unity_revoke.url in custom_config not defined. Cannot revoke Unity tokens.")
+            return
         req_prop = backend_request_properties(custom_config, self.log)
         if not req_prop:
-            return        
+            return
         jhub_user_id = user.orm_user.id
         auth_state = await user.get_auth_state()
         access_token = auth_state.get("access_token", None)
@@ -72,10 +81,11 @@ class BackendLogoutHandler(LogoutHandler):
             validate_cert=req_prop["validate_cert"],
             ca_certs=req_prop["ca_certs"]
         )
-        
+
         try:
             resp = await user.authenticator.fetch(req, parse_json=False)
-            self.log.debug(f"Token revokation. -- 'uuidcode': {uuidcode}, 'response': {resp}")
+            self.log.debug(
+                f"Token revokation. -- 'uuidcode': {uuidcode}, 'response': {resp}")
         except Exception:
             self.log.exception(
                 "Exception while revoking tokens",
@@ -85,12 +95,13 @@ class BackendLogoutHandler(LogoutHandler):
                     "action": "revoke_error",
                 },
             )
-        
+
         return await super().handle_logout()
-    
+
     async def get(self):
         await self.backend_call()
         return await super().get()
+
 
 class CustomGenericLoginHandler(OAuthLoginHandler):
     def authorize_redirect(self, *args, **kwargs):
@@ -102,11 +113,12 @@ class CustomGenericLoginHandler(OAuthLoginHandler):
                 extra_params_allowed = self.authenticator.extra_params_allowed_runtime
             extra_params.update(
                 {
-                    k[len("extra_param_") :]: "&".join([x.decode("utf-8") for x in v])
+                    k[len("extra_param_"):]: "&".join(
+                        [x.decode("utf-8") for x in v])
                     for k, v in self.request.arguments.items()
                     if k.startswith("extra_param_")
                     and set([x.decode("utf-8") for x in v]).issubset(
-                        extra_params_allowed.get(k[len("extra_param_") :], [])
+                        extra_params_allowed.get(k[len("extra_param_"):], [])
                     )
                 }
             )
@@ -115,15 +127,19 @@ class CustomGenericLoginHandler(OAuthLoginHandler):
 
 custom_config_timeout = os.environ.get("CUSTOM_CONFIG_CACHE_TIME", 60)
 
+
 class CustomGenericOAuthenticator(GenericOAuthenticator):
     login_handler = CustomGenericLoginHandler
     logout_handler = BackendLogoutHandler
-    
-    
+
     custom_config_file = Unicode('jupyterhub_custom_config.json', help="The custom config file to load").tag(
         config=True
     )
-        
+    tokeninfo_url = Unicode(
+        config=True,
+        help="""The url retrieving information about the access token""",
+    )
+
     @TimedCacheProperty(timeout=custom_config_timeout)
     def custom_config(self):
         self.log.debug("Load custom config file.")
@@ -131,7 +147,8 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
             with open(self.custom_config_file, "r") as f:
                 ret = json.load(f)
         except:
-            self.log.warning("Could not load custom config file.", exc_info=True)
+            self.log.warning(
+                "Could not load custom config file.", exc_info=True)
             ret = {}
         return ret
 
@@ -158,3 +175,70 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         if self.oauth_callback_url and handler and "_host_" in ret:
             ret = ret.replace("_host_", handler.request.host)
         return ret
+
+    async def post_auth_hook(self, authenticator, handler, authentication):
+        access_token = authentication["auth_state"]["access_token"]
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "JupyterHub",
+            "Authorization": f"Bearer {access_token}",
+        }
+        req = HTTPRequest(self.tokeninfo_url, method="GET", headers=headers)
+        try:
+            resp = await authenticator.fetch(req)
+        except HTTPClientError as e:
+            authenticator.log.warning(
+                "Could not request user information - {}".format(e))
+            raise Exception(e)
+        authentication["auth_state"]["exp"] = resp.get("exp")
+        authentication["auth_state"]["last_login"] = datetime.now().strftime(
+            "%H:%M:%S %Y-%m-%d")
+
+        used_authenticator = (
+            authentication["auth_state"]
+            .get("oauth_user", {})
+            .get("used_authenticator_attr", "unknown")
+        )
+        hpc_list = (
+            authentication.get("auth_state", {})
+            .get("oauth_user", {})
+            .get("hpc_infos_attribute", [])
+        )
+        hpc_infos_via_unity = str(len(hpc_list) > 0).lower()
+        handler.statsd.incr(f"login.authenticator.{used_authenticator}")
+        handler.statsd.incr(f"login.hpc_infos_via_unity.{hpc_infos_via_unity}")
+
+        username = authentication.get("name", "unknown")
+        admin = authentication.get("admin", False)
+
+        vo_active, vo_available = get_vos(
+            authentication["auth_state"], self.custom_config, username, admin=admin)
+        authentication["auth_state"]["vo_active"] = vo_active
+        authentication["auth_state"]["vo_available"] = vo_available
+
+        default_partitions = self.custom_config.get("default_partitions")
+        to_add = []
+        if type(hpc_list) == str:
+            hpc_list = [hpc_list]
+        elif type(hpc_list) == list and len(hpc_list) > 0 and len(hpc_list[0]) == 1:
+            hpc_list = ["".join(hpc_list)]
+        for entry in hpc_list:
+            try:
+                partition = re.search(
+                    "[^,]+,([^,]+),[^,]+,[^,]+", entry).groups()[0]
+            except:
+                authenticator.log.info(
+                    f"----- {username} - Failed to check for defaults partitions: {entry} ---- {hpc_list}"
+                )
+                continue
+            if partition in default_partitions.keys():
+                for value in default_partitions[partition]:
+                    to_add.append(
+                        entry.replace( f",{partition},", ",{},".format(value) )
+                    )
+        hpc_list.extend(to_add)
+        if hpc_list:
+            authentication["auth_state"]["oauth_user"]["hpc_infos_attribute"] = hpc_list
+
+        authenticator.log.info(authentication)
+        return authentication

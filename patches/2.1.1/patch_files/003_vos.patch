@@ -19,7 +19,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
  # pattern for the authentication token header
  auth_header_pat = re.compile(r'^(?:token|bearer)\s+([^\s]+)$', flags=re.IGNORECASE)
  
-@@ -1274,6 +1278,19 @@
+@@ -1274,6 +1278,20 @@
              parsed_scopes=self.parsed_scopes,
              expanded_scopes=self.expanded_scopes,
          )
@@ -27,7 +27,8 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 +            get_task = asyncio.get_event_loop().create_task(user.get_auth_state())
 +            asyncio.get_event_loop().run_until_complete(get_task)
 +            auth_state = get_task.result()
-+            vo_active, vo_available = get_vos(auth_state, user)
++            custom_config = user.authenticator.custom_config
++            vo_active, vo_available = get_vos(auth_state, custom_config, user.name, user.admin)
 +            auth_state["vo_active"] = vo_active
 +            auth_state["vo_available"] = vo_available
 +            save_task = asyncio.get_event_loop().create_task(
@@ -39,6 +40,20 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
          if self.settings['template_vars']:
              ns.update(self.settings['template_vars'])
          return ns
+@@ -1563,13 +1563,11 @@
+             424 if not self.app.use_legacy_stopped_server_status_code else 503
+         )
+ 
+-        auth_state = await user.get_auth_state()
+         html = await self.render_template(
+             "not_running.html",
+             user=user,
+             server_name=server_name,
+             spawn_url=spawn_url,
+-            auth_state=auth_state,
+             implicit_spawn_seconds=self.settings.get("implicit_spawn_seconds", 0),
+         )
+         self.finish(html)
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/handlers/pages.py ../jupyterhub-patched/jupyterhub/handlers/pages.py
 --- ../jupyterhub/jupyterhub/handlers/pages.py	2022-02-17 13:30:53.000000000 +0000
 +++ ../jupyterhub-patched/jupyterhub/handlers/pages.py	2022-02-18 10:20:27.751217598 +0000
@@ -122,4 +137,3 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 -            auth_state=auth_state,
          )
          self.finish(html)
- 

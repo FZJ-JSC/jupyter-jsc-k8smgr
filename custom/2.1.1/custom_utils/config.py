@@ -2,18 +2,18 @@ import json
 import os
 
 
-def get_vos(auth_state, user):
+def get_vos(auth_state, custom_config, username, admin):
     used_authenticator = auth_state.get("oauth_user", {}).get(
         "used_authenticator_attr", "unknown"
     )
-    vo_config = user.authenticator.custom_config.get("vos", {})
+    vo_config = custom_config.get("vos", {})
 
     vos_with_weight = []
     for vo_name, vo_infos in vo_config.items():
         if (
             used_authenticator in vo_infos.get("authenticators", [])
-            or user.name in vo_infos.get("usernames", [])
-            or (user.admin and vo_infos.get("admin", False))
+            or username in vo_infos.get("usernames", [])
+            or (admin and vo_infos.get("admin", False))
         ):
             vos_with_weight.append((vo_name, vo_infos.get("weight", 99)))
     vos_with_weight.sort(key=lambda x: x[1])

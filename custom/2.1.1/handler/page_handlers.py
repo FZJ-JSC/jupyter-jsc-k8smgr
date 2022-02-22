@@ -47,12 +47,13 @@ class VOHandler(BaseHandler):
     async def get(self):
         user = self.current_user
         auth_state = await user.get_auth_state()
-        vo_active, vo_available = get_vos(auth_state, user)
+        custom_config = user.authenticator.custom_config
+        vo_active, vo_available = get_vos(auth_state, custom_config, user.name, user.admin)
         auth_state["vo_active"] = vo_active
         auth_state["vo_available"] = vo_available
         await user.save_auth_state(auth_state)
 
-        vo_details_config = user.authenticator.custom_config.get("vos", {})
+        vo_details_config = custom_config.get("vos", {})
         vo_details = {}
         for vo_name in vo_available:
             vo_details[vo_name] = (
