@@ -296,6 +296,8 @@ async def get_options_form(spawner, service, service_info):
 
 
 async def get_options_from_form(formdata, custom_config):
+    check_formdata_keys(formdata, custom_config)
+    
     systems_config = custom_config.get("systems")
     resources = custom_config.get("resources")
 
@@ -329,3 +331,18 @@ async def get_options_from_form(formdata, custom_config):
         for key, value in formdata.items()
         if not skip_resources(key, value[0])
     }
+
+
+def check_formdata_keys(data, custom_config):
+    keys = data.keys()
+    unicore_systems = custom_config.get("systems").get("UNICORE")
+
+    required_keys = {"options_input", "system_input"}
+    if data.get("systems") in unicore_systems:
+        required_keys = required_keys | {"account_input", "project_input", "partition_input"}
+    allowed_keys = required_keys | {"resercation_input", "resource_nodes", "resource_gpus", "resource_runtime"}
+
+    if not required_keys <= keys:
+        raise KeyError(f"Keys must include {required_keys}, but got {keys}.")
+    if not keys <= allowed_keys:
+        raise KeyError(f"Got keys {keys}, but only {allowed_keys} are allowed.")
