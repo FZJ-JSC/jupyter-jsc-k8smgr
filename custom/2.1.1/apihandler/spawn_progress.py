@@ -3,7 +3,6 @@ import json
 
 from jupyterhub.apihandlers.base import APIHandler
 from jupyterhub.scopes import needs_scope
-from jupyterhub.utils import maybe_future
 from tornado import web
 
 user_cancel_message = "Start cancelled by user."
@@ -81,8 +80,8 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
 
 
 class SpawnProgressStatusAPIHandler(APIHandler):
-    @needs_scope("access:servers")
-    async def get(self, username, server_name):
+    @needs_scope("read:servers")
+    async def get(self, username, server_name=""):
         user = self.find_user(username)
         if user is None:
             # no such user
