@@ -9,8 +9,6 @@
     integrity="sha256-2yiJIxF53wjxXJpWRIHMVx2h6gbxPA9qR4PZ77fmA2k="
     crossorigin="anonymous"
   />
-  {# <link rel="stylesheet" href='{{ static_url("css/spawn.css", include_version=False) }}' type="text/css"/> #}
-  {# <link rel="stylesheet" href='{{ static_url("css/progress.css", include_version=False) }}' type="text/css"/> #}
 {%- endblock -%}
 
 {%- macro vertical_tab(title, key, active=false, disabled=false) -%}
@@ -249,21 +247,9 @@ require(["jquery", "jhapi", "utils"], function (
     updateStatus();
   });
 
-  // Expand/collapse table rows
-  $('tr[data-server-name]').not('.progress-tr').not('.collapse-tr').on('click', function () {
-    var collapse = $(this).next().find('.collapse');
-    var first_td = $(this).children().first();
-    var icon = first_td.children().first();
-    var hidden = collapse.css('display') == 'none' ? true : false;
-
-    if (hidden) {
-      icon.removeClass('collapsed');
-      new bootstrap.Collapse(collapse);
-    } else {
-      icon.addClass('collapsed');
-      new bootstrap.Collapse(collapse);
-    }
-  });
+  {#- Manually set until added to template -#}
+  {%- set cancel_progress_refresh_rate = 1000 -%}
+  {%- set cancel_progress_activation = 30 -%}
 
   // Cancel server spawn on click
   $('#cancel').click(function (event) {
@@ -272,7 +258,6 @@ require(["jquery", "jhapi", "utils"], function (
 
     if (!$('#cancel').is('[disabled=disabled]')) {
       $('#cancel').attr('disabled', true);
-      // api.cancel_server('{{cancel_url}}');
       api.cancel_named_server(user, "{{spawner.name}}");
     }
   });
