@@ -9,7 +9,6 @@ user_cancel_message = "Start cancelled by user."
 
 
 class SpawnProgressUpdateAPIHandler(APIHandler):
-
     @needs_scope("access:servers")
     def post(self, user_name, server_name=""):
         self.set_header("Cache-Control", "no-cache")

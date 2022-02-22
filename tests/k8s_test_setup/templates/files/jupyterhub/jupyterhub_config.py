@@ -6,6 +6,7 @@ custom_path = "/src/jupyterhub-custom"
 sys.path.insert(1, custom_path)
 
 from spawner import BackendSpawner
+from apihandler import SpawnCancelAPIHandler
 from apihandler import SpawnUpdateOptionsAPIHandler
 from apihandler import SpawnProgressUpdateAPIHandler, SpawnProgressStatusAPIHandler
 from apihandler import user_cancel_message
@@ -75,6 +76,8 @@ c.JupyterHub.extra_handlers = [
     (r"/groups", page_handlers.VOHandler),
     (r"/signout", BackendLogoutHandler),
     # APIHandlers
+    (r"/api/users/([^/]+)/servers/([^/]*)/cancel", SpawnCancelAPIHandler),
+    (r"/api/users/([^/]+)/server/cancel", SpawnCancelAPIHandler),
     (r"/api/users/([^/]+)/server/update", SpawnUpdateOptionsAPIHandler),
     (r"/api/users/([^/]+)/servers/([^/]*)/update", SpawnUpdateOptionsAPIHandler),
     (r"/api/users/progress/update/([^/]+)", SpawnProgressUpdateAPIHandler),
