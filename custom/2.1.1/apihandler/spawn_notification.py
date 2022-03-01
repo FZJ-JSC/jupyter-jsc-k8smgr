@@ -1,8 +1,8 @@
 import asyncio
-from tornado import web
 
 from jupyterhub.apihandlers.users import SpawnProgressAPIHandler
 from jupyterhub.scopes import needs_scope
+from tornado import web
 
 
 class SpawnNotificationAPIHandler(SpawnProgressAPIHandler):

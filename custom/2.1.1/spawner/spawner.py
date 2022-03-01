@@ -1,18 +1,20 @@
 import asyncio
 import html
 import json
-import uuid
 import os
+import uuid
 
+from custom_utils.backend_services import BackendException
+from custom_utils.backend_services import drf_request
+from custom_utils.backend_services import drf_request_properties
+from custom_utils.options_form import get_options_form
+from custom_utils.options_form import get_options_from_form
 from jupyterhub.spawner import Spawner
-from jupyterhub.utils import maybe_future, random_port
+from jupyterhub.utils import maybe_future
+from jupyterhub.utils import random_port
 from jupyterhub.utils import url_path_join
 from tornado.httpclient import HTTPRequest
 from traitlets import Unicode
-from custom_utils.backend_services import drf_request_properties, drf_request, BackendException
-from custom_utils.options_form import get_options_form, get_options_from_form
-
-
 
 
 class BackendSpawner(Spawner):
@@ -92,6 +94,7 @@ class BackendSpawner(Spawner):
         self.port = random_port()
         # Test setup
         import random
+
         self.port = random.randint(30000, 30010)
 
         auth_state = await self.user.get_auth_state()
@@ -111,7 +114,7 @@ class BackendSpawner(Spawner):
         popen_kwargs = {
             "auth_state": auth_state,
             "env": env,
-            "user_options": user_options
+            "user_options": user_options,
         }
 
         custom_config = self.user.authenticator.custom_config
@@ -124,13 +127,24 @@ class BackendSpawner(Spawner):
             body=json.dumps(popen_kwargs),
             request_timeout=req_prop["request_timeout"],
             validate_cert=req_prop["validate_cert"],
-            ca_certs=req_prop["ca_certs"]
+            ca_certs=req_prop["ca_certs"],
         )
         # Todo:
         # Test behaviour if start.sh is not present
         # Run job with /bin/bash start2.sh , will never be there. But it should try at least 3 times to start
         max_start_attempts = 1
-        await drf_request(uuidcode, req, self.log, self.user.authenticator.fetch, "start", self.user.name, self._log_name, max_start_attempts, parse_json=True, raise_exception=True)
+        await drf_request(
+            uuidcode,
+            req,
+            self.log,
+            self.user.authenticator.fetch,
+            "start",
+            self.user.name,
+            self._log_name,
+            max_start_attempts,
+            parse_json=True,
+            raise_exception=True,
+        )
         self.id = uuidcode
         k8s_tunnel_namespace = os.environ.get("TUNNEL_POD_NAMESPACE")
         k8s_jupyterlab_service = f"{self.id}.{k8s_tunnel_namespace}.svc"
@@ -157,12 +171,23 @@ class BackendSpawner(Spawner):
             headers=req_prop["headers"],
             request_timeout=req_prop["request_timeout"],
             validate_cert=req_prop["validate_cert"],
-            ca_certs=req_prop["ca_certs"]
+            ca_certs=req_prop["ca_certs"],
         )
         max_poll_attempts = 1
-        
+
         try:
-            resp_json = await drf_request(uuidcode, req, self.log, self.user.authenticator.fetch, "poll", self.user.name, self._log_name, max_poll_attempts, parse_json=True, raise_exception=True)
+            resp_json = await drf_request(
+                uuidcode,
+                req,
+                self.log,
+                self.user.authenticator.fetch,
+                "poll",
+                self.user.name,
+                self._log_name,
+                max_poll_attempts,
+                parse_json=True,
+                raise_exception=True,
+            )
         except:
             return None
         if not resp_json.get("running", True):
@@ -189,11 +214,21 @@ class BackendSpawner(Spawner):
             headers=req_prop["headers"],
             request_timeout=req_prop["request_timeout"],
             validate_cert=req_prop["validate_cert"],
-            ca_certs=req_prop["ca_certs"]
+            ca_certs=req_prop["ca_certs"],
         )
         max_stop_attempts = 1
-        await drf_request(uuidcode, req, self.log, self.user.authenticator.fetch, "stop", self.user.name, self._log_name, max_stop_attempts, parse_json=True, raise_exception=True)
-        
+        await drf_request(
+            uuidcode,
+            req,
+            self.log,
+            self.user.authenticator.fetch,
+            "stop",
+            self.user.name,
+            self._log_name,
+            max_stop_attempts,
+            parse_json=True,
+            raise_exception=True,
+        )
 
     async def progress(self):
         spawn_future = self._spawn_future
@@ -248,13 +283,15 @@ class BackendSpawner(Spawner):
     async def options_form(self, spawner):
         query_options = {}
         for key, byte_list in spawner.handler.request.query_arguments.items():
-            query_options[key] = [bs.decode('utf8') for bs in byte_list]
+            query_options[key] = [bs.decode("utf8") for bs in byte_list]
         service = query_options.get("service", "JupyterLab")
         if type(service) == list:
             service = service[0]
         services = self.user.authenticator.custom_config.get("services")
         if service in services.keys():
-            return await get_options_form(spawner, service, services[service].get("options", {}))
+            return await get_options_form(
+                spawner, service, services[service].get("options", {})
+            )
         raise NotImplementedError(f"{service} unknown")
 
     async def options_from_form(self, formdata):
@@ -262,5 +299,4 @@ class BackendSpawner(Spawner):
         service = formdata.get("service_input", [""])[0]
         if service in custom_config.get("services").keys():
             return await get_options_from_form(formdata, custom_config)
-        raise NotImplementedError(
-            "{} unknown".format(formdata.get("service_input")))
+        raise NotImplementedError("{} unknown".format(formdata.get("service_input")))

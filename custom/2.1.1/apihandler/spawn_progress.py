@@ -1,15 +1,14 @@
 import asyncio
 import json
 
+from custom_utils.backend_services import drf_request
+from custom_utils.backend_services import drf_request_properties
 from jupyterhub.apihandlers.base import APIHandler
 from jupyterhub.scopes import needs_scope
 from tornado import web
 from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
 from tornado.httpclient import HTTPResponse
-
-
-from custom_utils.backend_services import drf_request_properties, drf_request
 
 user_cancel_message = "Start cancelled by user."
 
@@ -86,10 +85,21 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                     body=json.dumps(event["setup_tunnel"]),
                     request_timeout=req_prop["request_timeout"],
                     validate_cert=req_prop["validate_cert"],
-                    ca_certs=req_prop["ca_certs"]
+                    ca_certs=req_prop["ca_certs"],
                 )
                 max_tunnel_attempts = 1
-                await drf_request(uuidcode, req, self.log, user.authenticator.fetch, "start", user.name, f"{user.name}::setuptunnel", max_tunnel_attempts, parse_json=True, raise_exception=True)
+                await drf_request(
+                    uuidcode,
+                    req,
+                    self.log,
+                    user.authenticator.fetch,
+                    "start",
+                    user.name,
+                    f"{user.name}::setuptunnel",
+                    max_tunnel_attempts,
+                    parse_json=True,
+                    raise_exception=True,
+                )
 
             self.set_header("Content-Type", "text/plain")
             self.set_status(204)
@@ -115,6 +125,6 @@ class SpawnProgressStatusAPIHandler(APIHandler):
         data = {
             "events": spawner.events,
             "active": spawner.active,
-            "ready": spawner.ready
+            "ready": spawner.ready,
         }
         self.write(json.dumps(data))

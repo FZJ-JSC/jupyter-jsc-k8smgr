@@ -1,25 +1,27 @@
-from audioop import adpcm2lin
-from oauthenticator.generic import GenericOAuthenticator
-from oauthenticator.oauth2 import OAuthLoginHandler
-from oauthenticator.traitlets import Callable
-from traitlets import Dict
-from traitlets import Union
-from traitlets import Unicode
-from jupyterhub.handlers.login import LogoutHandler
-
-import re
-import os
-import uuid
 import json
-from tornado.httpclient import HTTPRequest, HTTPClientError
-from custom_utils.backend_services import drf_request_properties, drf_request
-from custom_utils import get_vos
+import os
+import re
+import uuid
+from audioop import adpcm2lin
 from datetime import datetime
 from datetime import timedelta
 
+from custom_utils import get_vos
+from custom_utils.backend_services import drf_request
+from custom_utils.backend_services import drf_request_properties
+from jupyterhub.handlers.login import LogoutHandler
+from oauthenticator.generic import GenericOAuthenticator
+from oauthenticator.oauth2 import OAuthLoginHandler
+from oauthenticator.traitlets import Callable
+from tornado.httpclient import HTTPClientError
+from tornado.httpclient import HTTPRequest
+from traitlets import Dict
+from traitlets import Unicode
+from traitlets import Union
+
 
 class TimedCacheProperty(object):
-    '''decorator to create get only property; values are fetched once per `timeout`'''
+    """decorator to create get only property; values are fetched once per `timeout`"""
 
     def __init__(self, timeout):
         self._timeout = timedelta(seconds=timeout)
@@ -43,8 +45,7 @@ class BackendLogoutHandler(LogoutHandler):
     async def backend_call(self):
         user = self.current_user
         if not user:
-            self.log.debug(
-                "Could not receive current user in backend logout call.")
+            self.log.debug("Could not receive current user in backend logout call.")
             return
         custom_config = user.authenticator.custom_config
         req_prop = drf_request_properties("backend", custom_config, self.log)
@@ -62,9 +63,12 @@ class BackendLogoutHandler(LogoutHandler):
             tokens["refresh_token"] = refresh_token
         arguments = self.request.query_arguments
         body = {
-            "stop_services": arguments.get("stop_services", [b'false'])[0].decode().lower() == "true",
+            "stop_services": arguments.get("stop_services", [b"false"])[0]
+            .decode()
+            .lower()
+            == "true",
             "tokens": tokens,
-            "jhub_user_id": jhub_user_id
+            "jhub_user_id": jhub_user_id,
         }
         uuidcode = uuid.uuid4().hex
         req = HTTPRequest(
@@ -74,10 +78,21 @@ class BackendLogoutHandler(LogoutHandler):
             body=json.dumps(body),
             request_timeout=req_prop["request_timeout"],
             validate_cert=req_prop["validate_cert"],
-            ca_certs=req_prop["ca_certs"]
+            ca_certs=req_prop["ca_certs"],
         )
         max_revocation_attempts = 1
-        await drf_request(uuidcode, req, self.log, user.authenticator.fetch, "revocation", user.name, f"{user.name}::token_revocation", max_revocation_attempts, parse_json=False, raise_exception=False)
+        await drf_request(
+            uuidcode,
+            req,
+            self.log,
+            user.authenticator.fetch,
+            "revocation",
+            user.name,
+            f"{user.name}::token_revocation",
+            max_revocation_attempts,
+            parse_json=False,
+            raise_exception=False,
+        )
 
         return await super().handle_logout()
 
@@ -96,12 +111,11 @@ class CustomGenericLoginHandler(OAuthLoginHandler):
                 extra_params_allowed = self.authenticator.extra_params_allowed_runtime
             extra_params.update(
                 {
-                    k[len("extra_param_"):]: "&".join(
-                        [x.decode("utf-8") for x in v])
+                    k[len("extra_param_") :]: "&".join([x.decode("utf-8") for x in v])
                     for k, v in self.request.arguments.items()
                     if k.startswith("extra_param_")
                     and set([x.decode("utf-8") for x in v]).issubset(
-                        extra_params_allowed.get(k[len("extra_param_"):], [])
+                        extra_params_allowed.get(k[len("extra_param_") :], [])
                     )
                 }
             )
@@ -115,9 +129,9 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
     login_handler = CustomGenericLoginHandler
     logout_handler = BackendLogoutHandler
 
-    custom_config_file = Unicode('jupyterhub_custom_config.json', help="The custom config file to load").tag(
-        config=True
-    )
+    custom_config_file = Unicode(
+        "jupyterhub_custom_config.json", help="The custom config file to load"
+    ).tag(config=True)
     tokeninfo_url = Unicode(
         config=True,
         help="""The url retrieving information about the access token""",
@@ -130,8 +144,7 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
             with open(self.custom_config_file, "r") as f:
                 ret = json.load(f)
         except:
-            self.log.warning(
-                "Could not load custom config file.", exc_info=True)
+            self.log.warning("Could not load custom config file.", exc_info=True)
             ret = {}
         return ret
 
@@ -171,11 +184,13 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
             resp = await authenticator.fetch(req)
         except HTTPClientError as e:
             authenticator.log.warning(
-                "Could not request user information - {}".format(e))
+                "Could not request user information - {}".format(e)
+            )
             raise Exception(e)
         authentication["auth_state"]["exp"] = resp.get("exp")
         authentication["auth_state"]["last_login"] = datetime.now().strftime(
-            "%H:%M:%S %Y-%m-%d")
+            "%H:%M:%S %Y-%m-%d"
+        )
 
         used_authenticator = (
             authentication["auth_state"]
@@ -195,7 +210,8 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         admin = authentication.get("admin", False)
 
         vo_active, vo_available = get_vos(
-            authentication["auth_state"], self.custom_config, username, admin=admin)
+            authentication["auth_state"], self.custom_config, username, admin=admin
+        )
         authentication["auth_state"]["vo_active"] = vo_active
         authentication["auth_state"]["vo_available"] = vo_available
 
@@ -207,8 +223,7 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
             hpc_list = ["".join(hpc_list)]
         for entry in hpc_list:
             try:
-                partition = re.search(
-                    "[^,]+,([^,]+),[^,]+,[^,]+", entry).groups()[0]
+                partition = re.search("[^,]+,([^,]+),[^,]+,[^,]+", entry).groups()[0]
             except:
                 authenticator.log.info(
                     f"----- {username} - Failed to check for defaults partitions: {entry} ---- {hpc_list}"
@@ -216,9 +231,7 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
                 continue
             if partition in default_partitions.keys():
                 for value in default_partitions[partition]:
-                    to_add.append(
-                        entry.replace( f",{partition},", ",{},".format(value) )
-                    )
+                    to_add.append(entry.replace(f",{partition},", ",{},".format(value)))
         hpc_list.extend(to_add)
         if hpc_list:
             authentication["auth_state"]["oauth_user"]["hpc_infos_attribute"] = hpc_list
