@@ -22,7 +22,7 @@ export JUPYTER_JSC_HOME=${HOME}
 sed -i -e "s|_port_|${PORT}|g" -e "s|_home_|${JUPYTER_JSC_HOME}|g" -e "s|_servername_|${JUPYTERHUB_SERVER_NAME}|g" -e "s|_username_|${JUPYTERHUB_USER}|g" -e "s|_remotenode_|${JUPYTER_JSC_REMOTENODE}|g" -e "s|_remoteport_|${JUPYTER_JSC_REMOTEPORT}|g" ${DIR}/config.py
 
 sleep 1
-curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 25, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "demo_site", "target_node": "unicore-<ID>.<NAMESPACE>.svc", "target_port": "${PORT}", "startuuidcode": "job_tunnel_call"}}' -X "POST" http://<JUPYTERHUB_ALT_NAME>/hub/api/${JUPYTERHUB_STATUS_URL}
+curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 25, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "demo_site", "target_node": "unicore-<ID>.<NAMESPACE>.svc", "target_port": "'${PORT}'", "startuuidcode": "job_tunnel_call"}}' -X "POST" http://<JUPYTERHUB_ALT_NAME>/hub/api/${JUPYTERHUB_STATUS_URL}
 sleep 1
 curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 50, "failed": false, "html_message": "Msg 50"}' -X "POST" http://<JUPYTERHUB_ALT_NAME>/hub/api/${JUPYTERHUB_STATUS_URL}
 sleep 1
