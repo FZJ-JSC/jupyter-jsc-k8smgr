@@ -12,7 +12,7 @@ import os
 import uuid
 import json
 from tornado.httpclient import HTTPRequest, HTTPClientError
-from custom_utils.backend import backend_request_properties
+from custom_utils.backend_services import drf_request_properties, drf_request
 from custom_utils import get_vos
 from datetime import datetime
 from datetime import timedelta
@@ -47,15 +47,10 @@ class BackendLogoutHandler(LogoutHandler):
                 "Could not receive current user in backend logout call.")
             return
         custom_config = user.authenticator.custom_config
-        backend_revoke_url = custom_config.get("backend", {}).get(
-            "unity_revoke", {}).get("url", None)
-        if not backend_revoke_url:
-            self.log.critical(
-                "backend.unity_revoke.url in custom_config not defined. Cannot revoke Unity tokens.")
-            return
-        req_prop = backend_request_properties(custom_config, self.log)
+        req_prop = drf_request_properties("backend", custom_config, self.log)
         if not req_prop:
             return
+        backend_revoke_url = req_prop.get("urls", {}).get("token_revokation", "None")
         jhub_user_id = user.orm_user.id
         auth_state = await user.get_auth_state()
         access_token = auth_state.get("access_token", None)
@@ -81,20 +76,8 @@ class BackendLogoutHandler(LogoutHandler):
             validate_cert=req_prop["validate_cert"],
             ca_certs=req_prop["ca_certs"]
         )
-
-        try:
-            resp = await user.authenticator.fetch(req, parse_json=False)
-            self.log.debug(
-                f"Token revokation. -- 'uuidcode': {uuidcode}, 'response': {resp}")
-        except Exception:
-            self.log.exception(
-                "Exception while revoking tokens",
-                extra={
-                    "uuidcode": uuidcode,
-                    "user": user.name,
-                    "action": "revoke_error",
-                },
-            )
+        max_revocation_attempts = 1
+        await drf_request(uuidcode, req, self.log, user.authenticator.fetch, "revocation", user.name, f"{user.name}::token_revocation", max_revocation_attempts, parse_json=False, raise_exception=False)
 
         return await super().handle_logout()
 

@@ -13,7 +13,10 @@
       ],
       "env": {
         "JUPYTERHUB_CRYPT_KEY": "06e35ed347ec42859d52198b1773af86",
-        "PYTHONPATH": "/src/jupyterhub-patched:/src/jupyterhub-custom"
+        "PYTHONPATH": "/src/jupyterhub-patched:/src/jupyterhub-custom",
+        "RESERVATIONS_PATH": "/home/jupyterhub/reservations.json",
+        "MAINTENANCE_PATH": "/home/jupyterhub/maintenance.json",
+        "BACKEND_AUTHENTICATION_TOKEN": "<BACKEND_JHUB_BASIC>"
       }
     }
   ]

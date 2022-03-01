@@ -3,11 +3,20 @@
     "authentication_token": "<BACKEND_JHUB_BASIC>",
     "request_timeout": 10,
     "certificate_path": false,
-    "unity_revoke": {
-      "url": "http://backend-<ID>.<NAMESPACE>.svc/api/unity/"
+    "urls": {
+      "token_revokation": "http://backend-<ID>.<NAMESPACE>.svc/api/unity/",
+      "services": "http://backend-<ID>.<NAMESPACE>.svc/api/services/"
     }
   },
-
+  
+  "tunnel": {
+    "authentication_token": "<TUNNEL_JHUB_BASIC>",
+    "request_timeout": 10,
+    "certificate_path": false,
+    "urls": {
+      "services": "http://tunnel-<ID>.<NAMESPACE>.svc/api/tunnel/"
+    }
+  },
 
   "vos": {
     "default": {

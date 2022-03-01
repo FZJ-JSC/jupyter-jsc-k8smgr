@@ -26,7 +26,6 @@ c.JupyterHub.allow_named_servers = True
 
 c.JupyterHub.spawner_class = BackendSpawner
 c.BackendSpawner.http_timeout = 900
-c.BackendSpawner.backend_services_url = "http://backend-<ID>.<NAMESPACE>.svc/api/services/"
 
 c.JupyterHub.authenticator_class = CustomGenericOAuthenticator
 

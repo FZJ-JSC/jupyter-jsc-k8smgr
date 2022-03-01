@@ -36,7 +36,7 @@ spec:
         - name: ADVERTISED_HOST
           value: unity-<ID>.<NAMESPACE>.svc
         - name: JHUB_CALLBACK_URLS_AS_LIST
-          value: '["http://jupyterhub-<ID>.<NAMESPACE>.svc/hub/oauth_callback", "https://jupyterhub-<ID>.<NAMESPACE>.svc/hub/oauth_callback", "http://localhost:8000/hub/oauth_callback", "http://jupyterhub.gitlab.svc:8000/hub/oauth_callback"]'
+          value: '["http://jupyterhub-<ID>.<NAMESPACE>.svc/hub/oauth_callback", "https://jupyterhub-<ID>.<NAMESPACE>.svc/hub/oauth_callback", "http://localhost:8000/hub/oauth_callback", "http://jupyterhub.<NAMESPACE>.svc:8000/hub/oauth_callback"]'
         - name: DEBUG
           value: "true"
         image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unity-test-server:<UNITY_VERSION>

@@ -80,9 +80,6 @@ spec:
           mountPath: /home/backend/backend.p12
           subPath: backend.p12
         - name: files
-          mountPath: /home/backend/web/uwsgi.ini
-          subPath: uwsgi.ini
-        - name: files
           mountPath: /tmp/config.json
           subPath: config.json
         - name: files

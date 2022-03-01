@@ -12,6 +12,10 @@ spec:
       port: 443
       protocol: TCP
       targetPort: 9112
+    - name: ssh
+      port: 22
+      protocol: TCP
+      targetPort: 2223
     - name: unicorex
       port: 7112
       protocol: TCP
@@ -37,12 +41,10 @@ spec:
       - name: gitlab-registry
       containers:
       - env:
-        - name: SSH_RO_PATH
-          value: "/tmp/ssh_ro"
         - name: UNITY_ADVERTISED_HOST
-          value: unity-<ID>.gitlab.svc
+          value: unity-<ID>.<NAMESPACE>.svc
         - name: EXTERNALURL
-          value: https://unicore-<ID>.gitlab.svc/DEMO-SITE/
+          value: https://unicore-<ID>.<NAMESPACE>.svc/DEMO-SITE/
         - name: DEBUG
           value: "true"
         image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unicore-test-server/unicore-server:<UNICORE_VERSION>
@@ -54,7 +56,7 @@ spec:
           mountPath: /tmp/ljupyter_home/manage_tunnel.sh
         - name: files
           subPath: authorized_keys
-          mountPath: /tmp/ssh_ro/authorized_keys
+          mountPath: /tmp/ljupyter_ssh/authorized_keys
         - name: certs
           mountPath: /opt/unicore/certs/gateway.key
           subPath: gateway.key
@@ -92,7 +94,7 @@ spec:
           mountPath: /opt/unicore/certs/ca-root.pem
           subPath: ca-root.pem
         - name: keypairs
-          mountPath: /tmp/ssh_ro/id_ed25519
+          mountPath: /tmp/ljupyter_ssh/id_ed25519
           subPath: ljupyter
       volumes:
       - name: files

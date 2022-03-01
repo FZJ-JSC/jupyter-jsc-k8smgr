@@ -2,28 +2,17 @@ import asyncio
 import html
 import json
 import uuid
-from asyncio.tasks import sleep
-
+import os
 
 from jupyterhub.spawner import Spawner
 from jupyterhub.utils import maybe_future, random_port
 from jupyterhub.utils import url_path_join
-from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
-from tornado.httpclient import HTTPResponse
 from traitlets import Unicode
-from custom_utils.backend import backend_request_properties
+from custom_utils.backend_services import drf_request_properties, drf_request, BackendException
 from custom_utils.options_form import get_options_form, get_options_from_form
 
 
-class BackendException(Exception):
-    error = "Unexpected error."
-    error_detail = ""
-
-    def __init__(self, error, error_detail=""):
-        self.error = error
-        self.error_detail = error_detail
-        super().__init__(f"{error} --- {error_detail}")
 
 
 class BackendSpawner(Spawner):
@@ -37,22 +26,6 @@ class BackendSpawner(Spawner):
         help="""
         The backend id of the server spawned for current user.
         """,
-    )
-
-    backend_services_url = Unicode(
-        "",
-        help="""
-        URL to start/stop jobs via backend.
-        """,
-        config=True
-    )
-
-    backend_services_token = Unicode(
-        "",
-        help="""
-        Used to authenticate against backend to start/stop jobs.
-        """,
-        config=True
     )
 
     def status_update_url(self, server_name=""):
@@ -142,10 +115,10 @@ class BackendSpawner(Spawner):
         }
 
         custom_config = self.user.authenticator.custom_config
-        req_prop = backend_request_properties(custom_config, self.log)
-
+        req_prop = drf_request_properties("backend", custom_config, self.log)
+        service_url = req_prop.get("urls", {}).get("services", "None")
         req = HTTPRequest(
-            f"{self.backend_services_url}?uuidcode={uuidcode}",
+            f"{service_url}?uuidcode={uuidcode}",
             method="POST",
             headers=req_prop["headers"],
             body=json.dumps(popen_kwargs),
@@ -157,39 +130,11 @@ class BackendSpawner(Spawner):
         # Test behaviour if start.sh is not present
         # Run job with /bin/bash start2.sh , will never be there. But it should try at least 3 times to start
         max_start_attempts = 1
-        for i in range(0, max_start_attempts):
-            try:
-                resp = await self.user.authenticator.fetch(req, parse_json=True)
-                self.log.info(
-                    f"Server started. -- 'uuidcode': {uuidcode}, 'response': {resp}")
-                break
-            except Exception as e:
-                if i < max_start_attempts - 1:
-                    continue
-                error = "Jupyter-JSC backend service could not start your service."
-                error_detail = str(e)
-                if isinstance(e, HTTPClientError):
-                    if len(e.args) > 2:
-                        orig_response = e.args[2]
-                        if isinstance(orig_response, HTTPResponse):
-                            error_json = json.loads(
-                                orig_response.body.decode("utf-8"))
-                            error = error_json.get("error", error)
-                            error_detail = error_json.get(
-                                "detailed_error", error_detail)
-                self.log.exception(
-                    "Exception while starting service",
-                    extra={
-                        "uuidcode": uuidcode,
-                        "log_name": self._log_name,
-                        "user": self.user.name,
-                        "action": "start",
-                        "user_options": user_options,
-                    },
-                )
-                raise BackendException(error, error_detail)
+        await drf_request(uuidcode, req, self.log, self.user.authenticator.fetch, "start", self.user.name, self._log_name, max_start_attempts, parse_json=True, raise_exception=True)
         self.id = uuidcode
-        return ("localhost", self.port)
+        k8s_tunnel_namespace = os.environ.get("TUNNEL_POD_NAMESPACE")
+        k8s_jupyterlab_service = f"{self.id}.{k8s_tunnel_namespace}.svc"
+        return (k8s_jupyterlab_service, self.port)
 
     def start(self):
         self.events = []
@@ -200,13 +145,14 @@ class BackendSpawner(Spawner):
     async def poll(self):
         uuidcode = uuid.uuid4().hex
         custom_config = self.user.authenticator.custom_config
-        req_prop = backend_request_properties(custom_config, self.log)
+        req_prop = drf_request_properties("backend", custom_config, self.log)
+        service_url = req_prop.get("urls", {}).get("services", "None")
 
         auth_state = await self.user.get_auth_state()
         access_token = auth_state["access_token"]
 
         req = HTTPRequest(
-            f"{self.backend_services_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
+            f"{service_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
             method="GET",
             headers=req_prop["headers"],
             request_timeout=req_prop["request_timeout"],
@@ -214,36 +160,12 @@ class BackendSpawner(Spawner):
             ca_certs=req_prop["ca_certs"]
         )
         max_poll_attempts = 1
-        for i in range(0, max_poll_attempts):
-            try:
-                resp = await self.user.authenticator.fetch(req, parse_json=True)
-                # self.log.info(f"Server polled. -- 'uuidcode': {uuidcode}, 'response': {resp}")
-                break
-            except Exception as e:
-                if i < max_poll_attempts - 1:
-                    continue
-                error = "Jupyter-JSC backend service could not poll your service."
-                error_detail = str(e)
-                if isinstance(e, HTTPClientError):
-                    if len(e.args) > 2:
-                        orig_response = e.args[2]
-                        if isinstance(orig_response, HTTPResponse):
-                            error_json = json.loads(
-                                orig_response.body.decode("utf-8"))
-                            error = error_json.get("error", error)
-                            error_detail = error_json.get(
-                                "detailed_error", error_detail)
-                self.log.exception(
-                    "Exception while starting service",
-                    extra={
-                        "uuidcode": uuidcode,
-                        "log_name": self._log_name,
-                        "user": self.user.name,
-                        "action": "poll",
-                    },
-                )
-                return None
-        if not resp.get("running", True):
+        
+        try:
+            resp_json = await drf_request(uuidcode, req, self.log, self.user.authenticator.fetch, "poll", self.user.name, self._log_name, max_poll_attempts, parse_json=True, raise_exception=True)
+        except:
+            return None
+        if not resp_json.get("running", True):
             return 0
         return None
 
@@ -255,43 +177,23 @@ class BackendSpawner(Spawner):
             return
         uuidcode = uuid.uuid4().hex
         custom_config = self.user.authenticator.custom_config
-        req_prop = backend_request_properties(custom_config, self.log)
+        req_prop = drf_request_properties("backend", custom_config, self.log)
+        service_url = req_prop.get("urls", {}).get("services", "None")
 
         auth_state = await self.user.get_auth_state()
         access_token = auth_state["access_token"]
 
         req = HTTPRequest(
-            f"{self.backend_services_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
+            f"{service_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
             method="DELETE",
             headers=req_prop["headers"],
             request_timeout=req_prop["request_timeout"],
             validate_cert=req_prop["validate_cert"],
             ca_certs=req_prop["ca_certs"]
         )
-        try:
-            await self.user.authenticator.fetch(req)
-        except Exception as e:
-            error = "Jupyter-JSC backend service could not stop the service."
-            error_detail = str(e)
-            if isinstance(e, HTTPClientError):
-                if len(e.args) > 2:
-                    orig_response = e.args[2]
-                    if isinstance(orig_response, HTTPResponse):
-                        error_json = json.loads(
-                            orig_response.body.decode("utf-8"))
-                        error = error_json.get("error", error)
-                        error_detail = error_json.get(
-                            "detailed_error", error_detail)
-            self.log.exception(
-                "Exception while stopping service",
-                extra={
-                    "uuidcode": uuidcode,
-                    "log_name": self._log_name,
-                    "user": self.user.name,
-                    "action": "stop_failed",
-                },
-            )
-            raise Exception(f"{error} ---- {error_detail}")
+        max_stop_attempts = 1
+        await drf_request(uuidcode, req, self.log, self.user.authenticator.fetch, "stop", self.user.name, self._log_name, max_stop_attempts, parse_json=True, raise_exception=True)
+        
 
     async def progress(self):
         spawn_future = self._spawn_future
