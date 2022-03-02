@@ -11,7 +11,6 @@ from custom_utils.options_form import get_options_form
 from custom_utils.options_form import get_options_from_form
 from jupyterhub.spawner import Spawner
 from jupyterhub.utils import maybe_future
-from jupyterhub.utils import random_port
 from jupyterhub.utils import url_path_join
 from tornado.httpclient import HTTPRequest
 from traitlets import Unicode
@@ -91,11 +90,7 @@ class BackendSpawner(Spawner):
 
     async def _start_job(self):
         uuidcode = uuid.uuid4().hex
-        self.port = random_port()
-        # Test setup
-        import random
-
-        self.port = random.randint(30000, 30010)
+        self.port = 8080
 
         auth_state = await self.user.get_auth_state()
 
@@ -110,7 +105,6 @@ class BackendSpawner(Spawner):
         }
 
         env = self.get_env()
-        env["PORT"] = self.port
         popen_kwargs = {
             "auth_state": auth_state,
             "env": env,
