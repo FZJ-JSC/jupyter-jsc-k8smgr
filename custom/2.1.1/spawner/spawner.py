@@ -66,7 +66,7 @@ class BackendSpawner(Spawner):
 
     async def _start(self):
         try:
-            await self._start_job()
+            return await self._start_job()
         except Exception as e:
             self.log.exception("Start failed")
             failed_event = {
@@ -87,6 +87,14 @@ class BackendSpawner(Spawner):
                 )
             await self._cancel(failed_event)
             return
+
+    def get_svc_name(self, id):
+        k8s_tunnel_deployment_name = os.environ.get(
+            "TUNNEL_DEPLOYMENT_NAME", "tunneling"
+        )[0:30]
+        k8s_tunnel_deployment_namespace = os.environ.get("TUNNEL_DEPLOYMENT_NAMESPACE")
+        svc_name = f"{k8s_tunnel_deployment_name}-{id}"[0:63]
+        return f"{svc_name}.{k8s_tunnel_deployment_namespace}.svc"
 
     async def _start_job(self):
         uuidcode = uuid.uuid4().hex
@@ -140,9 +148,11 @@ class BackendSpawner(Spawner):
             raise_exception=True,
         )
         self.id = uuidcode
-        k8s_tunnel_namespace = os.environ.get("TUNNEL_POD_NAMESPACE")
-        k8s_jupyterlab_service = f"{self.id}.{k8s_tunnel_namespace}.svc"
-        return (k8s_jupyterlab_service, self.port)
+        svc_name = self.get_svc_name(self.id)
+        self.log.debug(
+            f"Expect JupyterLab at {svc_name}:{self.port}", extra={"uuidcode": self.id}
+        )
+        return (svc_name, self.port)
 
     def start(self):
         self.events = []

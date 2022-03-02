@@ -16,7 +16,9 @@
         "PYTHONPATH": "/src/jupyterhub-patched:/src/jupyterhub-custom",
         "RESERVATIONS_PATH": "/home/jupyterhub/reservations.json",
         "MAINTENANCE_PATH": "/home/jupyterhub/maintenance.json",
-        "BACKEND_AUTHENTICATION_TOKEN": "<BACKEND_JHUB_BASIC>"
+        "BACKEND_AUTHENTICATION_TOKEN": "<BACKEND_JHUB_BASIC>",
+        "TUNNEL_DEPLOYMENT_NAMESPACE": "<NAMESPACE>",
+        "TUNNEL_DEPLOYMENT_NAME": "tunnel-<ID>"
       }
     }
   ]

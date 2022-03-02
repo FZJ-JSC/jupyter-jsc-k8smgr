@@ -1,3 +1,32 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tunnel-<ID>-svc-acc
+  namespace: <NAMESPACE>
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tunnel-<ID>-cluster-role
+  namespace: <NAMESPACE>
+rules:
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["create", "delete"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tunnel-<ID>-cluster-role-binding
+subjects:
+- kind: ServiceAccount
+  name: tunnel-<ID>-svc-acc
+  namespace: <NAMESPACE>
+roleRef:
+  kind: ClusterRole
+  name: tunnel-<ID>-cluster-role
+  apiGroup: rbac.authorization.k8s.io
+---
 apiVersion:  v1
 kind: Service
 metadata:
@@ -35,14 +64,21 @@ spec:
         fsGroup: 100
       imagePullSecrets:
       - name: gitlab-registry
+      serviceAccountName: "tunnel-<ID>-svc-acc"
       containers:
       - env:
-        - name: SSH_RO_PATH
-          value: "/tmp/ssh_ro"
         - name: SSHCONFIGFILE
           value: "/home/tunnel/.ssh/config"
         - name: DEBUG
           value: "true"
+        - name: DEPLOYMENT_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['app']
+        - name: DEPLOYMENT_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         - name: TUNNEL_SECRET_KEY
           valueFrom:
             secretKeyRef:
@@ -72,28 +108,28 @@ spec:
         name: tunnel-<ID>
         volumeMounts:
         - name: certs
-          mountPath: /tmp/ssh_ro/ca-root.pem
+          mountPath: /tmp/tunnel_ssh/ca-root.pem
           subPath: ca-root.pem
         - name: certs
-          mountPath: /tmp/ssh_ro/tunnel.key
+          mountPath: /tmp/tunnel_ssh/tunnel.key
           subPath: tunnel.key
         - name: certs
-          mountPath: /tmp/ssh_ro/tunnel.crt
+          mountPath: /tmp/tunnel_ssh/tunnel.crt
           subPath: tunnel.crt
         - name: certs
-          mountPath: /tmp/ssh_ro/tunnel.p12
+          mountPath: /tmp/tunnel_ssh/tunnel.p12
           subPath: tunnel.p12
         - name: files
-          mountPath: /tmp/ssh_ro/config
+          mountPath: /tmp/tunnel_ssh/config
           subPath: config
         - name: files
-          mountPath: /tmp/ssh_ro/authorized_keys
+          mountPath: /tmp/tunnel_ssh/authorized_keys
           subPath: authorized_keys
         - name: keypairs
-          mountPath: /tmp/ssh_ro/tunnel
+          mountPath: /tmp/tunnel_ssh/tunnel
           subPath: tunnel
         - name: keypairs
-          mountPath: /tmp/ssh_ro/remote
+          mountPath: /tmp/tunnel_ssh/remote
           subPath: remote
       volumes:
       - name: files

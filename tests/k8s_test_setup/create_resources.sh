@@ -6,14 +6,14 @@ fi
 
 DEVEL_JUPYTERHUB="true"
 DEVEL_BACKEND="false"
-DEVEL_TUNNEL="false"
+DEVEL_TUNNEL="true"
 
 
 JUPYTERHUB_VERSION="latest"
 UNITY_VERSION="3.8.1-1"
 UNICORE_VERSION="8.3.0-9"
 BACKEND_VERSION="1.0.0-21"
-TUNNEL_VERSION="1.0.0-29"
+TUNNEL_VERSION="1.0.0-34"
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -119,7 +119,7 @@ select_yaml_file ${DEVEL_BACKEND} "backend"
 select_yaml_file ${DEVEL_TUNNEL} "tunnel"
 
 cp -rp ${DIR}/templates/files ${DIR}/${ID}/.
-find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<DIR>@${DIR}@g" -e "s@<BACKEND_JHUB_BASIC>@${BACKEND_JHUB_BASIC}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" -e "s@<ID>@${ID}@g" -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<DEVEL_PUBLIC_KEY>@${ESCAPED_DPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
+find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<DIR>@${DIR}@g" -e "s@<TUNNEL_JHUB_BASIC>@${TUNNEL_JHUB_BASIC}@g" -e "s@<BACKEND_JHUB_BASIC>@${BACKEND_JHUB_BASIC}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" -e "s@<ID>@${ID}@g" -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<DEVEL_PUBLIC_KEY>@${ESCAPED_DPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
 tar -czf ${DIR}/${ID}/files/backend/job_descriptions.tar.gz -C ${DIR}/${ID}/files/backend/ job_descriptions
 
 find ${DIR}/${ID}/yaml -type f -exec sed -i '' -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_VERSION>@${JUPYTERHUB_VERSION}@g" -e "s@<UNITY_VERSION>@${UNITY_VERSION}@g" -e "s@<UNICORE_VERSION>@${UNICORE_VERSION}@g" -e "s@<TUNNEL_VERSION>@${TUNNEL_VERSION}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<BACKEND_VERSION>@${BACKEND_VERSION}@g" -e "s@<_VERSION>@${_VERSION}@g" -e "s@<DIR>@${DIR}@g" -e "s@<BACKEND_JHUB_BASIC>@${BACKEND_JHUB_BASIC}@g" -e "s@<ID>@${ID}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" {} \; 2> /dev/null
@@ -178,8 +178,12 @@ wait_for_service () {
 
 wait_for_service "https://${UNITY_ALT_NAME}/home/"
 wait_for_service "https://${UNICORE_ALT_NAME}/"
-wait_for_service "http://${TUNNEL_ALT_NAME}/api/health/" "${TUNNEL_JHUB_BASIC}" ${DEVEL_TUNNEL}
-wait_for_service "http://${BACKEND_ALT_NAME}/api/health/" "${BACKEND_JHUB_BASIC}" ${DEVEL_BACKEND}
+if [[ ! ${DEVEL_TUNNEL} == "true" ]]; then
+    wait_for_service "http://${TUNNEL_ALT_NAME}/api/health/" "${TUNNEL_JHUB_BASIC}" ${DEVEL_TUNNEL}
+fi
+if [[ ! ${DEVEL_BACKEND} == "true" ]]; then
+    wait_for_service "http://${BACKEND_ALT_NAME}/api/health/" "${BACKEND_JHUB_BASIC}" ${DEVEL_BACKEND}
+fi
 
 
 # Prepare port forwarding from localhost to cluster
@@ -230,4 +234,3 @@ if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
     echo "7. Open http://jupyterhub-${ID}.${NAMESPACE}.svc in your Browser."
     echo "8. /home/jupyterhub/jupyterhub-[custom|patched] will be synched every 60 seconds to ${ID}/rsync on your machine. So no need to panic if a pod crashes. Your changes are save"
 fi
-

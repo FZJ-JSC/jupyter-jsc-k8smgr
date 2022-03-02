@@ -14,7 +14,12 @@
             "django": true,
             "justMyCode": false,
             "env": {
-                "TUNNEL_SECRET_KEY": "94919419491419419419111"
+                "TUNNEL_SECRET_KEY": "94919419491419419419111",
+                "UWSGI_START": "true",
+                "KUBERNETES_SERVICE_HOST": "<KUBERNETES_SERVICE_HOST>",
+                "KUBERNETES_SERVICE_PORT": "<KUBERNETES_SERVICE_PORT>",
+                "DEPLOYMENT_NAMESPACE": "<NAMESPACE>",
+                "DEPLOYMENT_NAME": "tunnel-<ID>"
             }
         }
     ]
