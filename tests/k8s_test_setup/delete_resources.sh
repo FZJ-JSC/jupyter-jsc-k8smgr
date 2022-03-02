@@ -18,14 +18,16 @@ stop_port_forward_svc "tunnel"
 stop_port_forward_svc "backend"
 if [[ -f ${DIR}/${ID}/pids/rsync.pid ]]; then
     kill -9 $(cat ${DIR}/${ID}/pids/rsync.pid)
+    rm -r ${DIR}/${ID}/certs
+    rm -r ${DIR}/${ID}/files
+    rm -r ${DIR}/${ID}/keypairs
+    rm -r ${DIR}/${ID}/pids
+    rm -r ${DIR}/${ID}/yaml
+
+    echo "-----------------"
+    echo "rsync folder not deleted. To do so: "
+    echo "rm -r ${DIR}/${ID}"
+else
+    echo "no rsync found. Delete everything"
+    rm -r ${DIR}/${ID}
 fi
-
-rm -r ${DIR}/${ID}/certs
-rm -r ${DIR}/${ID}/files
-rm -r ${DIR}/${ID}/keypairs
-rm -r ${DIR}/${ID}/pids
-rm -r ${DIR}/${ID}/yaml
-
-echo "-----------------"
-echo "rsync folder not deleted. To do so: "
-echo "rm -r ${DIR}/${ID}"

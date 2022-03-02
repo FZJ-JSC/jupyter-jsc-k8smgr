@@ -29,21 +29,65 @@ spec:
     spec:
       securityContext:
         fsGroup: 100
-        runAsUser: 1000
+        runAsUser: 0
       imagePullSecrets:
       - name: gitlab-registry
       containers:
       - image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/jupyterhub-relaunch:<JUPYTERHUB_VERSION>
         imagePullPolicy: Always
-        args: ["-f" "/home/jupyterhub/jupyterhub_config.py"]
+        args: ["-f", "/home/jupyterhub/jupyterhub_config.py"]
         name: jupyterhub-<ID>
+        env:
+        - name: JUPYTERHUB_CRYPT_KEY
+          value: "06e35ed347ec42859d52198b1773af86"
+        - name: PYTHONPATH
+          value: "/src/jupyterhub-patched:/src/jupyterhub-custom"
+        - name: RESERVATIONS_PATH
+          value: "/home/jupyterhub/reservations.json"
+        - name: MAINTENANCE_PATH
+          value: "/home/jupyterhub/maintenance.json"
+        - name: STATIC_FILES_SRC
+          value: "/home/jupyterhub/jupyterhub-static/static/default"
+        - name: STATIC_FILES_DEST
+          value: "/home/jupyterhub/jupyterhub-static/static/<JUPYTERHUB_ALT_NAME>"
+        - name: TEMPLATE_FILES_SRC
+          value: "/home/jupyterhub/jupyterhub-static/templates/default"
+        - name: TEMPLATE_FILES_DEST
+          value: "/home/jupyterhub/jupyterhub-static/templates/<JUPYTERHUB_ALT_NAME>"
+        - name: BACKEND_AUTHENTICATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: backend-drf-<ID>
+              key: jupyterhub_basic
+              optional: false
+        - name: TUNNEL_AUTHENTICATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: tunnel-drf-<ID>
+              key: jupyterhub_basic
+              optional: false
+        - name: TUNNEL_DEPLOYMENT_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: TUNNEL_DEPLOYMENT_NAME
+          value: "tunnel-<ID>"
         volumeMounts:
         - name: files
-          mountPath: /home/home/jupyterhub_custom_config.json
+          mountPath: /home/jupyterhub/.ssh/authorized_keys
+          subPath: authorized_keys
+        - name: files
+          mountPath: /home/jupyterhub/jupyterhub_custom_config.json
           subPath: jupyterhub_custom_config.json
         - name: files
-          mountPath: /home/home/jupyterhub_config.py
+          mountPath: /home/jupyterhub/jupyterhub_config.py
           subPath: jupyterhub_config.py
+        - name: files
+          mountPath: /home/jupyterhub/reservations.json
+          subPath: reservations.json
+        - name: files
+          mountPath: /home/jupyterhub/maintenance.json
+          subPath: maintenance.json
       volumes:
       - name: files
         configMap:

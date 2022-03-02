@@ -4,9 +4,9 @@ if [[ -z ${1} ]]; then
     exit 1
 fi
 
-DEVEL_JUPYTERHUB="true"
+DEVEL_JUPYTERHUB="false"
 DEVEL_BACKEND="false"
-DEVEL_TUNNEL="true"
+DEVEL_TUNNEL="false"
 
 
 JUPYTERHUB_VERSION="latest"
@@ -119,6 +119,9 @@ select_yaml_file ${DEVEL_BACKEND} "backend"
 select_yaml_file ${DEVEL_TUNNEL} "tunnel"
 
 cp -rp ${DIR}/templates/files ${DIR}/${ID}/.
+if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
+    find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@/src/jupyterhub-static@/home/jupyterhub/jupyterhub-static@g" {} \; 2> /dev/null
+fi
 find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<DIR>@${DIR}@g" -e "s@<TUNNEL_JHUB_BASIC>@${TUNNEL_JHUB_BASIC}@g" -e "s@<BACKEND_JHUB_BASIC>@${BACKEND_JHUB_BASIC}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" -e "s@<ID>@${ID}@g" -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<DEVEL_PUBLIC_KEY>@${ESCAPED_DPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
 tar -czf ${DIR}/${ID}/files/backend/job_descriptions.tar.gz -C ${DIR}/${ID}/files/backend/ job_descriptions
 
@@ -179,10 +182,13 @@ wait_for_service () {
 wait_for_service "https://${UNITY_ALT_NAME}/home/"
 wait_for_service "https://${UNICORE_ALT_NAME}/"
 if [[ ! ${DEVEL_TUNNEL} == "true" ]]; then
-    wait_for_service "http://${TUNNEL_ALT_NAME}/api/health/" "${TUNNEL_JHUB_BASIC}" ${DEVEL_TUNNEL}
+    wait_for_service "http://${TUNNEL_ALT_NAME}/api/health/" 
 fi
 if [[ ! ${DEVEL_BACKEND} == "true" ]]; then
-    wait_for_service "http://${BACKEND_ALT_NAME}/api/health/" "${BACKEND_JHUB_BASIC}" ${DEVEL_BACKEND}
+    wait_for_service "http://${BACKEND_ALT_NAME}/api/health/" 
+fi
+if [[ ! ${DEVEL_JUPYTERHUB} == "true" ]]; then
+    wait_for_service "http://${JUPYTERHUB_ALT_NAME}/hub/login" 
 fi
 
 
@@ -205,32 +211,35 @@ if [[ ${DEVEL_BACKEND} == "true" ]]; then
     forward_port "backend" "2224"
 fi
 
-# Start rsync
-mkdir -p ${DIR}/${ID}/rsync/jupyterhub-patched
-mkdir -p ${DIR}/${ID}/rsync/jupyterhub-custom
-RSYNC=$(which rsync)
-if [[ $RSYNC == "" ]]; then
-    echo "!!! Any changes are not stored automatically. If you install 'rsync' locally, you can start syncing the repositories !!!"
-    exit 0
-fi
-cp -p ${DIR}/templates/rsync.sh ${DIR}/${ID}/rsync/rsync.sh
-sed -i -e "s!<DIR>!${DIR}!g" -e "s!<ID>!${ID}!g" ${DIR}/${ID}/rsync/rsync.sh
-/bin/bash ${DIR}/${ID}/rsync/rsync.sh &
-PID=$!
-echo -n "${PID}" > ${DIR}/${ID}/pids/rsync.pid
-echo "${ID}/rsync/rsync.sh started. PID: ${PID}"
-
-
 if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
+    # Start rsync
+    mkdir -p ${DIR}/${ID}/rsync/jupyterhub-patched
+    mkdir -p ${DIR}/${ID}/rsync/jupyterhub-custom
+fi
+if [[ ${DEVEL_JUPYTERHUB} == "true" || ${DEVEL_TUNNEL} == "true" || ${DEVEL_BACKEND} == "true" ]]; then
+    RSYNC=$(which rsync)
+    if [[ $RSYNC == "" ]]; then
+        echo "!!! Any changes are not stored automatically. If you install 'rsync' locally, you can start syncing the repositories !!!"
+        exit 0
+    fi
+
+    cp -p ${DIR}/templates/rsync.sh ${DIR}/${ID}/rsync/rsync.sh
+    sed -i -e "s!<DIR>!${DIR}!g" -e "s!<ID>!${ID}!g" ${DIR}/${ID}/rsync/rsync.sh
+    /bin/bash ${DIR}/${ID}/rsync/rsync.sh &
+    PID=$!
+    echo -n "${PID}" > ${DIR}/${ID}/pids/rsync.pid
+    echo "${ID}/rsync/rsync.sh started. PID: ${PID}"
     echo "---------- Run remote JupyterHub in VSCode (Remote-SSH plugin required) ----------" 
     echo "1. Open empty VSCode"
     echo "2. ctrl+shift+p -> Remote-SSH: Open SSH Configuration File"
     echo "  - Add this: ${DIR}/${ID}/files/ssh_config"
     echo "3. ctrl+shift+p -> Remote-SSH: Connect to Host"
-    echo "  - jupyterhub-${ID}" 
+    echo "  - jupyterhub-${ID} (or any other service in debug mode)" 
     echo "4. Install 'Python' extension via VSCode on jupyterhub-${ID}"
     echo "5. Open folder /home/jupyterhub"
     echo "6. Run JupyterHub in debug mode via VSCode"
     echo "7. Open http://jupyterhub-${ID}.${NAMESPACE}.svc in your Browser."
     echo "8. /home/jupyterhub/jupyterhub-[custom|patched] will be synched every 60 seconds to ${ID}/rsync on your machine. So no need to panic if a pod crashes. Your changes are save"
+else
+    echo "1. Open http://jupyterhub-${ID}.${NAMESPACE}.svc in your Browser."
 fi
