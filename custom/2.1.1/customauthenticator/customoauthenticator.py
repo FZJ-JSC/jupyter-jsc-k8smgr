@@ -6,7 +6,7 @@ from audioop import adpcm2lin
 from datetime import datetime
 from datetime import timedelta
 
-from custom_utils import get_vos
+from custom_utils import get_vos, VoException
 from custom_utils.backend_services import drf_request
 from custom_utils.backend_services import drf_request_properties
 from jupyterhub.handlers.login import LogoutHandler
@@ -209,9 +209,15 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         username = authentication.get("name", "unknown")
         admin = authentication.get("admin", False)
 
-        vo_active, vo_available = get_vos(
-            authentication["auth_state"], self.custom_config, username, admin=admin
-        )
+        try:
+            vo_active, vo_available = get_vos(
+                authentication["auth_state"], self.custom_config, username, admin=admin
+            )
+        except VoException as e:
+            authenticator.log.warning(
+                "Could not get vo for user - {}".format(e)
+            )
+            raise e
         authentication["auth_state"]["vo_active"] = vo_active
         authentication["auth_state"]["vo_available"] = vo_available
 

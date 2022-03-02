@@ -2,6 +2,12 @@ import json
 import os
 
 
+class VoException(Exception):
+     def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
 def get_vos(auth_state, custom_config, username, admin):
     used_authenticator = auth_state.get("oauth_user", {}).get(
         "used_authenticator_attr", "unknown"
@@ -17,13 +23,15 @@ def get_vos(auth_state, custom_config, username, admin):
         ):
             vos_with_weight.append((vo_name, vo_infos.get("weight", 99)))
     vos_with_weight.sort(key=lambda x: x[1])
-
+    
     vo_available = []
     for x in vos_with_weight:
         vo_available.append(x[0])
         if vo_config.get(x[0], {}).get("exclusive", False):
             vo_available = [x[0]]
             break
+    if len(vo_available) == 0:
+        raise VoException(f"No vo available for user {username}")
 
     vo_active = auth_state.get("vo_active", None)
     if not vo_active or vo_active not in vo_available:
