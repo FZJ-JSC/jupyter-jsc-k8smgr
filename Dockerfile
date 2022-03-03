@@ -24,8 +24,7 @@ RUN apt update && apt install -y git \
  && git clone -b ${JUPYTERHUB_VERSION} https://github.com/jupyterhub/jupyterhub.git /src/jupyterhub \
  && rm -rf /src/jupyterhub/.git* \
  && apt remove -y git \
- && chown -R jupyterhub:users /src/jupyterhub \
- && pip3 install -r /src/jupyterhub/dev-requirements.txt
+ && chown -R jupyterhub:users /src/jupyterhub
 COPY --chown=jupyterhub:users ./patches/${JUPYTERHUB_VERSION}/patch_files /src/patches/${JUPYTERHUB_VERSION}/patch_files
 COPY --chown=jupyterhub:users ./patches/install_patches.sh /src/patches/install_patches.sh
 RUN /src/patches/install_patches.sh
