@@ -9,9 +9,8 @@ from datetime import timedelta
 from custom_utils import get_vos, VoException
 from custom_utils.backend_services import drf_request
 from custom_utils.backend_services import drf_request_properties
-from jupyterhub.handlers.login import LogoutHandler
 from oauthenticator.generic import GenericOAuthenticator
-from oauthenticator.oauth2 import OAuthLoginHandler
+from oauthenticator.oauth2 import OAuthLoginHandler, OAuthLogoutHandler
 from oauthenticator.traitlets import Callable
 from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
@@ -41,7 +40,7 @@ class TimedCacheProperty(object):
         return self
 
 
-class BackendLogoutHandler(LogoutHandler):
+class BackendLogoutHandler(OAuthLogoutHandler):
     async def backend_call(self):
         user = self.current_user
         if not user:
@@ -81,7 +80,7 @@ class BackendLogoutHandler(LogoutHandler):
             ca_certs=req_prop["ca_certs"],
         )
         max_revocation_attempts = 1
-        await drf_request(
+        return await drf_request(
             uuidcode,
             req,
             self.log,
@@ -93,8 +92,6 @@ class BackendLogoutHandler(LogoutHandler):
             parse_json=False,
             raise_exception=False,
         )
-
-        return await super().handle_logout()
 
     async def get(self):
         await self.backend_call()
