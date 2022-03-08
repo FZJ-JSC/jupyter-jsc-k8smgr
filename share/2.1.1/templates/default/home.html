@@ -182,12 +182,12 @@
 </div>
 {%- endmacro -%}
 
-{%- macro create_tr(name, active, service, option1, system, account, project, partition, reservation, runtime, nodes, gpus) -%}
+{%- macro create_tr(name, display_name, active, service, option1, system, account, project, partition, reservation, runtime, nodes, gpus) -%}
 <tr data-server-name="{{name}}">
   <td class="details" data-bs-target="#{{name}}-collapse">
     <div class="d-flex mx-auto accordion-icon collapsed"></div>
   </td>
-  <th scope="row">{{ name }}</th>
+  <th scope="row">{{ display_name }}</th>
   <td class="system-td">{{ system }}</td>
   <td class="partition-td">
     {%- if partition == None %}
@@ -224,7 +224,7 @@
 </tr>
 {%- endmacro -%}
 
-{%- macro create_tr_collapse(name) -%} {# Collapsed detailed information #}
+{%- macro create_tr_collapse(name, display_name) -%} {# Collapsed detailed information #}
 <tr data-server-name="{{name}}" class="collapse-tr" style="--bs-table-accent-bg: transparent;">
   {# Remove padding from table data cell to hide the row when collapsed #}
   <td colspan=12 class="p-0">
@@ -254,7 +254,7 @@
               <div class="row mb-3">
                 <label for="{{name}}-name-input" class="col-sm-2 col-form-label">Name</label>
                 <div class="col-sm-10">
-                  <input type="name" class="form-control" id="{{name}}-name-input" value="{{name}}" disabled>
+                  <input type="name" class="form-control" id="{{name}}-name-input" value="{{display_name}}" disabled>
                 </div>
               </div>
               {{ form_div("Type", name) }}
@@ -453,7 +453,7 @@
         {%- set user_options = spawner.user_options -%}
         {%- if user_options -%}
         {# {{user_options}} #}
-        {%- set name = user_options.get("name") -%}
+        {%- set display_name = user_options.get("name") -%}
         {%- set service = user_options.get("service").split('/')[0] -%}
         {%- set option = user_options.get("service").split('/')[1] -%}
         {%- set system = user_options.get("system", None) -%}
@@ -466,8 +466,8 @@
         {%- set gpus = user_options.get("gpus", None) -%}
         {# Exclude dashboards and juniq labs #}
         {%- if service != "Dashboard" and user_options.get("vo", "default") != "juniq" -%}
-        {{ create_tr(name, s.active, service, option, system, account, project, partition, reservation, runtime, nodes, gpus) }}
-        {{ create_tr_collapse(name) }}
+        {{ create_tr(spawner.name, display_name, s.active, service, option, system, account, project, partition, reservation, runtime, nodes, gpus) }}
+        {{ create_tr_collapse(spawner.name, display_name) }}
         {%- set tbody_ns.table_has_rows = True -%}
         {%- endif -%}
         {%- endif -%}
@@ -496,8 +496,6 @@ var user_options = {};
 user_options["{{spawner.name}}"] = {{ user_options | tojson }}
 {%- endif -%}
 {%- endfor %}
-
-require(["home-components"]);
 </script>
 
 <script>
@@ -589,22 +587,28 @@ $(document).ready(function () {
 </script>
 
 <script>
+function get_id(element) {
+  var id_array = element.attr("id").split('-');
+  var id = id_array.slice(0,-2).join('-');
+  return id;
+}
+
 /* On user chaning JupyterLab configurations */
 $("select[id*=type]").change(function() {
-  var id = $(this).attr("id").split('-')[0];
+  var id = get_id($(this));
   var option = $(this).val();
   updateSystems(id, option);
 });
 
 $("select[id*=system]").change(function() {
-  var id = $(this).attr("id").split('-')[0];
+  var id = get_id($(this));
   var option = $("select#" + id + "-type-select").val();
   var system = $(this).val();
   updateAccounts(id, option, system);
 });
 
 $("select[id*=account]").change(function() {
-  var id = $(this).attr("id").split('-')[0];
+  var id = get_id($(this));
   var option = $("select#" + id + "-type-select").val();
   var system = $("select#" + id + "-system-select").val();
   var account = $(this).val();
@@ -612,7 +616,7 @@ $("select[id*=account]").change(function() {
 });
 
 $("select[id*=project]").change(function() {
-  var id = $(this).attr("id").split('-')[0];
+  var id = get_id($(this));
   var option = $("select#" + id + "-type-select").val();
   var system = $("select#" + id + "-system-select").val();
   var account = $("select#" + id + "-account-select").val();
@@ -621,7 +625,7 @@ $("select[id*=project]").change(function() {
 });
 
 $("select[id*=partition]").change(function() {
-  var id = $(this).attr("id").split('-')[0];
+  var id = get_id($(this));
   var option = $("select#" + id + "-type-select").val();
   var system = $("select#" + id + "-system-select").val();
   var account = $("select#" + id + "-account-select").val();

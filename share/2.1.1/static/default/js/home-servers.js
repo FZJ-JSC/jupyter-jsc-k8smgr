@@ -339,8 +339,8 @@ require(["jquery", "jhapi", "utils"], function (
     var tr = $(this).parents("tr").prev();
     var alert = $(this).siblings(".alert");
 
-    var name = $(this).attr("id").split('-')[0];
-    var server_name = collapse.find("input[id*=name]").val();
+    var server_name = get_id($(this));
+    var display_name = collapse.find("input[id*=name]").val();
     var options = createDataDict(collapse);
 
     api.update_named_server(user, server_name, {
@@ -351,15 +351,15 @@ require(["jquery", "jhapi", "utils"], function (
         // Update user options
         user_options[name] = options;
         // Update alert message
-        alert.children("span").text(`Successfully updated ${server_name}.`);
+        alert.children("span").text(`Successfully updated ${display_name}.`);
         alert.removeClass("alert-danger pe-none");
         alert.addClass("alert-success show");
         // Disable edit buttons again
-        $("#" + name + "-save-btn").attr("disabled", true);
-        $("#" + name + "-reset-btn").attr("disabled", true);
+        $("#" + server_name + "-save-btn").attr("disabled", true);
+        $("#" + server_name + "-reset-btn").attr("disabled", true);
       },
       error: function (xhr, textStatus, errorThrown) {
-        alert.children("span").text(`Could not update ${server_name}. Error: ${xhr.status} ${errorThrown}`);
+        alert.children("span").text(`Could not update ${display_name}. Error: ${xhr.status} ${errorThrown}`);
         alert.removeClass("alert-success pe-none");
         alert.addClass("alert-danger show");
       }
@@ -371,31 +371,32 @@ require(["jquery", "jhapi", "utils"], function (
     var tr = $(this).parents("tr").prev();
     var alert = $(this).siblings(".alert");
 
-    var name = $(this).attr("id").split('-')[0];
+    var server_name = get_id($(this));
+    var display_name = collapse.find("input[id*=name]").val();
     var options = user_options[name];
 
-    api.update_named_server(user, name, {
+    api.update_named_server(user, server_name, {
       data: JSON.stringify(options),
       success: function () {
         // setValues and removeWarning from new_home.html
-        setValues(name, user_options[name]);
-        removeWarnings(name); // Remove all warning badges
+        setValues(server_name, user_options[server_name]);
+        removeWarnings(server_name); // Remove all warning badges
         // Update table data entries
         updateTr(collapse, tr)
         // Show first tab after resetting values
-        var trigger = $("#" + name + "-service-tab");
+        var trigger = $("#" + server_name + "-service-tab");
         var tab = new bootstrap.Tab(trigger);
         tab.show();
         // Update alert message
-        alert.children("span").text(`Successfully reverted settings back for ${name}.`);
+        alert.children("span").text(`Successfully reverted settings back for ${display_name}.`);
         alert.removeClass("alert-danger pe-none");
         alert.addClass("alert-success show");
         // Disable edit buttons again
-        $("#" + name + "-save-btn").attr("disabled", true);
-        $("#" + name + "-reset-btn").attr("disabled", true);
+        $("#" + server_name + "-save-btn").attr("disabled", true);
+        $("#" + nserver_nameame + "-reset-btn").attr("disabled", true);
       },
       error: function (xhr, textStatus, errorThrown) {
-        alert.children("span").text(`Could not update ${name}. Error: ${xhr.status} ${errorThrown}`);
+        alert.children("span").text(`Could not update ${display_name}. Error: ${xhr.status} ${errorThrown}`);
         alert.removeClass("alert-success pe-none");
         alert.addClass("alert-danger show");
       }
@@ -408,7 +409,7 @@ require(["jquery", "jhapi", "utils"], function (
   // Check if there are changes and thus if the save and revert buttons should be enabled
   $("select, input").change(function () {
     var that = $(this);
-    var id = $(this).attr("id").split('-')[0];
+    var id = get_id(that);
     var option = $(this).attr("id").split('-')[1];
     var options = user_options[id];
 

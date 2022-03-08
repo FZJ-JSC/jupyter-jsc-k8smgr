@@ -53,7 +53,7 @@ $("[id*=tab-warning]").on("change", function () {
 
 // Remove warning icons when clicking on inputs
 function onFocus(select, tab_name, setting = "select") {
-  var id = select.attr("id").split('-')[0];
+  var id = get_id(select);
   var warning_id = select.attr("id").replace("-" + setting, "-warning");
   select.removeClass("border-warning");
   $("#" + warning_id).hide();
@@ -135,7 +135,7 @@ $(".progress-log-btn").on("click", function (event) {
   var hidden = collapse.css("display") == "none" ? true : false;
   var name = tr.data("server-name");
   // Do not hide collapse if already open, but not showing the logs tab
-  if (!hidden && !$("#" + name + "-logs-tab").hasClass("active")) {
+  if (!hidden && !$("#" + name + "-logs-tab").hasClass("show")) {
     event.preventDefault();
     event.stopPropagation();
   }
