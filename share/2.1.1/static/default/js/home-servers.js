@@ -230,12 +230,12 @@ require(["jquery", "jhapi", "utils"], function (
     // Automatically set name if none was specified
     if (display_name == "") {
       var c = 1;
-      do {
-        var servername = "jupyterlab_" + c;
-        c += 1;
-      } while ($(`[data-server-name=${servername}]`).length > 0)
-      $("#new_jupyterlab-name-input").val(servername); // Set name for user
-      display_name = servername;
+      $("th[scope=row]").each(function() {
+        var name = $(this).html();
+        if ( RegExp(/^jupyterlab_[0-9]*[0-9]$/).test(name) ) c+=1;
+      })
+      display_name = "jupyterlab_" + c;
+      $("#new_jupyterlab-name-input").val(display_name); // Set name for user
     }
 
     $(this).attr("disabled", true);
