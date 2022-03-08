@@ -168,6 +168,8 @@
     "demo_site_NOBATCH": "nobatch"
   },
 
+  "map_user_options": {},
+
   "default_partitions": {
     "juwels": ["juwels_devel"],
     "juwels_booster": ["juwels_develbooster"],

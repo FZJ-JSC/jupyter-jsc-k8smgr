@@ -102,6 +102,13 @@ class BackendSpawner(Spawner):
 
         auth_state = await self.user.get_auth_state()
 
+        def map_user_options():
+            config = self.user.authenticator.custom_config
+            ret = {}
+            for key, value in self.user_options.items():
+                ret[config.get("map_user_options").get(key, key)] = value
+            return ret
+
         # Test setup
         user_options = {
             "service": "JupyterLab/JupyterLab-no-tunnel",
@@ -117,6 +124,7 @@ class BackendSpawner(Spawner):
             "auth_state": auth_state,
             "env": env,
             "user_options": user_options,
+            # "user_options": map_user_options()
         }
 
         custom_config = self.user.authenticator.custom_config
@@ -291,16 +299,19 @@ class BackendSpawner(Spawner):
         service = query_options.get("service", "JupyterLab")
         if type(service) == list:
             service = service[0]
+        service_type = service.split('/')[0]
+
         services = self.user.authenticator.custom_config.get("services")
-        if service in services.keys():
+        if service_type in services.keys():
             return await get_options_form(
-                spawner, service, services[service].get("options", {})
+                spawner, service, services[service_type].get("options", {})
             )
-        raise NotImplementedError(f"{service} unknown")
+        raise NotImplementedError(f"Service type {service_type} from {service} unknown")
 
     async def options_from_form(self, formdata):
         custom_config = self.user.authenticator.custom_config
-        service = formdata.get("service_input", [""])[0]
-        if service in custom_config.get("services").keys():
+        service = formdata.get("service", [""])[0]
+        service_type = service.split('/')[0]
+        if service_type in custom_config.get("services").keys():
             return await get_options_from_form(formdata, custom_config)
-        raise NotImplementedError("{} unknown".format(formdata.get("service_input")))
+        raise NotImplementedError(f"Service type {service_type} from {service} unknown")
