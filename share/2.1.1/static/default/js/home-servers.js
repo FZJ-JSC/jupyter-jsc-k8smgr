@@ -196,6 +196,7 @@ require(["jquery", "jhapi", "utils"], function (
 
         },
         error: function (xhr, textStatus, errorThrown) {
+          // newTab.location.reload();
           progress_bar.css("width", "100%");
           progress_bar.attr("aria-valuenow", 100);
           progress_bar.addClass("bg-danger");
@@ -212,39 +213,50 @@ require(["jquery", "jhapi", "utils"], function (
   }
 
   function startNewServer() {
+    function uuidv4() {
+      return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+      );
+    }
+
+    function uuid_with_letter_start() {
+      let uuid = uuidv4();
+      let char = Math.random().toString(36).substr(2, 1);
+      return char + uuid.substring(1);
+    }
+
+    var server_name = uuid_with_letter_start();
+    var display_name = $("#new_jupyterlab-name-input").val();
+    // Automatically set name if none was specified
+    if (display_name == "") {
+      var c = 1;
+      do {
+        var servername = "jupyterlab_" + c;
+        c += 1;
+      } while ($(`[data-server-name=${servername}]`).length > 0)
+      $("#new_jupyterlab-name-input").val(servername); // Set name for user
+      display_name = servername;
+    }
+
     $(this).attr("disabled", true);
     var button = $(this);
     var spinner = $(this).children().first();
     var alert = $(this).siblings(".alert");
     spinner.removeClass("d-none");
 
-    // askForNotificationPermission();
-
-    // Automatically set name if none was specified
-    var name = $("#new_jupyterlab-name-input").val();
-    if (name == "") {
-      var c = 1;
-      do {
-        var servername = "jupyterlab_" + c;
-        c += 1;
-      } while ($(`[data-server-name=${servername}]`).length > 0)
-      name = servername;
-    }
-
     var url = utils.url_path_join(base_url, "spawn", user, name);
-    url = createUrlAndUpdateTr(url, $("#new_jupyterlab-configuration"));
+    url = createUrlAndUpdateTr(url, $("#new_jupyterlab-configuration"), display_name);
     $(this).attr("href", url);
 
-    var search_element = $("#new_jupyterlab-dialog").find(".modal-content");
-    var options = createDataDict(search_element);
-    // console.log(url);
+    var parent = $("#new_jupyterlab-dialog").find(".modal-content");
+    var options = createDataDict(parent, display_name);
 
     try {
       $("form[id*=new_jupyterlab]").submit();
       var newTab = window.open("about:blank");
-      alert.children("span").text(`Waiting for ${name} to start...`);
+      alert.children("span").text(`Waiting for ${display_name} to start...`);
       alert.removeClass("alert-danger").addClass("show alert-dark");
-      api.start_named_server(user, name, {
+      api.start_named_server(user, server_name, {
         data: JSON.stringify(options),
         success: function () {
           newTab.location.href = url;
@@ -257,10 +269,11 @@ require(["jquery", "jhapi", "utils"], function (
           location.reload();
         },
         error: function (xhr, textStatus, errorThrown) {
+          // newTab.location.reload();
           spinner.addClass("d-none");
           button.removeAttr("disabled");
           alert.removeClass("alert-dark").addClass("show alert-danger");
-          alert.children("span").text(`Could not start ${name}. Error: ${xhr.status} ${errorThrown}`);
+          alert.children("span").text(`Could not start ${display_name}. Error: ${xhr.status} ${errorThrown}`);
         }
       });
     } catch (e) {
@@ -391,7 +404,7 @@ require(["jquery", "jhapi", "utils"], function (
 
   $(".save").click(saveChanges);
   $(".reset").click(revertChanges);
-  
+
   // Check if there are changes and thus if the save and revert buttons should be enabled
   $("select, input").change(function () {
     var that = $(this);
@@ -427,27 +440,30 @@ require(["jquery", "jhapi", "utils"], function (
   /*
   Util functions
   */
-  function createUrlAndUpdateTr(url, collapse, tr) {
-    url += "?vo_active_input=" + $("#vo-form input[type='radio']:checked").val();
-    url += "&service_input=" + "JupyterLab";
+  function createUrlAndUpdateTr(url, parent, display_name, tr) {
+    url += "?vo=" + $("#vo-form input[type='radio']:checked").val();
+    url += "&name=" + display_name;
 
-    function addParameter(param, option_name = null, input = false) {
-      if (!option_name) var option_name = param + "_input";
-
+    function addParameter(param, input = false) {
       if (input) { // <input>
-        var input = collapse.find(`input[id*=${param}]`);
+        var input = parent.find(`input[id*=${param}]`);
         var parent_div = input.parents(".row").first();
         if (parent_div.css("display") == "none") {
           return;
         }
         var value = input.val();
-        if (option_name == "resource_Runtime") {
+        if (param == "runtime") {
           value = value * 60;
         }
       }
       else { // <select>
-        var select = collapse.find(`select[id*=${param}]`);
+        var select = parent.find(`select[id*=${param}]`);
         var value = select.val();
+
+        if (param == "type") {
+          param = "service";
+          value = "JupyterLab/" + value;
+        }
 
         // For new jupterlabs, no tr exists that can be updated
         if (tr) {
@@ -468,59 +484,60 @@ require(["jquery", "jhapi", "utils"], function (
         }
       }
 
-      if (value != null && value != "") url += "&" + option_name + "=" + value;
+      if (value != null && value != "") url += "&" + param + "=" + value;
     }
 
-    addParameter("type", "options_input");
+    addParameter("type");  // service
     addParameter("system");
     addParameter("account");
     addParameter("project");
     addParameter("partition");
     addParameter("reservation");
-    addParameter("nodes", "resource_Nodes", true);
-    addParameter("gpus", "resource_GPUS", true);
-    addParameter("runtime", "resource_Runtime", true);
-
+    addParameter("nodes", true);
+    addParameter("gpus", true);
+    addParameter("runtime", true);
     return url;
   }
 
-  function createDataDict(collapse) {
+  function createDataDict(parent, display_name) {
     var user_options = {}
-    user_options["vo_active_input"] = $("#vo-form input[type='radio']:checked").val();
-    user_options["service_input"] = "JupyterLab";
+    user_options["vo"] = $("#vo-form input[type='radio']:checked").val();
+    user_options["name"] = display_name;
 
-    function addParameter(param, option_name = null, input = false) {
-      if (!option_name) var option_name = param + "_input";
-
+    function addParameter(param, input = false) {
       if (input) { // <input>
-        var input = collapse.find(`input[id*=${param}]`);
+        var input = parent.find(`input[id*=${param}]`);
         var parent_div = input.parents(".row").first();
         if (parent_div.css("display") == "none") {
           return;
         }
         var value = input.val();
-        if (option_name == "resource_Runtime") {
+        if (param == "runtime") {
           value = value * 60;
         }
       }
       else { // <select>
-        var select = collapse.find(`select[id*=${param}]`);
+        var select = parent.find(`select[id*=${param}]`);
         var value = select.val();
+        if (param == "type") {
+          value = "JupyterLab/" + value;
+          user_options["service"] = value;
+          return;
+        }
       }
 
-      if (value != null) user_options[option_name] = value;
+      if (value != null) user_options[param] = value;
     }
 
-    addParameter("type", "options_input");
+    addParameter("type"); // service
     addParameter("system");
     addParameter("account");
     addParameter("project");
     addParameter("partition");
     addParameter("reservation");
-    addParameter("nodes", "resource_Nodes", true);
-    addParameter("gpus", "resource_GPUS", true);
-    addParameter("runtime", "resource_Runtime", true);
-
+    addParameter("nodes", true);
+    addParameter("gpus", true);
+    addParameter("runtime", true);
     return user_options;
   }
 

@@ -378,11 +378,9 @@
                   </label>
                   <div class="col-sm-9">
                     <input type="name" class="form-control" id="{{new}}-name-input" 
-                      pattern="^[a-z0-9_]*$" maxlength="30"
-                      placeholder="Please give your configuration a name.">
-                    <small class="text-muted">Supported characters are a-z, 0-9 and '_'.</small>
+                      maxlength="30" placeholder="Please give your configuration a name.">
                     <div class="invalid-feedback">
-                      <b>Supported characters are a-z, 0-9 and '_'.</b>
+                      <b>Your name is too long, max=30.</b>
                     </div>
                   </div>
                 </div>
@@ -454,20 +452,22 @@
         {%- set spawner = s.orm_spawner -%}
         {%- set user_options = spawner.user_options -%}
         {%- if user_options -%}
-        {%- set service = user_options.get("service_input") -%}
-        {%- set option = user_options.get("options_input", "JupyterLab") -%}
-        {%- set system = user_options.get("system_input", None) -%}
-        {%- set account = user_options.get("account_input", None) -%}
-        {%- set project = user_options.get("project_input", None) -%}
-        {%- set partition = user_options.get("partition_input", None) -%}
-        {%- set reservation = user_options.get("reservation_input", None) -%}
-        {%- set nodes = user_options.get("resource_nodes", None) -%}
-        {%- set runtime = user_options.get("resource_runtime", None) -%}
-        {%- set gpus = user_options.get("resource_gpus", None) -%}
+        {# {{user_options}} #}
+        {%- set name = user_options.get("name") -%}
+        {%- set service = user_options.get("service").split('/')[0] -%}
+        {%- set option = user_options.get("service").split('/')[1] -%}
+        {%- set system = user_options.get("system", None) -%}
+        {%- set account = user_options.get("account", None) -%}
+        {%- set project = user_options.get("project", None) -%}
+        {%- set partition = user_options.get("partition", None) -%}
+        {%- set reservation = user_options.get("reservation", None) -%}
+        {%- set nodes = user_options.get("nodes", None) -%}
+        {%- set runtime = user_options.get("runtime", None) -%}
+        {%- set gpus = user_options.get("gpus", None) -%}
         {# Exclude dashboards and juniq labs #}
-        {%- if user_options.get("service_input", "Dashboard") != "Dashboard" and user_options.get("vo_active_input", "default") != "juniq" -%}
-        {{ create_tr(spawner.name, s.active, service, option, system, account, project, partition, reservation, runtime, nodes, gpus) }}
-        {{ create_tr_collapse(spawner.name) }}
+        {%- if service != "Dashboard" and user_options.get("vo", "default") != "juniq" -%}
+        {{ create_tr(name, s.active, service, option, system, account, project, partition, reservation, runtime, nodes, gpus) }}
+        {{ create_tr_collapse(name) }}
         {%- set tbody_ns.table_has_rows = True -%}
         {%- endif -%}
         {%- endif -%}
@@ -482,11 +482,6 @@
     </table>
   </div>
 </div>
-
-{%- for s in named_spawners -%}
-
-{% endfor %}
-
 {%- endblock -%}
 
 
@@ -497,7 +492,7 @@ var user_options = {};
 {%- for s in named_spawners -%}
 {%- set spawner = s.orm_spawner -%}
 {%- set user_options = spawner.user_options -%}
-{%- if user_options and user_options.get("service_input") == "JupyterLab" and user_options.get("vo_active_input") != "juniq"%}
+{%- if user_options and user_options.get("service").startswith("JupyterLab") and user_options.get("vo") != "juniq"%}
 user_options["{{spawner.name}}"] = {{ user_options | tojson }}
 {%- endif -%}
 {%- endfor %}
@@ -544,15 +539,15 @@ $("#{{new}}-dialog").on('hidden.bs.modal', function (event) {
 /* Set initial values */
 function setValues(name, options) {
   var id = name;
-  var option1 = options["options_input"];
-  var system = options["system_input"];
-  var account = options["account_input"];
-  var project = options["project_input"];
-  var partition = options["partition_input"];
-  var reservation = options["reservation_input"];
-  var nodes = options["resource_Nodes"];
-  var runtime = options["resource_Runtime"];
-  var gpus = options["resource_GPUS"];
+  var option1 = options["service"].split('/')[1];
+  var system = options["system"];
+  var account = options["account"];
+  var project = options["project"];
+  var partition = options["partition"];
+  var reservation = options["reservation"];
+  var nodes = options["nodes"];
+  var runtime = options["runtime"];
+  var gpus = options["gpus"];
 
   if (!account) account = "None";
   if (!project) project = "None";

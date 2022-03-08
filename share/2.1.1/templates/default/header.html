@@ -24,24 +24,24 @@
   <ul class="dropdown-menu dropdown-menu-end">
     {%- set vo_available = auth_state.get("vo_available", []) -%}
     {%- set vo_active = auth_state.get("vo_active") -%}  
-    {%- if vo_available|length > 1 %}
-    <li>
-      <h6 class="dropdown-header">
-        Group (<a href="/hub/groups">?</a>)
-      </h6>
-    </li>
-    <form id="vo-form" class="px-4">
-      {#- Need to set value in js as <option selected> does not work for some reason #}
-      <span id="vo-active" class="d-none">{{vo_active}}</span>
-      {%- for vo in vo_available %}
-      <div class="form-check">
-        <input class="form-check-input" type="radio" name="vo-radio" id="{{vo}}-radio" value="{{vo}}">
-        <label class="form-check-label" for="{{vo}}-radio">{{ vo }}</label>
-      </div>
-      {%- endfor %}
-    </form>
-    <li><hr class="dropdown-divider"></li>
-    {%- endif -%}
+    <div class="{%- if vo_available|length <= 1 -%} d-none {%- endif -%}">
+      <li>
+        <h6 class="dropdown-header">
+          Group (<a href="/hub/groups">?</a>)
+        </h6>
+      </li>
+      <form id="vo-form" class="px-4">
+        {#- Need to set value in js as <option selected> does not work for some reason #}
+        <span id="vo-active" class="d-none">{{vo_active}}</span>
+        {%- for vo in vo_available %}
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="vo-radio" id="{{vo}}-radio" value="{{vo}}">
+          <label class="form-check-label" for="{{vo}}-radio">{{ vo }}</label>
+        </div>
+        {%- endfor %}
+      </form>
+      <li><hr class="dropdown-divider"></li>
+    </div>
 
     {%- if auth_state and auth_state.get("last_login", False) %}
     <li><h6 class="dropdown-header">Last login</h6></li>
