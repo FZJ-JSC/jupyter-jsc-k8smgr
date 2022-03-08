@@ -221,7 +221,7 @@ require(["jquery", "jhapi", "utils"], function (
 
     function uuid_with_letter_start() {
       let uuid = uuidv4();
-      let char = Math.random().toString(36).substr(2, 1);
+      let char = Math.random().toString(36).match(/[a-zA-Z]/)[0];
       return char + uuid.substring(1);
     }
 
