@@ -16,7 +16,7 @@
 {%- set new = "new_jupyterlab" -%} {# id for new jupyterlabs #}
 
 
-{%- macro table_actions(name, active, service, option1, system, account, project, partition, reservation, runtime, nodes, gpus) -%}
+{%- macro table_actions(name, active, pending, service, option1, system, account, project, partition, reservation, runtime, nodes, gpus) -%}
 {# Set config related variables #}
 {%- set vo_allowed_list = vo_services.get(service, {}).get(option1, {}).get("replace_allowed_lists", {}) -%}
 {%- set vo_resources = vo_services.get(service, {}).get(option1, {}).get("replace_resources", {}) -%}
@@ -93,8 +93,18 @@
     Open
   </button>
   {%- endif -%}
+  {# Cancel #}
+  <button type="button" class="btn btn-danger cancel {%- if not active %} d-none {%- endif -%} 
+    {%- if active and pending == None %} d-none {%- endif -%}">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stop-circle" viewBox="0 0 16 16">
+      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+      <path d="M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z"/>
+    </svg>
+    Stop
+  </button>
   {# Stop #}
-  <button type="button" class="btn btn-danger stop {%- if not active %} d-none {%- endif -%}">
+  <button type="button" class="btn btn-danger stop {%- if not active %} d-none {%- endif -%}
+   {%- if active and pending != None %} d-none {%- endif -%}">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stop-circle" viewBox="0 0 16 16">
       <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
       <path d="M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z"/>
@@ -182,7 +192,7 @@
 </div>
 {%- endmacro -%}
 
-{%- macro create_tr(name, display_name, active, service, option1, system, account, project, partition, reservation, runtime, nodes, gpus) -%}
+{%- macro create_tr(name, display_name, active, pending, service, option1, system, account, project, partition, reservation, runtime, nodes, gpus) -%}
 <tr data-server-name="{{name}}">
   <td class="details" data-bs-target="#{{name}}-collapse">
     <div class="d-flex mx-auto accordion-icon collapsed"></div>
@@ -220,7 +230,7 @@
       </div>
     </div>
   </td>
-   <td class="actions-td">{{ table_actions(name, active, service, option1, system, account, project, partition, reservation, runtime, nodes, gpus) }}</td>
+   <td class="actions-td">{{ table_actions(name, active, pending, service, option1, system, account, project, partition, reservation, runtime, nodes, gpus) }}</td>
 </tr>
 {%- endmacro -%}
 
@@ -466,7 +476,7 @@
         {%- set gpus = user_options.get("gpus", None) -%}
         {# Exclude dashboards and juniq labs #}
         {%- if service != "Dashboard" and user_options.get("vo", "default") != "juniq" -%}
-        {{ create_tr(spawner.name, display_name, s.active, service, option, system, account, project, partition, reservation, runtime, nodes, gpus) }}
+        {{ create_tr(spawner.name, display_name, s.active, s.pending, service, option, system, account, project, partition, reservation, runtime, nodes, gpus) }}
         {{ create_tr_collapse(spawner.name, display_name) }}
         {%- set tbody_ns.table_has_rows = True -%}
         {%- endif -%}
@@ -951,9 +961,9 @@ evtSources = {}
 
 function updateSpawners() {
   {%- for s in named_spawners -%}
-    {%- if s.progress_dic -%}
-      var progress_dic = {{s.progress_dic | tojson}};
-      var last_progress = {{s.progress_number}};
+    {%- if s.events -%}
+      var events = {{s.events | tojson}};
+      var current_progress = events.slice(-1)[0];
 
       var name = "{{s.name}}";
       var progress_bar = $("#" + name + "-progress-bar");
@@ -961,11 +971,11 @@ function updateSpawners() {
 
       var tr = progress_bar.parents("tr");
       var open_btn = tr.find(".open");
-      var stop_btn = tr.find(".stop");
+      var stop_btn = tr.find(".stop, .cancel");
       
       // Append log messages
-      for (const progress in progress_dic) {
-        var html_message = progress_dic[progress]["html_message"];
+      for (const event in events) {
+        var html_message = events[event]["html_message"];
         progress_log.append($("<div>").html(html_message));
         // tab_log.append($("<div>").html(html_message));
       }
@@ -974,15 +984,14 @@ function updateSpawners() {
       // if the spawner if currenty spawning
       {%- if not s.ready and s.active %}
       progress_bar.css("width", "100%");
-      progress_bar.attr("aria-valuenow", last_progress);
-      progress_bar.append( $("b").html(last_progress + "%") );
+      progress_bar.attr("aria-valuenow", current_progress);
+      progress_bar.append( $("b").html(current_progress + "%") );
       // open_btn.addClass("disabled");
-      if (last_progress < {{cancel_progress_activation}}) {
+      if (current_progress < {{cancel_progress_activation}}) {
         stop_btn.addClass("disabled");
       }
       // Disable the delete button during the spawn process
-      var server_name = tr.data("server-name");
-      var collapse = tr.siblings(`.collapse-tr[data-server-name=${server_name}]`);
+      var collapse = $(`.collapse-tr[data-server-name=${name}]`);
       collapse.find(".delete").addClass("disabled");
 
       // Reattach event listener
@@ -996,18 +1005,9 @@ function updateSpawners() {
 
       {%- elif s.active %}
       progress_bar.css("width", "100%");
-      progress_bar.attr("aria-valuenow", last_progress);
+      progress_bar.attr("aria-valuenow", current_progress);
       progress_bar.addClass('bg-success');
       {%- endif %}
-
-    // Try to append logs from last spawn
-    {%- elif s.orm_spawner.progress %}
-    var progress_dic = {{s.orm_spawner.progress | tojson}};
-    var progress_log = $("#{{s.name}}-progress-log");
-    for (const progress in progress_dic) {
-      var html_message = progress_dic[progress]["html_message"];
-      progress_log.append($("<div>").html(html_message));
-    }
     {%- endif %}
   {%- endfor %}
 
@@ -1024,6 +1024,7 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
   var server_name = tr.data("server-name");
   var collapse = tr.siblings(`.collapse-tr[data-server-name=${server_name}]`);
   var open_btn = tr.find(".open");
+  var cancel_btn = tr.find(".cancel");
   var stop_btn = tr.find(".stop");
   var delete_btn = collapse.find(".delete").addClass("disabled");
 
@@ -1039,7 +1040,7 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     delete_btn.addClass("disabled")
 
     if (evt.progress >= {{cancel_progress_activation}}) {
-      stop_btn.removeClass("disabled");
+      cancel_btn.removeClass("disabled");
     }
   }
 
@@ -1059,8 +1060,10 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     delete evtSources[evtSource.name];
     progress_bar.html('');
     progress_bar.addClass("bg-success");
+    cancel_btn.addClass("d-none");
+    stop_btn.removeClass("d-none");
     open_btn.removeClass("disabled");
-    delete_btn.removeClass("disabled")
+    delete_btn.removeClass("disabled");
   }
 
   if (evt.failed) {
@@ -1079,8 +1082,8 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
       tr.find(".start").removeClass("d-none");
     }
     open_btn.addClass("d-none");
-    stop_btn.addClass("d-none");
-    delete_btn.removeClass("disabled")
+    cancel_btn.addClass("d-none");
+    delete_btn.removeClass("disabled");
   }
 }
 </script>

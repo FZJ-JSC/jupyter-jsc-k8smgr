@@ -92,18 +92,29 @@ define(["jquery", "utils"], function ($, utils) {
   JHAPI.prototype.cancel_named_server = function (user, server_name, options) {
     options = options || {};
     options = update(options, { type: "POST" });
-    options.data = JSON.stringify({ error: "cancelclick" });
+    options.data = JSON.stringify({ 
+      failed: true,
+      progress: 100,
+      html_message: "Start cancelled by user."
+     });
     this.api_request(
-      utils.url_path_join("users", user, "servers", server_name, "cancel"),
+      utils.url_path_join("users/progress/update", user, server_name),
       options
     );
   };
 
-  JHAPI.prototype.cancel_server = function (cancel_url, options) {
+  JHAPI.prototype.cancel_server = function (user, options) {
     options = options || {};
     options = update(options, { type: "POST" });
-    options.data = JSON.stringify({ error: "cancelclick" });
-    this.api_request(cancel_url, options);
+    options.data = JSON.stringify({ 
+      failed: true,
+      progress: 100,
+      html_message: "Start cancelled by user."
+     });
+    this.api_request(
+      utils.url_path_join("users/progress/update", user),
+      options
+    );
   };
 
   JHAPI.prototype.stop_named_server = function (user, server_name, options) {

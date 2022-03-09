@@ -72,12 +72,11 @@ require(["jquery", "jhapi", "utils"], function (
     if (running) {
       tr.find(".na").addClass("d-none")
       tr.find(".start").addClass("d-none");
-      tr.find(".delete").addClass("d-none");
       tr.find(".open").removeClass("d-none");
-      tr.find(".stop").removeClass("d-none");
+      tr.find(".cancel").removeClass("d-none");
       // Disable until fitting event received from EventSource
       tr.find(".open").addClass("disabled");
-      tr.find(".stop").addClass("disabled");
+      tr.find(".cancel").addClass("disabled");
     } else {
       if (na == "1") {
         tr.find(".na").removeClass("d-none")
@@ -85,10 +84,10 @@ require(["jquery", "jhapi", "utils"], function (
       } else {
         tr.find(".na").addClass("d-none")
         tr.find(".start").removeClass("d-none");
-        tr.find(".delete").removeClass("d-none");
-        tr.find(".open").addClass("d-none");
-        tr.find(".stop").addClass("d-none");
       }
+      tr.find(".open").addClass("d-none");
+      tr.find(".cancel").addClass("d-none");
+      tr.find(".stop").addClass("d-none");
     }
   }
 
@@ -289,8 +288,8 @@ require(["jquery", "jhapi", "utils"], function (
     window.open(url, "_blank");
   }
 
-  $(".stop").click(cancelServer);
-  // $(".stop").click(stopServer);
+  $(".cancel").click(cancelServer);
+  $(".stop").click(stopServer);
   $(".delete").click(deleteServer);
   $(".start").click(startServer);
   $("#new_jupyterlab-start-btn").click(startNewServer);
