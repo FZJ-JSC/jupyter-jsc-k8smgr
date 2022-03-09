@@ -5,7 +5,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
  from ..utils import url_path_join
  from .base import APIHandler
  
-+from custom_utils.server_limits import named_server_limit_per_user_exceeded
++from custom_utils.server_limit import named_server_limit_per_user_exceeded
 +
  
  class SelfAPIHandler(APIHandler):
@@ -33,7 +33,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
  from .base import BaseHandler
  
  from custom_utils import get_maintenance_list
-+from custom_utils.server_limits import named_server_limit_per_user_exceeded
++from custom_utils.server_limit import named_server_limit_per_user_exceeded
  
  
  class RootHandler(BaseHandler):
