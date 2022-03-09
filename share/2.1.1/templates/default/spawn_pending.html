@@ -321,7 +321,7 @@ require(["jquery", "jhapi", "utils"], function (
     var interv = setInterval(_updateStatus, {{cancel_progress_refresh_rate}});
 
     function _updateStatus() {
-      api.api_request(`/users/${user}/servers/{{spawner.name}}/status`, {
+      api.api_request(`/users/progress/status/${user}/{{spawner.name}}`, {
         success: function(data) {
           progress_bar.width(100);
           console.log(data);
