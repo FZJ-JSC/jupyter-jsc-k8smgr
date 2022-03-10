@@ -1,2 +1,2 @@
-from .customoauthenticator import BackendLogoutHandler
+from .customoauthenticator import CustomLogoutHandler
 from .customoauthenticator import CustomGenericOAuthenticator

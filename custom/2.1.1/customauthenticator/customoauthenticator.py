@@ -1,14 +1,11 @@
+import copy
 import json
 import os
 import re
-import uuid
-from audioop import adpcm2lin
 from datetime import datetime
 from datetime import timedelta
 
 from custom_utils import get_vos, VoException
-from custom_utils.backend_services import drf_request
-from custom_utils.backend_services import drf_request_properties
 from oauthenticator.generic import GenericOAuthenticator
 from oauthenticator.oauth2 import OAuthLoginHandler, OAuthLogoutHandler
 from oauthenticator.traitlets import Callable
@@ -17,6 +14,8 @@ from tornado.httpclient import HTTPRequest
 from traitlets import Dict
 from traitlets import Unicode
 from traitlets import Union
+from urllib.error import HTTPError
+from urllib.parse import urlencode
 
 
 class TimedCacheProperty(object):
@@ -40,65 +39,95 @@ class TimedCacheProperty(object):
         return self
 
 
-class BackendLogoutHandler(OAuthLogoutHandler):
-    async def backend_call(self):
+class CustomLogoutHandler(OAuthLogoutHandler):
+    async def _shutdown_all_services(self, user):
+        pass
+
+    async def revoke_unity_tokens(self, all_devices=False, stop_all=False):
         user = self.current_user
         if not user:
-            self.log.debug("Could not receive current user in backend logout call.")
+            self.log.debug("Could not retrieve current user for logout call.")
             return
-        custom_config = user.authenticator.custom_config
-        req_prop = drf_request_properties("backend", custom_config, self.log)
-        if not req_prop:
-            return
-        backend_revoke_url = req_prop.get("urls", {}).get("token_revokation", "None")
-        jhub_user_id = user.orm_user.id
-        auth_state = await user.get_auth_state()
-        access_token = auth_state.get("access_token", None)
-        refresh_token = auth_state.get("refresh_token", None)
-        tokens = {}
-        if access_token:
-            tokens["access_token"] = access_token
-        if refresh_token:
-            tokens["refresh_token"] = refresh_token
-        arguments = self.request.query_arguments
-        body = {
-            "stop_services": arguments.get("stop_services", [b"false"])[0]
-            .decode()
-            .lower()
-            == "true",
-            "tokens": tokens,
-            "jhub_user_id": jhub_user_id,
-        }
-        uuidcode = uuid.uuid4().hex
-        req = HTTPRequest(
-            f"{backend_revoke_url}?uuidcode={uuidcode}",
-            method="POST",
-            headers=req_prop["headers"],
-            body=json.dumps(body),
-            request_timeout=req_prop["request_timeout"],
-            validate_cert=req_prop["validate_cert"],
-            ca_certs=req_prop["ca_certs"],
-        )
-        max_revocation_attempts = 1
-        return await drf_request(
-            uuidcode,
-            req,
-            self.log,
-            user.authenticator.fetch,
-            "revocation",
-            user.name,
-            f"{user.name}::token_revocation",
-            max_revocation_attempts,
-            parse_json=False,
-            raise_exception=False,
-        )
+
+        if user.authenticator.enable_auth_state:
+            auth_state = await user.get_auth_state()
+            tokens = {}
+
+            access_token = auth_state.get("access_token", None)
+            if access_token:
+                tokens["access_token"] = access_token
+                auth_state["access_token"] = None
+                auth_state["exp"] = "0"
+            # Only revoke refresh token if we logout from all devices and stop all services
+            if all_devices and (stop_all or not user.active):
+                refresh_token = auth_state.get("refresh_token", None)
+                if refresh_token:
+                    tokens["refresh_token"] = refresh_token
+                    auth_state["refresh_token"] = None
+            if stop_all:
+                self._shutdown_all_services(user)
+
+            custom_config = user.authenticator.custom_config
+            unity_revoke_config = custom_config.get("unity", {}).get("revoke", {})
+
+            unity_revoke_url = unity_revoke_config.get("url", "")
+            unity_revoke_certificate = unity_revoke_config.get("certificate_path", False)
+            unity_revoke_request_timeout = unity_revoke_config.get("request_timeout", 10)
+            unity_revoke_expected_status_code = unity_revoke_config.get("expected_status_code", 200)
+            client_id = unity_revoke_config.get("client_id", "oauth-client")
+
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded",
+            }
+            data = {"client_id": client_id, "logout": "true"}
+            ca_certs = unity_revoke_certificate if unity_revoke_certificate else None
+            validate_cert = True if ca_certs else False
+
+            log_extras = {
+                "unity_revoke_url": unity_revoke_url,
+                "unity_revoke_certificate": unity_revoke_certificate,
+                "unity_revoke_request_timeout": unity_revoke_request_timeout,
+                "unity_revoke_expected_status_code": unity_revoke_expected_status_code,
+                "data": copy.deepcopy(data),
+            }
+
+            for key, value in tokens.items():
+                data["token_type_hint"] = key
+                data["token"] = value
+                log_extras["data"]["token_type_hint"] = key
+                log_extras["data"]["token"] = "***"
+                try:
+                    req = HTTPRequest(
+                        f"{unity_revoke_url}",
+                        method="POST",
+                        headers=headers,
+                        body=urlencode(data),
+                        request_timeout=unity_revoke_request_timeout,
+                        validate_cert=validate_cert,
+                        ca_certs=ca_certs,
+                    )
+                    resp = await user.authenticator.fetch(req)
+                    if resp and resp.code != unity_revoke_expected_status_code:
+                        raise Exception(
+                            f"Received unexpected status code: {resp.code} != {unity_revoke_expected_status_code}"
+                        )
+                except (HTTPError, HTTPClientError):
+                    self.log.critical(f"Could not revoke token", extra=log_extras, exc_info=True)
+                except:
+                    self.log.critical("Could not revoke token.", extra=log_extras, exc_info=True)
+                else:
+                    self.log.debug(f"Unity revoke {key} call successful.", extra=log_extras)
+                    user.save_auth_state(auth_state)
 
     async def get(self):
-        await self.backend_call()
+        arguments = self.request.query_arguments
+        all_devices = arguments.get("alldevices", [b"false"])[0].decode().lower() == "true"
+        stop_all = arguments.get("stopall", [b"false"])[0].decode().lower() == "true"
+        await self.revoke_unity_tokens(all_devices, stop_all)
         return await super().get()
 
 
-class CustomGenericLoginHandler(OAuthLoginHandler):
+class CustomLoginHandler(OAuthLoginHandler):
     def authorize_redirect(self, *args, **kwargs):
         extra_params = kwargs.setdefault("extra_params", {})
         if self.authenticator.extra_params_allowed_runtime:
@@ -123,8 +152,8 @@ custom_config_timeout = os.environ.get("CUSTOM_CONFIG_CACHE_TIME", 60)
 
 
 class CustomGenericOAuthenticator(GenericOAuthenticator):
-    login_handler = CustomGenericLoginHandler
-    logout_handler = BackendLogoutHandler
+    login_handler = CustomLoginHandler
+    logout_handler = CustomLogoutHandler
 
     custom_config_file = Unicode(
         "jupyterhub_custom_config.json", help="The custom config file to load"

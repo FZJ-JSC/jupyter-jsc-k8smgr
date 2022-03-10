@@ -18,6 +18,16 @@
     }
   },
 
+  "unity": {
+    "revoke": {
+      "url": "https://<UNITY_ALT_NAME>/oauth2/revoke",
+      "certificate_path": false,
+      "request_timeout": 10,
+      "client_id": "oauth-client",
+      "expected_status_code": 200
+    }
+  },
+
   "vos": {
     "default": {
       "authenticators": ["ldap"],
