@@ -6,6 +6,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from custom_utils import get_vos, VoException
+from jupyterhub.utils import new_token
 from oauthenticator.generic import GenericOAuthenticator
 from oauthenticator.oauth2 import OAuthLoginHandler, OAuthLogoutHandler
 from oauthenticator.traitlets import Callable
@@ -40,16 +41,19 @@ class TimedCacheProperty(object):
 
 
 class CustomLogoutHandler(OAuthLogoutHandler):
-    async def revoke_unity_tokens(self, all_devices=False, stop_all=False):
+    async def handle_logout(self, all_devices=False, stop_all=False):
         user = self.current_user
         if not user:
             self.log.debug("Could not retrieve current user for logout call.")
             return
 
-        if user.authenticator.enable_auth_state:
-            auth_state = await user.get_auth_state()
-            tokens = {}
+        # Stop all servers before revoking tokens
+        if stop_all:
+            await self._shutdown_servers(user)
 
+        if user.authenticator.enable_auth_state:
+            tokens = {}
+            auth_state = await user.get_auth_state()
             access_token = auth_state.get("access_token", None)
             if access_token:
                 tokens["access_token"] = access_token
@@ -61,16 +65,16 @@ class CustomLogoutHandler(OAuthLogoutHandler):
                 if refresh_token:
                     tokens["refresh_token"] = refresh_token
                     auth_state["refresh_token"] = None
-            if stop_all:
-                await self._shutdown_servers(user)
-
-            custom_config = user.authenticator.custom_config
-            unity_revoke_config = custom_config.get("unity", {}).get("revoke", {})
-
+                
+            unity_revoke_config = user.authenticator.custom_config.get("unity", {}).get(
+                "revoke", {}
+            )
             unity_revoke_url = unity_revoke_config.get("url", "")
             unity_revoke_certificate = unity_revoke_config.get("certificate_path", False)
             unity_revoke_request_timeout = unity_revoke_config.get("request_timeout", 10)
-            unity_revoke_expected_status_code = unity_revoke_config.get("expected_status_code", 200)
+            unity_revoke_expected_status_code = unity_revoke_config.get(
+                "expected_status_code", 200
+            )
             client_id = unity_revoke_config.get("client_id", "oauth-client")
 
             headers = {
@@ -109,18 +113,29 @@ class CustomLogoutHandler(OAuthLogoutHandler):
                             f"Received unexpected status code: {resp.code} != {unity_revoke_expected_status_code}"
                         )
                 except (HTTPError, HTTPClientError):
-                    self.log.critical(f"Could not revoke token", extra=log_extras, exc_info=True)
+                    self.log.critical(
+                        f"Could not revoke token", extra=log_extras, exc_info=True
+                    )
                 except:
-                    self.log.critical("Could not revoke token.", extra=log_extras, exc_info=True)
+                    self.log.critical(
+                        "Could not revoke token.", extra=log_extras, exc_info=True
+                    )
                 else:
                     self.log.debug(f"Unity revoke {key} call successful.", extra=log_extras)
-        await user.save_auth_state(auth_state)
+            await user.save_auth_state(auth_state)
+
+        # Set new cookie_id to invalidate previous cookies
+        if all_devices:
+            orm_user = user.orm_user
+            orm_user.cookie_id = new_token()
+            self.db.commit()
 
     async def get(self):
         all_devices = self.get_argument("alldevices", "false").lower() == "true"
         stop_all = self.get_argument("stopall", "false").lower() == "true"
-        await self.revoke_unity_tokens(all_devices, stop_all)
-        return await super().get()
+        await self.handle_logout(all_devices, stop_all)
+        await self.default_handle_logout()
+        await self.render_logout_page()
 
 
 class CustomLoginHandler(OAuthLoginHandler):
@@ -239,9 +254,7 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
                 authentication["auth_state"], self.custom_config, username, admin=admin
             )
         except VoException as e:
-            authenticator.log.warning(
-                "Could not get vo for user - {}".format(e)
-            )
+            authenticator.log.warning("Could not get vo for user - {}".format(e))
             raise e
         authentication["auth_state"]["vo_active"] = vo_active
         authentication["auth_state"]["vo_available"] = vo_available
