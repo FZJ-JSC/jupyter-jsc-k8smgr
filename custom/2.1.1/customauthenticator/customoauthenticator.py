@@ -40,9 +40,6 @@ class TimedCacheProperty(object):
 
 
 class CustomLogoutHandler(OAuthLogoutHandler):
-    async def _shutdown_all_services(self, user):
-        pass
-
     async def revoke_unity_tokens(self, all_devices=False, stop_all=False):
         user = self.current_user
         if not user:
@@ -65,7 +62,7 @@ class CustomLogoutHandler(OAuthLogoutHandler):
                     tokens["refresh_token"] = refresh_token
                     auth_state["refresh_token"] = None
             if stop_all:
-                self._shutdown_all_services(user)
+                await self._shutdown_servers(user)
 
             custom_config = user.authenticator.custom_config
             unity_revoke_config = custom_config.get("unity", {}).get("revoke", {})
@@ -117,12 +114,11 @@ class CustomLogoutHandler(OAuthLogoutHandler):
                     self.log.critical("Could not revoke token.", extra=log_extras, exc_info=True)
                 else:
                     self.log.debug(f"Unity revoke {key} call successful.", extra=log_extras)
-                    user.save_auth_state(auth_state)
+        await user.save_auth_state(auth_state)
 
     async def get(self):
-        arguments = self.request.query_arguments
-        all_devices = arguments.get("alldevices", [b"false"])[0].decode().lower() == "true"
-        stop_all = arguments.get("stopall", [b"false"])[0].decode().lower() == "true"
+        all_devices = self.get_argument("alldevices", "false").lower() == "true"
+        stop_all = self.get_argument("stopall", "false").lower() == "true"
         await self.revoke_unity_tokens(all_devices, stop_all)
         return await super().get()
 
@@ -197,6 +193,9 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         if self.oauth_callback_url and handler and "_host_" in ret:
             ret = ret.replace("_host_", handler.request.host)
         return ret
+
+    async def refresh_user(self, user, handler=None):
+        return await super().refresh_user(user, handler)
 
     async def post_auth_hook(self, authenticator, handler, authentication):
         access_token = authentication["auth_state"]["access_token"]
