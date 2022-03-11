@@ -9,10 +9,11 @@ sys.path.insert(1, custom_path)
 
 from spawner import BackendSpawner
 from apihandler import SpawnUpdateOptionsAPIHandler
-from apihandler import SpawnProgressUpdateAPIHandler, SpawnProgressStatusAPIHandler
+from apihandler import SpawnProgressUpdateAPIHandler
+from apihandler import SpawnProgressStatusAPIHandler
 from apihandler import user_cancel_message
 from apihandler import SpawnNotificationAPIHandler
-from customauthenticator import CustomGenericOAuthenticator, CustomLogoutHandler
+from customauthenticator import CustomGenericOAuthenticator
 
 c.JupyterHub.log_level = 10
 c.JupyterHub.custom_config_file = "/home/jupyterhub/jupyterhub_custom_config.json"
@@ -87,7 +88,6 @@ c.JupyterHub.extra_handlers = [
     (r"/privacy", page_handlers.DPSHandler),
     (r"/terms", page_handlers.ToSHandler),
     (r"/groups", page_handlers.VOHandler),
-    (r"/signout", CustomLogoutHandler),
     # APIHandlers
     (r"/api/users/([^/]+)/server/update", SpawnUpdateOptionsAPIHandler),
     (r"/api/users/([^/]+)/servers/([^/]*)/update", SpawnUpdateOptionsAPIHandler),

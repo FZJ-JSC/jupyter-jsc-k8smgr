@@ -38,22 +38,22 @@ require(["jquery", "utils"], function (
                 window.location.replace(
                   utils.url_path_join(
                     base_url,
-                    "signout?stopall=true&alldevices=true"
+                    "logout?stopall=true&alldevices=true"
                   )
                 );
               } else {
                 window.location.replace(
-                  utils.url_path_join(base_url, "signout?stopall=true")
+                  utils.url_path_join(base_url, "logout?stopall=true")
                 );
               }
             } else {
               if ($alldevices.prop("checked")) {
                 window.location.replace(
-                  utils.url_path_join(base_url, "signout?alldevices=true")
+                  utils.url_path_join(base_url, "logout?alldevices=true")
                 );
               } else {
                 window.location.replace(
-                  utils.url_path_join(base_url, "signout")
+                  utils.url_path_join(base_url, "logout")
                 );
               }
             }
