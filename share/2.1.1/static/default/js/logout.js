@@ -24,10 +24,9 @@ require(["jquery", "utils"], function (
 
     $.confirm({
       title: "Logout",
-      backgroundDismiss: "Logout",
       content: content,
       buttons: {
-        Logout: {
+        logout: {
           text: "Logout",
           btnClass: "btn-primary",
           action: function () {
@@ -57,6 +56,10 @@ require(["jquery", "utils"], function (
                 );
               }
             }
+            this.$$cancel.attr('disabled','disabled');
+            this.$$logout.attr('disabled','disabled');
+            this.$$logout.prepend('<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>');
+            return false; // Do not close popup
           },
         },
         cancel: {
