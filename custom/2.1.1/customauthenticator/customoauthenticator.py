@@ -41,12 +41,14 @@ class TimedCacheProperty(object):
 
 
 class CustomLogoutHandler(OAuthLogoutHandler):
-    async def handle_logout(self, all_devices=False, stop_all=False):
+    async def handle_logout(self):
         user = self.current_user
         if not user:
             self.log.debug("Could not retrieve current user for logout call.")
             return
 
+        all_devices = self.get_argument("alldevices", "false").lower() == "true"
+        stop_all = self.get_argument("stopall", "false").lower() == "true"
         # Stop all servers before revoking tokens
         if stop_all:
             await self._shutdown_servers(user)
@@ -131,9 +133,7 @@ class CustomLogoutHandler(OAuthLogoutHandler):
             self.db.commit()
 
     async def get(self):
-        all_devices = self.get_argument("alldevices", "false").lower() == "true"
-        stop_all = self.get_argument("stopall", "false").lower() == "true"
-        await self.handle_logout(all_devices, stop_all)
+        await self.handle_logout()
         await self.default_handle_logout()
         await self.render_logout_page()
 
