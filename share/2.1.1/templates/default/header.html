@@ -1,66 +1,54 @@
-{%- macro submenu(title, caption_href) -%}
-{%- set id = title.replace('-', '') -%}
-<li class="dropdown-submenu">
-  <a id="navbarNavDropdown{{id}}" aria-haspopup="true" aria-expanded="false" class="dropdown-item">
-    {{ title }}
-  </a>
-  <ul aria-labelledby="navbarNavDropdown{{id}}" class="dropdown-menu dropdown-menu-2">
-    {%- for caption, href in caption_href %}
-    <li><a class="dropdown-item" target="_blank" href="{{ href }}">
-        {# <i class="fa fa-chevron-right" style="color: #004176;"></i> #}
-        {{ caption }}</a></li>
-    {%- endfor %}
-  </ul>
-</li>
-{%- endmacro -%}
-
 {%- macro user_information(extra_classes="") -%}
 {%- if user and show_login -%}
-<div class="dropdown {{extra_classes}}">
-  <button class="btn dropdown-toggle" type="button" 
-    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-    {{ user.name }}
-  </button>
-  <ul class="dropdown-menu dropdown-menu-end">
-    {%- set vo_available = auth_state.get("vo_available", []) -%}
-    {%- set vo_active = auth_state.get("vo_active") -%}  
-    <div class="{%- if vo_available|length <= 1 -%} d-none {%- endif -%}">
-      <li>
-        <h6 class="dropdown-header">
-          Group (<a href="/hub/groups">?</a>)
-        </h6>
-      </li>
-      <form id="vo-form" class="px-4">
-        {#- Need to set value in js as <option selected> does not work for some reason #}
-        <span id="vo-active" class="d-none">{{vo_active}}</span>
-        {%- for vo in vo_available %}
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="vo-radio" id="{{vo}}-radio" value="{{vo}}">
-          <label class="form-check-label" for="{{vo}}-radio">{{ vo }}</label>
-        </div>
-        {%- endfor %}
-      </form>
+<div class="flex-grow-1 d-flex justify-content-end">
+  <div class="dropdown {{extra_classes}}">
+    <button class="btn dropdown-toggle" type="button" 
+      data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+      {{ user.name }}
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end w-100">
+      {%- if auth_state -%}
+      {%- set vo_available = auth_state.get("vo_available", []) -%}
+      {%- set vo_active = auth_state.get("vo_active") -%}  
+      <div class="{%- if vo_available|length <= 1 -%} d-none {%- endif -%}">
+        <li>
+          <h6 class="dropdown-header">
+            Group (<a href="/hub/groups">?</a>)
+          </h6>
+        </li>
+        <form id="vo-form" class="px-4">
+          {#- Need to set value in js as <option selected> does not work for some reason #}
+          <span id="vo-active" class="d-none">{{vo_active}}</span>
+          {%- for vo in vo_available %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="vo-radio" id="{{vo}}-radio" value="{{vo}}">
+            <label class="form-check-label" for="{{vo}}-radio">{{ vo }}</label>
+          </div>
+          {%- endfor %}
+        </form>
+        <li><hr class="dropdown-divider"></li>
+      </div>
+      {%- endif -%}
+
+      {%- if auth_state and auth_state.get("last_login", False) %}
+      <li><h6 class="dropdown-header">Last login</h6></li>
+      <li><a class="dropdown-item disabled text-black">
+      {{ auth_state.get("last_login") }}
+      </a></li>
       <li><hr class="dropdown-divider"></li>
-    </div>
+      {%- endif -%}
 
-    {%- if auth_state and auth_state.get("last_login", False) %}
-    <li><h6 class="dropdown-header">Last login</h6></li>
-    <li><a class="dropdown-item disabled text-black">
-    {{ auth_state.get("last_login") }}
-    </a></li>
-    <li><hr class="dropdown-divider"></li>
-    {%- endif -%}
-
-    <li>
-      <button id="logout" class="dropdown-item">
-        <svg class="align-middle" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-          <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-        </svg>
-        <span class="align-middle">Logout</span>
-      </button>
-    </li>
-  </ul>
+      <li>
+        <button id="logout" class="dropdown-item">
+          <svg class="align-middle" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+            <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+          </svg>
+          <span class="align-middle">Logout</span>
+        </button>
+      </li>
+    </ul>
+  </div>
 </div>
 {%- endif -%}
 {%- endmacro -%}
@@ -88,8 +76,8 @@
               </li>
             </ul>
             {%- endif -%}
-            {{ user_information(extra_classes="text-end flex-grow-1") }}
-            <a class="navbar-brand me-4" href="#">
+            {{ user_information(extra_classes="text-end") }}
+            <a class="navbar-brand ps-3 me-4" href="#">
               <img id="jupyter-logo" src='https://www.fz-juelich.de/SharedDocs/Bilder/IAS/JSC/EN/newsletter/2020-05-jupyter-jsc-logo.png?__blob=normal'
                 height="60px" alt="Jupyter-JSC" title="https://jupyter-jsc-devel.fz-juelich.de">
             </a>
