@@ -302,17 +302,17 @@ async def get_options_from_form(formdata, custom_config):
     resources = custom_config.get("resources")
 
     def skip_resources(key, value):
-        system = formdata.get("system_input")[0]
-        partition = formdata.get("partition_input")[0]
-        if key.startswith("resource_"):
+        system = formdata.get("system")[0]
+        partition = formdata.get("partition")[0]
+        resource_keys = ["nodes", "gpus", "runtime"]
+        if key in resource_keys:
             if system not in systems_config.get("UNICORE", {}).keys():
                 return True
             elif partition in systems_config.get("UNICORE", {}).get(system, {}).get("interactive_partitions", []):
                 return True
             else:
-                resource_name = key[len("resource_"):]
                 if (
-                    resource_name not in resources.get(
+                    key not in resources.get(
                         system.upper()).get(partition).keys()
                 ):
                     return True
