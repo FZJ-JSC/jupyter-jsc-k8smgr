@@ -162,11 +162,10 @@ class BackendSpawner(Spawner):
         )
         return (svc_name, self.port)
 
-    def start(self):
+    async def start(self):
         self.events = []
         self.cancel_event_yielded = False
-        self._start_future = asyncio.ensure_future(self._start())
-        return self._start_future
+        return await self._start()
 
     async def poll(self):
         uuidcode = uuid.uuid4().hex
