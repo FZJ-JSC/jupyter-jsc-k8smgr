@@ -243,7 +243,7 @@ require(["jquery", "jhapi", "utils"], function (
     var alert = $(this).siblings(".alert");
     spinner.removeClass("d-none");
 
-    var url = utils.url_path_join(base_url, "spawn", user, name);
+    var url = utils.url_path_join(base_url, "spawn", user, server_name);
     url = createUrlAndUpdateTr(url, $("#new_jupyterlab-configuration"), display_name);
     $(this).attr("href", url);
 

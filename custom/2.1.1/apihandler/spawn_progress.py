@@ -114,8 +114,8 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
 
 class SpawnProgressStatusAPIHandler(APIHandler):
     @needs_scope("read:servers")
-    async def get(self, username, server_name=""):
-        user = self.find_user(username)
+    async def get(self, user_name, server_name=""):
+        user = self.find_user(user_name)
         if user is None:
             # no such user
             raise web.HTTPError(404)

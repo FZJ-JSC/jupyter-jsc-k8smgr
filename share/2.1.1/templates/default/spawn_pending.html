@@ -62,16 +62,16 @@
 
 {%- set name = spawner.name -%}
 {%- set user_options = spawner.user_options -%}
-{%- set service = user_options.get("service_input") -%}
-{%- set option1 = user_options.get("options_input", "JupyterLab") -%}
-{%- set system = user_options.get("system_input", None) -%}
-{%- set account = user_options.get("account_input", None) -%}
-{%- set project = user_options.get("project_input", None) -%}
-{%- set partition = user_options.get("partition_input", None) -%}
-{%- set reservation = user_options.get("reservation_input", None) -%}
-{%- set nodes = user_options.get("resource_Nodes", None) -%}
-{%- set runtime = user_options.get("resource_Runtime", None) -%}
-{%- set gpus = user_options.get("resource_GPUS", None) -%}
+{%- set service = user_options.get("service") -%}
+{%- set option1 = user_options.get("options", "JupyterLab") -%}
+{%- set system = user_options.get("system", None) -%}
+{%- set account = user_options.get("account", None) -%}
+{%- set project = user_options.get("project", None) -%}
+{%- set partition = user_options.get("partition", None) -%}
+{%- set reservation = user_options.get("reservation", None) -%}
+{%- set nodes = user_options.get("nodes", None) -%}
+{%- set runtime = user_options.get("runtime", None) -%}
+{%- set gpus = user_options.get("gpus", None) -%}
 
 {#- Check if we should disable any tabs -#}
 {%- set hide_resources = True -%}
@@ -324,11 +324,11 @@ require(["jquery", "jhapi", "utils"], function (
       api.api_request(`/users/progress/status/${user}/{{spawner.name}}`, {
         success: function(data) {
           progress_bar.width(100);
-          console.log(data);
-          for (const perc in data) {
+          data["events"].forEach(function(event) {
+            const perc = event["progress"];
             if (Number(perc) && !logged[perc]) {
-              logged[perc] = data[perc];
-              var html_message = data[perc]['html_message'];
+              logged[perc] = event;
+              const html_message = event["html_message"];
               progress_bar.attr('aria-valuenow', perc);
               progress_bar.html('<b>' + perc + '%</b>');
               if (html_message) {
@@ -337,7 +337,7 @@ require(["jquery", "jhapi", "utils"], function (
               // Clear interval on 100%
               if (perc == 100) {
                 clearInterval(interv);
-                if (data[perc]['failed']) {
+                if (logged[perc]['failed']) {
                   progress_bar.html('');
                   progress_bar.addClass('bg-danger');
                   $('#retry').attr('disabled', false);
@@ -347,12 +347,12 @@ require(["jquery", "jhapi", "utils"], function (
                   window.location.reload();
                 }
               }
-            }         
-          }
+            }
+          })
           // If there is no evtSource for the spawner on the home page,
           // we still need to stop polling.
           // Might not need this code anymore after implementing SSE.
-          if (!data.ready && !data.active && !(100 in data)) {
+          if (!data.ready && !data.active && !(100 in logged)) {
             clearInterval(interv);
             progress_bar.html('');
             progress_bar.addClass('bg-danger');
@@ -362,6 +362,9 @@ require(["jquery", "jhapi", "utils"], function (
           }
           // Reload here in case there was no EventSource created for the Spawner
           if (data.ready) window.location.reload();
+        },
+        error: function() {
+          clearInterval(interv);
         }
       });
     }
