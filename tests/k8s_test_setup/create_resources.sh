@@ -4,16 +4,18 @@ if [[ -z ${1} ]]; then
     exit 1
 fi
 
-DEVEL_JUPYTERHUB="false"
-DEVEL_BACKEND="false"
+DEVEL_JUPYTERHUB="true"
+DEVEL_UNICOREMGR="false"
+DEVEL_K8SMGR="false"
 DEVEL_TUNNEL="false"
 
 
 JUPYTERHUB_VERSION="latest"
 UNITY_VERSION="3.8.1-1"
 UNICORE_VERSION="8.3.0-9"
-BACKEND_VERSION="1.0.0-21"
-TUNNEL_VERSION="1.0.0-34"
+UNICOREMGR_VERSION="1.0.1-2"
+TUNNEL_VERSION="1.0.1-3"
+K8SMGR_VERSION="1.0.1-9"
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -50,7 +52,8 @@ create_certificate "unicorex" "unicore-unicorex" "unicore-${ID}.${NAMESPACE}.svc
 create_certificate "tsi" "unicore-tsi" "unicore-${ID}.${NAMESPACE}.svc" 'the!tsi'
 create_certificate "unity" "unity" "unity-${ID}.${NAMESPACE}.svc" 'the!unity' "unity-test-server"
 create_certificate "tunnel" "tunnel" "tunnel-${ID}.${NAMESPACE}.svc" 'the!tunnel' 
-create_certificate "backend" "backend" "backend-${ID}.${NAMESPACE}.svc" 'the!backend' 
+create_certificate "unicoremgr" "unicoremgr" "unicoremgr-${ID}.${NAMESPACE}.svc" 'the!unicoremgr' 
+create_certificate "k8smgr" "k8smgr" "k8smgr-${ID}.${NAMESPACE}.svc" 'the!k8smgr' 
 
 # Create KeyPairs
 mkdir -p ${DIR}/${ID}/keypairs
@@ -59,6 +62,7 @@ create_keypair () {
 }
 create_keypair "ljupyter"
 create_keypair "tunnel"
+create_keypair "k8smgr"
 create_keypair "remote"
 create_keypair "reservation"
 create_keypair "devel"
@@ -67,13 +71,16 @@ create_keypair "devel"
 # Prepare input files for each services
 JUPYTERHUB_ALT_NAME="jupyterhub-${ID}.${NAMESPACE}.svc"
 TUNNEL_ALT_NAME="tunnel-${ID}.${NAMESPACE}.svc"
-BACKEND_ALT_NAME="backend-${ID}.${NAMESPACE}.svc"
+UNICOREMGR_ALT_NAME="unicoremgr-${ID}.${NAMESPACE}.svc"
+K8SMGR_ALT_NAME="k8smgr-${ID}.${NAMESPACE}.svc"
 UNICORE_ALT_NAME="unicore-${ID}.${NAMESPACE}.svc"
 UNITY_ALT_NAME="unity-${ID}.${NAMESPACE}.svc"
 TUNNEL_PUBLIC_KEY=$(cat ${DIR}/${ID}/keypairs/tunnel.pub)
 ESCAPED_TPK=$(printf '%s\n' "$TUNNEL_PUBLIC_KEY" | sed -e 's/[\@&]/\\&/g')
 REMOTE_PUBLIC_KEY="$(cat ${DIR}/${ID}/keypairs/remote.pub)"
 ESCAPED_RPK=$(printf '%s\n' "$REMOTE_PUBLIC_KEY" | sed -e 's/[\@&]/\\&/g')
+K8SMGR_PUBLIC_KEY="$(cat ${DIR}/${ID}/keypairs/k8smgr.pub)"
+ESCAPED_KPK=$(printf '%s\n' "$K8SMGR_PUBLIC_KEY" | sed -e 's/[\@&]/\\&/g')
 LJUPYTER_PUBLIC_KEY="$(cat ${DIR}/${ID}/keypairs/ljupyter.pub)"
 ESCAPED_LPK=$(printf '%s\n' "$LJUPYTER_PUBLIC_KEY" | sed -e 's/[\@&]/\\&/g')
 DEVEL_PUBLIC_KEY="$(cat ${DIR}/${ID}/keypairs/devel.pub)"
@@ -83,13 +90,18 @@ UNICORE_SSH_PORT="22"
 JUPYTERHUB_PORT="30800"
 
 # Create passwords / secrets for Django services
-BACKEND_SECRET=$(uuidgen)
+UNICOREMGR_SECRET=$(uuidgen)
+K8SMGR_SECRET=$(uuidgen)
 TUNNEL_SECRET=$(uuidgen)
+
 TUNNEL_SUPERUSER_PASS=$(uuidgen)
-TUNNEL_BACKEND_PASS=$(uuidgen)
+TUNNEL_K8SMGR_PASS=$(uuidgen)
 TUNNEL_JHUB_PASS=$(uuidgen)
-BACKEND_SUPERUSER_PASS=$(uuidgen)
-BACKEND_JHUB_PASS=$(uuidgen)
+UNICOREMGR_SUPERUSER_PASS=$(uuidgen)
+UNICOREMGR_JHUB_PASS=$(uuidgen)
+K8SMGR_SUPERUSER_PASS=$(uuidgen)
+K8SMGR_JHUB_PASS=$(uuidgen)
+
 
 get_basic_token () {
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -99,10 +111,10 @@ get_basic_token () {
     fi
     echo "Basic ${TMP}"
 }
-TUNNEL_BACKEND_BASIC=$(get_basic_token "backend" ${TUNNEL_BACKEND_PASS})
+TUNNEL_K8SMGR_BASIC=$(get_basic_token "k8smgr" ${TUNNEL_K8SMGR_PASS})
 TUNNEL_JHUB_BASIC=$(get_basic_token "jupyterhub" ${TUNNEL_JHUB_PASS})
-BACKEND_JHUB_BASIC=$(get_basic_token "jupyterhub" ${BACKEND_JHUB_PASS})
-
+UNICOREMGR_JHUB_BASIC=$(get_basic_token "jupyterhub" ${UNICOREMGR_JHUB_PASS})
+K8SMGR_JHUB_BASIC=$(get_basic_token "jupyterhub" ${K8SMGR_JHUB_PASS})
 
 # Prepare yaml files
 cp -rp ${DIR}/templates/yaml ${DIR}/${ID}/.
@@ -115,25 +127,32 @@ select_yaml_file () {
     fi
 }
 select_yaml_file ${DEVEL_JUPYTERHUB} "jupyterhub"
-select_yaml_file ${DEVEL_BACKEND} "backend"
+select_yaml_file ${DEVEL_UNICOREMGR} "unicoremgr"
+select_yaml_file ${DEVEL_K8SMGR} "k8smgr"
 select_yaml_file ${DEVEL_TUNNEL} "tunnel"
 
 cp -rp ${DIR}/templates/files ${DIR}/${ID}/.
 if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
     find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@/src/jupyterhub-static@/home/jupyterhub/jupyterhub-static@g" {} \; 2> /dev/null
 fi
-find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<DIR>@${DIR}@g" -e "s@<TUNNEL_JHUB_BASIC>@${TUNNEL_JHUB_BASIC}@g" -e "s@<BACKEND_JHUB_BASIC>@${BACKEND_JHUB_BASIC}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" -e "s@<ID>@${ID}@g" -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<DEVEL_PUBLIC_KEY>@${ESCAPED_DPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
-tar -czf ${DIR}/${ID}/files/backend/job_descriptions.tar.gz -C ${DIR}/${ID}/files/backend/ job_descriptions
+find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<DIR>@${DIR}@g" -e "s@<TUNNEL_JHUB_BASIC>@${TUNNEL_JHUB_BASIC}@g" -e "s@<TUNNEL_K8SMGR_BASIC>@${TUNNEL_K8SMGR_BASIC}@g" -e "s@<UNICOREMGR_JHUB_BASIC>@${UNICOREMGR_JHUB_BASIC}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" -e "s@<ID>@${ID}@g" -e "s@<K8SMGR_ALT_NAME>@${K8SMGR_ALT_NAME}@g" -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<K8SMGR_PUBLIC_KEY>@${ESCAPED_KPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<DEVEL_PUBLIC_KEY>@${ESCAPED_DPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
+tar -czf ${DIR}/${ID}/files/unicoremgr/files.tar.gz -C ${DIR}/${ID}/files/unicoremgr files
+tar -czf ${DIR}/${ID}/files/k8smgr/files.tar.gz -C ${DIR}/${ID}/files/k8smgr files
 
-find ${DIR}/${ID}/yaml -type f -exec sed -i '' -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_VERSION>@${JUPYTERHUB_VERSION}@g" -e "s@<UNITY_VERSION>@${UNITY_VERSION}@g" -e "s@<UNICORE_VERSION>@${UNICORE_VERSION}@g" -e "s@<TUNNEL_VERSION>@${TUNNEL_VERSION}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<BACKEND_VERSION>@${BACKEND_VERSION}@g" -e "s@<_VERSION>@${_VERSION}@g" -e "s@<DIR>@${DIR}@g" -e "s@<BACKEND_JHUB_BASIC>@${BACKEND_JHUB_BASIC}@g" -e "s@<ID>@${ID}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" {} \; 2> /dev/null
+find ${DIR}/${ID}/yaml -type f -exec sed -i '' -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_VERSION>@${JUPYTERHUB_VERSION}@g" -e "s@<K8SMGR_ALT_NAME>@${K8SMGR_ALT_NAME}@g" -e "s@<UNITY_VERSION>@${UNITY_VERSION}@g" -e "s@<UNICORE_VERSION>@${UNICORE_VERSION}@g" -e "s@<K8SMGR_VERSION>@${K8SMGR_VERSION}@g" -e "s@<TUNNEL_VERSION>@${TUNNEL_VERSION}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<UNICOREMGR_VERSION>@${UNICOREMGR_VERSION}@g" -e "s@<DIR>@${DIR}@g" -e "s@<UNICOREMGR_JHUB_BASIC>@${UNICOREMGR_JHUB_BASIC}@g" -e "s@<ID>@${ID}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" {} \; 2> /dev/null
 kubectl -n ${NAMESPACE} create configmap --dry-run=client unicore-files-${ID} --from-file=${DIR}/${ID}/files/unicore --output yaml > ${DIR}/${ID}/yaml/cm-unicore-files.yaml
-kubectl -n ${NAMESPACE} create configmap --dry-run=client backend-files-${ID} --from-file=${DIR}/${ID}/files/backend --output yaml > ${DIR}/${ID}/yaml/cm-backend-files.yaml
+kubectl -n ${NAMESPACE} create configmap --dry-run=client unicoremgr-files-${ID} --from-file=${DIR}/${ID}/files/unicoremgr --output yaml > ${DIR}/${ID}/yaml/cm-unicoremgr-files.yaml
+kubectl -n ${NAMESPACE} create configmap --dry-run=client k8smgr-files-${ID} --from-file=${DIR}/${ID}/files/k8smgr --output yaml > ${DIR}/${ID}/yaml/cm-k8smgr-files.yaml
 kubectl -n ${NAMESPACE} create configmap --dry-run=client tunnel-files-${ID} --from-file=${DIR}/${ID}/files/tunnel --output yaml > ${DIR}/${ID}/yaml/cm-tunnel-files.yaml
 kubectl -n ${NAMESPACE} create configmap --dry-run=client jupyterhub-files-${ID} --from-file=${DIR}/${ID}/files/jupyterhub --output yaml > ${DIR}/${ID}/yaml/cm-jupyterhub-files.yaml
-kubectl -n ${NAMESPACE} create secret generic --dry-run=client backend-drf-${ID} --from-literal=backend_secret=${BACKEND_SECRET} --from-literal=superuser_pass=${BACKEND_SUPERUSER_PASS} --from-literal=jupyterhub_pass=${BACKEND_JHUB_PASS} --from-literal=jupyterhub_basic="${BACKEND_JHUB_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-backend-drf.yaml
-kubectl -n ${NAMESPACE} create secret generic --dry-run=client tunnel-drf-${ID} --from-literal=tunnel_secret=${TUNNEL_SECRET} --from-literal=superuser_pass=${TUNNEL_SUPERUSER_PASS} --from-literal=backend_pass=${TUNNEL_BACKEND_PASS} --from-literal=backend_basic="${TUNNEL_BACKEND_BASIC}" --from-literal=jupyterhub_pass=${TUNNEL_JHUB_PASS} --from-literal=jupyterhub_basic="${TUNNEL_JHUB_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-tunnel-drf.yaml
+kubectl -n ${NAMESPACE} create secret generic --dry-run=client unicoremgr-drf-${ID} --from-literal=SECRET_KEY=${UNICOREMGR_SECRET} --from-literal=SUPERUSER_PASS=${UNICOREMGR_SUPERUSER_PASS} --from-literal=JUPYTERHUB_USER_PASS=${UNICOREMGR_JHUB_PASS} --from-literal=JUPYTERHUB_USER_BASIC="${UNICOREMGR_JHUB_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-unicoremgr-drf.yaml
+kubectl -n ${NAMESPACE} create secret generic --dry-run=client k8smgr-drf-${ID} --from-literal=SECRET_KEY=${K8SMGR_SECRET} --from-literal=SUPERUSER_PASS=${K8SMGR_SUPERUSER_PASS} --from-literal=JUPYTERHUB_USER_PASS=${K8SMGR_JHUB_PASS} --from-literal=JUPYTERHUB_USER_BASIC="${K8SMGR_JHUB_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-k8smgr-drf.yaml
+kubectl -n ${NAMESPACE} create secret generic --dry-run=client tunnel-drf-${ID} --from-literal=SECRET_KEY=${TUNNEL_SECRET} --from-literal=SUPERUSER_PASS=${TUNNEL_SUPERUSER_PASS} --from-literal=JUPYTERHUB_USER_PASS=${TUNNEL_JHUB_PASS} --from-literal=JUPYTERHUB_USER_BASIC="${TUNNEL_JHUB_BASIC}" --from-literal=K8SMGR_USER_PASS=${TUNNEL_K8SMGR_PASS} --from-literal=K8SMGR_USER_BASIC="${TUNNEL_K8SMGR_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-tunnel-drf.yaml
 kubectl -n ${NAMESPACE} create secret generic --dry-run=client --output yaml --from-file=${DIR}/${ID}/keypairs keypairs-${ID} > ${DIR}/${ID}/yaml/secret-keypairs.yaml
 kubectl -n ${NAMESPACE} create secret generic --dry-run=client --output yaml --from-file=${DIR}/${ID}/certs certs-${ID} > ${DIR}/${ID}/yaml/secret-certs.yaml
+kubectl -n ${NAMESPACE} create secret tls --dry-run=client --output yaml --cert=${DIR}/${ID}/certs/k8smgr.crt --key=${DIR}/${ID}/certs/k8smgr.key tls-k8smgr-${ID} > ${DIR}/${ID}/yaml/tls-k8smgr.yaml
+kubectl -n ${NAMESPACE} create secret tls --dry-run=client --output yaml --cert=${DIR}/${ID}/certs/unicoremgr.crt --key=${DIR}/${ID}/certs/unicoremgr.key tls-unicoremgr-${ID} > ${DIR}/${ID}/yaml/tls-unicoremgr.yaml
+kubectl -n ${NAMESPACE} create secret tls --dry-run=client --output yaml --cert=${DIR}/${ID}/certs/tunnel.crt --key=${DIR}/${ID}/certs/tunnel.key tls-tunnel-${ID} > ${DIR}/${ID}/yaml/tls-tunnel.yaml
 kubectl -n ${NAMESPACE} create secret tls --dry-run=client --output yaml --cert=${DIR}/${ID}/certs/unity.crt --key=${DIR}/${ID}/certs/unity.key tls-unity-${ID} > ${DIR}/${ID}/yaml/tls-unity.yaml
 kubectl -n ${NAMESPACE} create secret tls --dry-run=client --output yaml --cert=${DIR}/${ID}/certs/gateway.crt --key=${DIR}/${ID}/certs/gateway.key tls-gateway-${ID} > ${DIR}/${ID}/yaml/tls-gateway.yaml
 
@@ -141,7 +160,7 @@ while true; do
     read -p "Do you want to deploy the created resources to the cluster? (y/n): " yn
     case $yn in
         [Yy]* ) kubectl -n ${NAMESPACE} apply -f ${DIR}/${ID}/yaml; break;;
-        [Nn]* ) echo "Add this to /etc/hosts:"; echo "<IP> jupyterhub-${ID}.${NAMESPACE}.svc backend-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"; exit 0;;
+        [Nn]* ) echo "Add this to /etc/hosts:"; echo "<IP> jupyterhub-${ID}.${NAMESPACE}.svc unicoremgr-${ID}.${NAMESPACE}.svc k8smgr-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"; exit 0;;
         * ) echo "That's not yes or no";;
     esac
 done
@@ -161,7 +180,7 @@ if [[ $COUNTER -eq 0 ]]; then
     exit 1
 fi
 
-echo "${IP} jupyterhub-${ID}.${NAMESPACE}.svc backend-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"
+echo "${IP} jupyterhub-${ID}.${NAMESPACE}.svc unicoremgr-${ID}.${NAMESPACE}.svc k8smgr-${ID}.${NAMESPACE}.svc tunnel-${ID}.${NAMESPACE}.svc unity-${ID}.${NAMESPACE}.svc unicore-${ID}.${NAMESPACE}.svc"
 read -p "Add the line above to /etc/hosts and press Enter to continue: "
 
 wait_for_service () {
@@ -182,10 +201,13 @@ wait_for_service () {
 wait_for_service "https://${UNITY_ALT_NAME}/home/"
 wait_for_service "https://${UNICORE_ALT_NAME}/"
 if [[ ! ${DEVEL_TUNNEL} == "true" ]]; then
-    wait_for_service "http://${TUNNEL_ALT_NAME}/api/health/" 
+    wait_for_service "https://${TUNNEL_ALT_NAME}/api/health/" 
 fi
-if [[ ! ${DEVEL_BACKEND} == "true" ]]; then
-    wait_for_service "http://${BACKEND_ALT_NAME}/api/health/" 
+if [[ ! ${DEVEL_UNICOREMGR} == "true" ]]; then
+    wait_for_service "https://${UNICOREMGR_ALT_NAME}/api/health/" 
+fi
+if [[ ! ${DEVEL_K8SMGR} == "true" ]]; then
+    wait_for_service "https://${K8SMGR_ALT_NAME}/api/health/" 
 fi
 if [[ ! ${DEVEL_JUPYTERHUB} == "true" ]]; then
     wait_for_service "http://${JUPYTERHUB_ALT_NAME}/hub/login" 
@@ -207,8 +229,11 @@ fi
 if [[ ${DEVEL_TUNNEL} == "true" ]]; then
     forward_port "tunnel" "2223"
 fi
-if [[ ${DEVEL_BACKEND} == "true" ]]; then
-    forward_port "backend" "2224"
+if [[ ${DEVEL_UNICOREMGR} == "true" ]]; then
+    forward_port "unicoremgr" "2224"
+fi
+if [[ ${DEVEL_K8SMGR} == "true" ]]; then
+    forward_port "k8smgr" "2225"
 fi
 
 if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
@@ -216,7 +241,7 @@ if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
     mkdir -p ${DIR}/${ID}/rsync/jupyterhub-patched
     mkdir -p ${DIR}/${ID}/rsync/jupyterhub-custom
 fi
-if [[ ${DEVEL_JUPYTERHUB} == "true" || ${DEVEL_TUNNEL} == "true" || ${DEVEL_BACKEND} == "true" ]]; then
+if [[ ${DEVEL_JUPYTERHUB} == "true" || ${DEVEL_TUNNEL} == "true" || ${DEVEL_UNICOREMGR} == "true" || ${DEVEL_K8SMGR} == "true" ]]; then
     RSYNC=$(which rsync)
     if [[ $RSYNC == "" ]]; then
         echo "!!! Any changes are not stored automatically. If you install 'rsync' locally, you can start syncing the repositories !!!"

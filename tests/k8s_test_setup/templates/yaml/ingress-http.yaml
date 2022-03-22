@@ -17,23 +17,3 @@ spec:
               number: 80
         path: /
         pathType: Prefix
-  - host: backend-<ID>.<NAMESPACE>.svc
-    http:
-      paths:
-      - backend:
-          service:
-            name: backend-<ID>
-            port:
-              number: 80
-        path: /
-        pathType: Prefix
-  - host: tunnel-<ID>.<NAMESPACE>.svc
-    http:
-      paths:
-      - backend:
-          service:
-            name: tunnel-<ID>
-            port:
-              number: 80
-        path: /
-        pathType: Prefix

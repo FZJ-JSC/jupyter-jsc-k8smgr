@@ -54,17 +54,29 @@ spec:
           value: "/home/jupyterhub/jupyterhub-static/templates/default"
         - name: TEMPLATE_FILES_DEST
           value: "/home/jupyterhub/jupyterhub-static/templates/<JUPYTERHUB_ALT_NAME>"
-        - name: BACKEND_AUTHENTICATION_TOKEN
+        - name: K8SMGR_AUTHENTICATION_TOKEN
           valueFrom:
             secretKeyRef:
-              name: backend-drf-<ID>
-              key: jupyterhub_basic
+              name: k8smgr-drf-<ID>
+              key: JUPYTERHUB_USER_BASIC
+              optional: false
+        - name: UNICOREMGR_AUTHENTICATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: unicoremgr-drf-<ID>
+              key: JUPYTERHUB_USER_BASIC
               optional: false
         - name: TUNNEL_AUTHENTICATION_TOKEN
           valueFrom:
             secretKeyRef:
               name: tunnel-drf-<ID>
-              key: jupyterhub_basic
+              key: JUPYTERHUB_USER_BASIC
+              optional: false
+        - name: K8SMGR_HDFCLOUD_AUTHENTICATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: k8smgr-drf-<ID>
+              key: JUPYTERHUB_USER_BASIC
               optional: false
         - name: TUNNEL_DEPLOYMENT_NAMESPACE
           valueFrom:
@@ -88,8 +100,15 @@ spec:
         - name: files
           mountPath: /home/jupyterhub/maintenance.json
           subPath: maintenance.json
+        - name: certs
+          mountPath: /home/jupyterhub/ca-root.pem
+          subPath: ca-root.pem
       volumes:
       - name: files
         configMap:
           defaultMode: 400
           name: jupyterhub-files-<ID>
+      - name: certs
+        configMap:
+          defaultMode: 400
+          name: certs-<ID>

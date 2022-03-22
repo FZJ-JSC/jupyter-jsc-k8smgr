@@ -1,20 +1,30 @@
 {
-  "backend": {
-    "authentication_token": "<BACKEND_JHUB_BASIC>",
-    "request_timeout": 10,
-    "certificate_path": false,
-    "urls": {
-      "token_revokation": "http://backend-<ID>.<NAMESPACE>.svc/api/unity/",
-      "services": "http://backend-<ID>.<NAMESPACE>.svc/api/services/"
-    }
-  },
+  "drf-services": {
+    "unicoremgr": {
+      "authentication_token": "Not Set",
+      "request_timeout": 10,
+      "certificate_path": "/home/jupyterhub/ca-root.pem",
+      "urls": {
+        "services": "https://unicoremgr-<ID>.<NAMESPACE>.svc/api/services/"
+      }
+    },
   
-  "tunnel": {
-    "authentication_token": "<TUNNEL_JHUB_BASIC>",
-    "request_timeout": 10,
-    "certificate_path": false,
-    "urls": {
-      "services": "http://tunnel-<ID>.<NAMESPACE>.svc/api/tunnel/"
+    "k8smgrhdfcloud": {
+      "authentication_token": "Not Set",
+      "request_timeout": 10,
+      "certificate_path": "/home/jupyterhub/ca-root.pem",
+      "urls": {
+        "services": "https://k8smgr-<ID>.<NAMESPACE>.svc/api/services/"
+      }
+    },
+
+    "tunnel": {
+      "authentication_token": "Not Set",
+      "request_timeout": 10,
+      "certificate_path": "/home/jupyterhub/ca-root.pem",
+      "urls": {
+        "services": "https://tunnel-<ID>.<NAMESPACE>.svc/api/tunnel/"
+      }
     }
   },
 
@@ -90,8 +100,12 @@
         "nodes_mapping": {},
         "fuser": "ljupyter",
         "host": "",
-        "weight": 1
+        "weight": 1,
+        "drf-service": "unicoremgr"
       }
+    },
+    "HDF-Cloud": {
+      "drf-service": "k8smgrhdfcloud"
     }
   },
 

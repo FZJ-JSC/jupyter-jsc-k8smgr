@@ -16,11 +16,20 @@ Host tunnel-<ID>
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no
 
-Host backend-<ID>
+Host unicoremgr-<ID>
     HostName localhost
-    User backend
+    User unicoremgr 
     IdentityFile <DIR>/<ID>/keypairs/devel
     Port 2224
+    LogLevel ERROR
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+
+Host k8smgr-<ID>
+    HostName localhost
+    User k8smgr
+    IdentityFile <DIR>/<ID>/keypairs/devel
+    Port 2225
     LogLevel ERROR
     UserKnownHostsFile /dev/null
     StrictHostKeyChecking no

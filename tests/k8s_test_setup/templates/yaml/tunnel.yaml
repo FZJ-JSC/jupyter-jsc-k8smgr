@@ -37,10 +37,10 @@ spec:
     app: tunnel-<ID>
   type: ClusterIP
   ports:
-    - name: http
-      port: 80
+    - name: https
+      port: 443
       protocol: TCP
-      targetPort: 8080
+      targetPort: 8443
     - name: ssh
       port: 2222
       protocol: TCP
@@ -66,71 +66,45 @@ spec:
       - name: gitlab-registry
       serviceAccountName: "tunnel-<ID>-svc-acc"
       containers:
-      - env:
-        - name: SSHCONFIGFILE
-          value: "/home/tunnel/.ssh/config"
-        - name: DEBUG
-          value: "true"
-        - name: DEPLOYMENT_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.labels['app']
-        - name: DEPLOYMENT_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: TUNNEL_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: tunnel-drf-<ID>
-              key: tunnel_secret
-              optional: false
-        - name: TUNNEL_SUPERUSER_PASS
-          valueFrom:
-            secretKeyRef:
-              name: tunnel-drf-<ID>
-              key: superuser_pass
-              optional: false
-        - name: BACKEND_USER_PASS
-          valueFrom:
-            secretKeyRef:
-              name: tunnel-drf-<ID>
-              key: backend_pass
-              optional: false
-        - name: JUPYTERHUB_USER_PASS
-          valueFrom:
-            secretKeyRef:
-              name: tunnel-drf-<ID>
-              key: jupyterhub_pass
-              optional: false
-        image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/tunneling-relaunch:<TUNNEL_VERSION>
-        imagePullPolicy: Always
-        name: tunnel-<ID>
-        volumeMounts:
-        - name: certs
-          mountPath: /tmp/tunnel_ssh/ca-root.pem
-          subPath: ca-root.pem
-        - name: certs
-          mountPath: /tmp/tunnel_ssh/tunnel.key
-          subPath: tunnel.key
-        - name: certs
-          mountPath: /tmp/tunnel_ssh/tunnel.crt
-          subPath: tunnel.crt
-        - name: certs
-          mountPath: /tmp/tunnel_ssh/tunnel.p12
-          subPath: tunnel.p12
-        - name: files
-          mountPath: /tmp/tunnel_ssh/config
-          subPath: config
-        - name: files
-          mountPath: /tmp/tunnel_ssh/authorized_keys
-          subPath: authorized_keys
-        - name: keypairs
-          mountPath: /tmp/tunnel_ssh/tunnel
-          subPath: tunnel
-        - name: keypairs
-          mountPath: /tmp/tunnel_ssh/remote
-          subPath: remote
+        - envFrom:
+            - secretRef:
+                name: tunnel-drf-<ID>
+          env:
+            - name: DEBUG
+              value: "true"
+            - name: DEPLOYMENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app']
+            - name: DEPLOYMENT_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/tunneling-relaunch:<TUNNEL_VERSION>
+          imagePullPolicy: Always
+          name: tunnel-<ID>
+          volumeMounts:
+            - name: certs
+              mountPath: /home/tunnel/certs/ca-root.pem
+              subPath: ca-root.pem
+            - name: certs
+              mountPath: /home/tunnel/certs/tunnel.key
+              subPath: tunnel.key
+            - name: certs
+              mountPath: /home/tunnel/certs/tunnel.crt
+              subPath: tunnel.crt
+            - name: files
+              mountPath: /tmp/tunnel_ssh/config
+              subPath: config
+            - name: files
+              mountPath: /tmp/tunnel_ssh/authorized_keys
+              subPath: authorized_keys
+            - name: keypairs
+              mountPath: /tmp/tunnel_ssh/tunnel
+              subPath: tunnel
+            - name: keypairs
+              mountPath: /tmp/tunnel_ssh/remote
+              subPath: remote
       volumes:
       - name: files
         configMap:

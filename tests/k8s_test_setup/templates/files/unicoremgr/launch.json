@@ -14,7 +14,7 @@
             "django": true,
             "justMyCode": false,
             "env": {
-                "BACKEND_SECRET_KEY": "94919419491419419419111"
+                "SECRET_KEY": "94919419491419419419111"
             }
         }
     ]

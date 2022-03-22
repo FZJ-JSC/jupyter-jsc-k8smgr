@@ -3,17 +3,33 @@ Host *
     ServerAliveCountMax 5
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
-    User ljupyter
     ControlMaster auto
     ControlPersist 0
-    Port <UNICORE_SSH_PORT>
 
 Host tunnel_demo_site
+    User ljupyter
+    Port <UNICORE_SSH_PORT>
     HostName <UNICORE_ALT_NAME>
     IdentityFile /home/tunnel/.ssh/tunnel
     ControlPath /tmp/tunnel_demo_site
 
 Host remote_demo_site
+    User ljupyter
+    Port <UNICORE_SSH_PORT>
     HostName <UNICORE_ALT_NAME>
     IdentityFile /home/tunnel/.ssh/remote
     ControlPath /tmp/remote_demo_site
+
+Host tunnel_k8smgr_hdfcloud
+    User k8smgr
+    Port 2222
+    HostName <K8SMGR_ALT_NAME>
+    IdentityFile /home/tunnel/.ssh/tunnel
+    ControlPath /tmp/tunnel_k8smgr_hdfcloud
+
+Host remote_k8smgr_hdfcloud
+    User k8smgr
+    Port 2222
+    HostName <K8SMGR_ALT_NAME>
+    IdentityFile /home/tunnel/.ssh/remote
+    ControlPath /tmp/remote_k8smgr_hdfcloud
