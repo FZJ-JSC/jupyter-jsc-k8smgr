@@ -125,6 +125,14 @@ require(["jquery", "jhapi", "utils"], function (
     api.stop_named_server(user, server_name, {
       success: function () {
         enableRow(tr, false);
+        // Only reset progress bar if stopping a running server
+        // If cancelling, we want to keep the progress indicator
+        var progress_bar = tr.find(".progress-bar");
+        if (progress_bar.hasClass("bg-success")) {
+          progress_bar.removeClass("bg-sucess");
+          progress_bar.width(0);
+          progress_bar.html('');
+        }
       },
     });
   }
