@@ -16,6 +16,7 @@ class BackendException(Exception):
 
 
 def drf_request_properties(drf_service, custom_config, app_log):
+    drf_config = custom_config.get("drf-services")
     authentication_token_os = os.environ.get(
         f"{drf_service.upper()}_AUTHENTICATION_TOKEN", None
     )
@@ -25,9 +26,8 @@ def drf_request_properties(drf_service, custom_config, app_log):
         app_log.warning(
             f"{drf_service.upper()}_AUTHENTICATION_TOKEN not set in environment."
         )
-        authentication_token_config = custom_config.get(drf_service, {}).get(
-            "authentication_token", None
-        )
+        authentication_token_config = drf_config.get(
+            drf_service, {}).get("authentication_token", None)
         if authentication_token_config:
             app_log.warning(
                 f"{drf_service}.authentication_token found in custom_config. You should not store secrets in config files in production"
@@ -43,11 +43,11 @@ def drf_request_properties(drf_service, custom_config, app_log):
         "Accept": "application/json",
         "Authorization": authentication_token,
     }
-    certificate_path = custom_config.get(drf_service, {}).get("certificate_path", False)
+    certificate_path = drf_config.get(drf_service, {}).get("certificate_path", False)
     ca_certs = certificate_path if certificate_path else None
     validate_cert = True if ca_certs else False
-    request_timeout = custom_config.get(drf_service, {}).get("request_timeout", 20)
-    urls = custom_config.get(drf_service, {}).get("urls", {})
+    request_timeout = drf_config.get(drf_service, {}).get("request_timeout", 20)
+    urls = drf_config.get(drf_service, {}).get("urls", {})
     ret = {
         "headers": headers,
         "ca_certs": ca_certs,
@@ -100,8 +100,13 @@ async def drf_request(
                     orig_response = e.args[2]
                     if isinstance(orig_response, HTTPResponse):
                         error_json = json.loads(orig_response.body.decode("utf-8"))
-                        error = error_json.get("error", error)
-                        error_detail = error_json.get("detailed_error", error_detail)
+                        try:
+                            error = error_json.get("error", error)
+                            error_detail = error_json.get("detailed_error", error_detail)
+                        except:
+                            # returned json is a list not a dictionary
+                            # for example for missing access_token key in header
+                            error_detail = error_json[0]
             app_log.exception(
                 "Exception while communicating with backend drf service",
                 extra={

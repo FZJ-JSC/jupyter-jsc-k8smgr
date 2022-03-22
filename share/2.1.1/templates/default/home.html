@@ -754,11 +754,7 @@ function updatePartitions(id, option, system, account, project, value=null) {
               {%- if partition in partitions_allowed.keys() %}
               values.push("{{partition}}");
               {%- set systems = custom_config.get("systems") -%}
-              {%- if system in systems.get("UNICORE").keys() %}
-              var interactive_partitions = {{ systems.get("UNICORE").get(system).get("interactive_partitions", []) | tojson }}
-              {%- elif system in systems.get("K8s").keys() %}
-              var interactive_partitions = {{ systems.get("K8s").get(system).get("interactive_partitions", []) | tojson }}
-              {%- endif %}
+              var interactive_partitions = {{ systems.get(system).get("interactive_partitions", []) | tojson }}
               if ( interactive_partitions.includes("{{partition}}") ) {
                 login_nodes.push("{{partition}}");
               } else compute_nodes.push("{{partition}}");

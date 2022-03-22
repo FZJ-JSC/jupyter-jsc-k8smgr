@@ -8,7 +8,6 @@
         "services": "https://unicoremgr-<ID>.<NAMESPACE>.svc/api/services/"
       }
     },
-  
     "k8smgrhdfcloud": {
       "authentication_token": "Not Set",
       "request_timeout": 10,
@@ -17,7 +16,6 @@
         "services": "https://k8smgr-<ID>.<NAMESPACE>.svc/api/services/"
       }
     },
-
     "tunnel": {
       "authentication_token": "Not Set",
       "request_timeout": 10,
@@ -27,7 +25,6 @@
       }
     }
   },
-
   "unity": {
     "revoke": {
       "url": "https://<UNITY_ALT_NAME>/oauth2/revoke",
@@ -37,10 +34,11 @@
       "expected_status_code": 200
     }
   },
-
   "vos": {
     "default": {
-      "authenticators": ["ldap"],
+      "authenticators": [
+        "ldap"
+      ],
       "usernames": [],
       "admin": false,
       "weight": 1,
@@ -54,10 +52,11 @@
       },
       "description": "Default group"
     },
-
     "admin": {
       "authenticators": [],
-      "usernames": ["jhub-admin@fz-juelich.de"],
+      "usernames": [
+        "jhub-admin@fz-juelich.de"
+      ],
       "admin": true,
       "weight": 2,
       "Systems": {},
@@ -71,8 +70,6 @@
       "description": "Admin group"
     }
   },
-
-
   "services": {
     "JupyterLab": {
       "options_name": "Version",
@@ -83,33 +80,31 @@
             "admins": "default"
           },
           "allowed_lists": {
-            "systems": ["DEMO-SITE"]
+            "systems": [
+              "DEMO-SITE", "HDF-Cloud"
+            ]
           }
         }
       }
     }
   },
-
-
   "systems": {
-    "UNICORE": {
-      "DEMO-SITE": {
-        "base_url": "https://unicore-<ID>.<NAMESPACE>.svc/DEMO-SITE/rest/core",
-        "interactive_partitions": ["nobatch"],
-        "nodes": [],
-        "nodes_mapping": {},
-        "fuser": "ljupyter",
-        "host": "",
-        "weight": 1,
-        "drf-service": "unicoremgr"
-      }
+    "DEMO-SITE": {
+      "base_url": "https://unicore-<ID>.<NAMESPACE>.svc/DEMO-SITE/rest/core",
+      "interactive_partitions": [
+        "nobatch"
+      ],
+      "nodes": [],
+      "nodes_mapping": {},
+      "fuser": "ljupyter",
+      "host": "",
+      "weight": 1,
+      "drf-service": "unicoremgr"
     },
     "HDF-Cloud": {
       "drf-service": "k8smgrhdfcloud"
     }
   },
-
-
   "resources": {
     "DEMO-SITE": {
       "nobatch": {},
@@ -117,18 +112,22 @@
         "nodes": {
           "default": 1,
           "divisor": 1,
-          "minmax": [1,10]
+          "minmax": [
+            1,
+            10
+          ]
         },
         "runtime": {
           "default": 30,
           "divisor": 60,
-          "minmax": [10,1440]
+          "minmax": [
+            10,
+            1440
+          ]
         }
       }
     }
   },
-
-  
   "map_systems": {
     "jureca_booster": "JURECA",
     "jureca_cpu": "JURECA",
@@ -160,8 +159,6 @@
     "demo_site": "DEMO-SITE",
     "demo_site_NOBATCH": "DEMO-SITE"
   },
-
-
   "map_partitions": {
     "jureca_dc-gpu": "dc-gpu",
     "jureca_dc-cpu": "dc-cpu",
@@ -191,16 +188,28 @@
     "demo_site": "batch",
     "demo_site_NOBATCH": "nobatch"
   },
-
   "map_user_options": {},
-
   "default_partitions": {
-    "juwels": ["juwels_devel"],
-    "juwels_booster": ["juwels_develbooster"],
-    "juwels_gpus": ["juwels_develgpus"],
-    "jusuf_gpus": ["jusuf_develgpus"],
-    "deep_cpu": ["deep_ml-gpu"],
-    "jureca-dc_cpu": ["jureca-dc_cpu-devel"],
-    "jureca-dc_gpu": ["jureca-dc_gpu-devel"]
+    "juwels": [
+      "juwels_devel"
+    ],
+    "juwels_booster": [
+      "juwels_develbooster"
+    ],
+    "juwels_gpus": [
+      "juwels_develgpus"
+    ],
+    "jusuf_gpus": [
+      "jusuf_develgpus"
+    ],
+    "deep_cpu": [
+      "deep_ml-gpu"
+    ],
+    "jureca-dc_cpu": [
+      "jureca-dc_cpu-devel"
+    ],
+    "jureca-dc_gpu": [
+      "jureca-dc_gpu-devel"
+    ]
   }
 }
