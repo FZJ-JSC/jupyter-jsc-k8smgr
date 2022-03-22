@@ -26,13 +26,15 @@ def get_system_infos(log, custom_config, user_hpc_accounts, reservations_list):
     user_hpc_list = [regroup(x) for x in user_hpc_accounts]
 
     systems_config = custom_config.get("systems")
-    unicore_systems = list(sorted(
+    # Sort UNICORE systems first
+    systems = list(sorted(
         {group[1] for group in user_hpc_list},
-        key=lambda system: systems_config.get(
-            "UNICORE", {}).get(system, {}).get("weight", 99)
+        key=lambda system: systems_config.get(system, {}).get("weight", 99)
     ))
-    k8s_systems = list(systems_config.get("K8s", {}).keys())
-    systems = unicore_systems + k8s_systems
+    # Then add K8s systems
+    for system in systems_config:
+        if system not in systems:
+            systems.append(system)
 
     accounts = {
         system: sorted(
@@ -140,7 +142,6 @@ async def get_options_form(spawner, service, service_info):
         if option not in vo_config.get(vo_active, {}).get("Services", {}).get(service, {}).keys():
             continue
 
-        # HPC systems
         if "systems" in replace_allowed_lists:
             allowed_lists_systems = vo_config.get(vo_active, {}).get("Services", {}).get(
                 service, {}).get(option, {}).get("replace_allowed_lists", {})["systems"]
@@ -209,16 +210,6 @@ async def get_options_form(spawner, service, service_info):
                         if partition not in required_partitions[system]:
                             required_partitions[system].append(partition)
                         options[option][system][account][project][partition] = reservations_used
-
-        # Cloud systems
-        if "systems" in replace_allowed_lists:
-            allowed_lists_systems = vo_config.get(vo_active, {}).get("Services", {}).get(
-                service, {}).get(option, {}).get("replace_allowed_lists", {})["systems"]
-        else:
-            allowed_lists_systems = infos.get("allowed_lists", {}).get(
-                "systems", systems_config.get("K8s", {}).keys())
-        systems_used = in_both_lists(systems_config.get(
-            "K8s", {}).keys(), allowed_lists_systems)
 
         for system in systems_used:
             if option not in options.keys():

@@ -123,12 +123,15 @@ class BackendSpawner(Spawner):
         popen_kwargs = {
             "auth_state": auth_state,
             "env": env,
-            "user_options": user_options,
-            # "user_options": map_user_options()
+            # "user_options": user_options,
+            "user_options": map_user_options()
         }
 
         custom_config = self.user.authenticator.custom_config
-        req_prop = drf_request_properties("backend", custom_config, self.log)
+        drf_service = custom_config.get("systems", {}).get(
+            user_options["system"], {}).get(
+                "drf-service", None)
+        req_prop = drf_request_properties(drf_service, custom_config, self.log)
         service_url = req_prop.get("urls", {}).get("services", "None")
         req = HTTPRequest(
             f"{service_url}?uuidcode={uuidcode}",
