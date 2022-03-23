@@ -82,7 +82,8 @@
           },
           "allowed_lists": {
             "systems": [
-              "DEMO-SITE", "HDF-Cloud"
+              "DEMO-SITE",
+              "HDF-Cloud"
             ]
           }
         }
@@ -93,7 +94,10 @@
     "DEMO-SITE": {
       "base_url": "https://unicore-<ID>.<NAMESPACE>.svc/DEMO-SITE/rest/core",
       "interactive_partitions": [
-        "nobatch"
+        "LoginNode"
+      ],
+      "LoginNode": [
+        "localhost"
       ],
       "nodes": [],
       "nodes_mapping": {},
@@ -108,7 +112,7 @@
   },
   "resources": {
     "DEMO-SITE": {
-      "nobatch": {},
+      "LoginNode": {},
       "batch": {
         "nodes": {
           "default": 1,
