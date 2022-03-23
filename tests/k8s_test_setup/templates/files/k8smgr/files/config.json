@@ -10,7 +10,7 @@
   },
   "userhomes": {
     "base": "/tmp/userhomes",
-    "skel": "/etc/skel"
+    "skel": "/tmp/files/userhome_template"
   },
   "tunnel": {
     "k8smgr_hostname": "k8smgr_hdfcloud",
