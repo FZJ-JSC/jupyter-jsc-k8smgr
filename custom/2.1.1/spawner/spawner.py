@@ -104,11 +104,12 @@ class BackendSpawner(Spawner):
         send_access_token = custom_config.get("drf-services", {}).get(
             drf_service, {}).get("send_access_token", False)
         access_token = auth_state["access_token"] if send_access_token else None
-        req_prop = drf_request_properties(drf_service, custom_config, self.log, access_token)
+        req_prop = drf_request_properties(drf_service, custom_config, self.log, access_token, self.id)
         return req_prop
 
     async def _start_job(self):
-        uuidcode = uuid.uuid4().hex
+        uuidcode = self.name
+        self.id = self.name
         self.port = 8080
 
         auth_state = await self.user.get_auth_state()
@@ -154,7 +155,6 @@ class BackendSpawner(Spawner):
             parse_json=True,
             raise_exception=True,
         )
-        self.id = uuidcode
         svc_name = self.get_svc_name(self.id)
         self.log.debug(
             f"Expect JupyterLab at {svc_name}:{self.port}", extra={"uuidcode": self.id}

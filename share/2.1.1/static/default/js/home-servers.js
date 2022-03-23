@@ -226,8 +226,13 @@ require(["jquery", "jhapi", "utils"], function (
       );
     }
 
+    function uuidv4hex() {
+      return ([1e7,1e3,4e3,8e3,1e11].join('')).replace(/[018]/g, c => 
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+    }
+
     function uuid_with_letter_start() {
-      let uuid = uuidv4();
+      let uuid = uuidv4hex();
       let char = Math.random().toString(36).match(/[a-zA-Z]/)[0];
       return char + uuid.substring(1);
     }
