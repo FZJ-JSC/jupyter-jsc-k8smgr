@@ -2,7 +2,6 @@ import asyncio
 import html
 import json
 import os
-import uuid
 
 from custom_utils.backend_services import BackendException
 from custom_utils.backend_services import drf_request
