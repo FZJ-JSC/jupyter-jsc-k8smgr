@@ -94,7 +94,7 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                     req,
                     self.log,
                     user.authenticator.fetch,
-                    "start",
+                    "setuptunnel",
                     user.name,
                     f"{user.name}::setuptunnel",
                     parse_json=True,

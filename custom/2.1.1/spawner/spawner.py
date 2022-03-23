@@ -176,7 +176,32 @@ class BackendSpawner(Spawner):
             self.user.name,
             self._log_name,
             parse_json=True,
-            raise_exception=True,
+            raise_exception=False,
+        )
+
+        custom_config = self.user.authenticator.custom_config
+        tunnel_req_prop = drf_request_properties(
+            "tunnel", custom_config, self.log, {}, req.headers["uuidcode"]
+        )
+
+        tunnel_service_url = tunnel_req_prop.get("urls", {}).get("services", "None")
+        tunnel_req = HTTPRequest(
+            f"{tunnel_service_url}{self.name}/",
+            method="DELETE",
+            headers=tunnel_req_prop["headers"],
+            request_timeout=tunnel_req_prop["request_timeout"],
+            validate_cert=tunnel_req_prop["validate_cert"],
+            ca_certs=tunnel_req_prop["ca_certs"],
+        )
+        await drf_request(
+            tunnel_req,
+            self.log,
+            self.user.authenticator.fetch,
+            "removetunnel",
+            self.user.name,
+            f"{self.user.name}::removetunnel",
+            parse_json=True,
+            raise_exception=False,
         )
 
     async def progress(self):
