@@ -61,7 +61,7 @@ def get_system_infos(log, custom_config, user_hpc_accounts, reservations_list):
     partitions = {
         system: {
             account: {
-                project: systems_config.get("UNICORE", {}).get(system, {}).get("interactive_partitions", []) + sorted(list(
+                project: systems_config.get(system, {}).get("interactive_partitions", []) + sorted(list(
                     {
                         group[2] for group in user_hpc_list
                         if system == group[1]
@@ -297,9 +297,7 @@ async def get_options_from_form(formdata, custom_config):
         partition = formdata.get("partition")[0]
         resource_keys = ["nodes", "gpus", "runtime"]
         if key in resource_keys:
-            if system not in systems_config.get("UNICORE", {}).keys():
-                return True
-            elif partition in systems_config.get("UNICORE", {}).get(system, {}).get("interactive_partitions", []):
+            if partition in systems_config.get(system, {}).get("interactive_partitions", []):
                 return True
             else:
                 if (
@@ -326,8 +324,11 @@ async def get_options_from_form(formdata, custom_config):
 
 def check_formdata_keys(data, custom_config):
     keys = data.keys()
-    unicore_systems = custom_config.get("systems").get("UNICORE")
-
+    systems_config = custom_config.get("systems")
+    unicore_systems = [
+        system for system in systems_config 
+        if systems_config[system].get("drf-service", None) == "unicoremgr"
+    ]
     required_keys = {"vo", "name", "service", "system"}
     if data.get("system")[0] in unicore_systems:
         required_keys = required_keys | {"account", "project", "partition"}
