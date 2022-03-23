@@ -109,29 +109,21 @@ class BackendSpawner(Spawner):
                 ret[config.get("map_user_options").get(key, key)] = value
             return ret
 
-        # Test setup
-        user_options = {
-            "service": "JupyterLab/JupyterLab-no-tunnel",
-            "system": "DEMO-SITE",
-            "partition": "debug",
-            "project": "project1",
-            "account": "demouser1",
-            "vo": "myvo",
-        }
-
         env = self.get_env()
         popen_kwargs = {
             "auth_state": auth_state,
             "env": env,
-            # "user_options": user_options,
             "user_options": map_user_options()
         }
 
         custom_config = self.user.authenticator.custom_config
         drf_service = custom_config.get("systems", {}).get(
-            user_options["system"], {}).get(
+            self.user_options["system"], {}).get(
                 "drf-service", None)
-        req_prop = drf_request_properties(drf_service, custom_config, self.log)
+        send_access_token = custom_config.get("drf-services", {}).get(
+            drf_service, {}).get("send_access_token", False)
+        access_token = auth_state["access_token"] if send_access_token else None
+        req_prop = drf_request_properties(drf_service, custom_config, self.log, access_token)
         service_url = req_prop.get("urls", {}).get("services", "None")
         req = HTTPRequest(
             f"{service_url}?uuidcode={uuidcode}",
