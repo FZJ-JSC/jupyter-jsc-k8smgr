@@ -18,6 +18,7 @@ from traitlets import Unicode
 class BackendSpawner(Spawner):
     events = []
     cancel_event_yielded = False
+    poll_cancel_called = False
     yield_wait_seconds = 1
     _start_future = None
 
@@ -117,9 +118,17 @@ class BackendSpawner(Spawner):
     async def start(self):
         self.events = []
         self.cancel_event_yielded = False
+        self.poll_cancel_called = False
         return await self._start()
 
     async def poll(self):
+        if self.poll_cancel_called:
+            # avoid loop with poll_cancel during failed spawn
+            if self._spawn_pending:
+                return 0
+            else:
+                return None
+
         auth_state = await self.user.get_auth_state()
 
         req_prop = self._get_req_prop(auth_state)
@@ -147,8 +156,24 @@ class BackendSpawner(Spawner):
             )
         except:
             return None
-        if resp_json and not resp_json.get("running", True):
+        if not resp_json.get("running", True):
+            if self._spawn_pending:
+                # During the spawn progress we've received that it's already stopped.
+                # We want to show the error message to the user
+                summary = resp_json.get("details", {}).get("error", "Start failed.")
+                details = resp_json.get("details", {}).get(
+                    "detailed_error", "No details available."
+                )
+                event = {
+                    "failed": True,
+                    "progress": 100,
+                    "html_message": f"<details><summary>{summary}</summary>{details}</details>",
+                }
+                self.poll_cancel_called = True
+                await self._cancel(event)
+                return 0
             return 0
+
         return None
 
     def stop(self):
