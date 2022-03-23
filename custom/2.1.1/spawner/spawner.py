@@ -250,9 +250,8 @@ class BackendSpawner(Spawner):
                 await asyncio.sleep(self.yield_wait_seconds)
         if self._start_future:
             await self.cancel_future(self._start_future)
-        cancelled = await self.cancel_future(self._spawn_future)
-        if not cancelled:
-            await self.user.stop(self.name)
+        await self.cancel_future(self._spawn_future)
+        await self.user.stop(self.name)
         self.server = None
 
     async def options_form(self, spawner):
