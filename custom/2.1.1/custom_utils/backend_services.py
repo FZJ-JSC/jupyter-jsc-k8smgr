@@ -15,7 +15,7 @@ class BackendException(Exception):
         super().__init__(f"{error} --- {error_detail}")
 
 
-def drf_request_properties(drf_service, custom_config, app_log):
+def drf_request_properties(drf_service, custom_config, app_log, access_token=None):
     drf_config = custom_config.get("drf-services")
     authentication_token_os = os.environ.get(
         f"{drf_service.upper()}_AUTHENTICATION_TOKEN", None
@@ -43,6 +43,8 @@ def drf_request_properties(drf_service, custom_config, app_log):
         "Accept": "application/json",
         "Authorization": authentication_token,
     }
+    if access_token:
+        headers["ACCESS_TOKEN"] = access_token
     certificate_path = drf_config.get(drf_service, {}).get("certificate_path", False)
     ca_certs = certificate_path if certificate_path else None
     validate_cert = True if ca_certs else False

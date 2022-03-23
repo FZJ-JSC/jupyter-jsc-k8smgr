@@ -2,6 +2,7 @@
   "drf-services": {
     "unicoremgr": {
       "authentication_token": "Not Set",
+      "send_access_token": true,
       "request_timeout": 10,
       "certificate_path": "/home/jupyterhub/ca-root.pem",
       "urls": {
