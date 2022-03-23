@@ -77,10 +77,12 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                 event["setup_tunnel"]["startuuidcode"] = spawner.name
                 event["setup_tunnel"]["svc_port"] = spawner.port
                 custom_config = user.authenticator.custom_config
-                req_prop = drf_request_properties("tunnel", custom_config, self.log)
+                req_prop = drf_request_properties(
+                    "tunnel", custom_config, self.log, {}, uuidcode
+                )
                 service_url = req_prop.get("urls", {}).get("services", "None")
                 req = HTTPRequest(
-                    f"{service_url}?uuidcode={uuidcode}",
+                    service_url,
                     method="POST",
                     headers=req_prop["headers"],
                     body=json.dumps(event["setup_tunnel"]),
@@ -88,16 +90,13 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                     validate_cert=req_prop["validate_cert"],
                     ca_certs=req_prop["ca_certs"],
                 )
-                max_tunnel_attempts = 1
                 await drf_request(
-                    uuidcode,
                     req,
                     self.log,
                     user.authenticator.fetch,
                     "start",
                     user.name,
                     f"{user.name}::setuptunnel",
-                    max_tunnel_attempts,
                     parse_json=True,
                     raise_exception=True,
                 )
