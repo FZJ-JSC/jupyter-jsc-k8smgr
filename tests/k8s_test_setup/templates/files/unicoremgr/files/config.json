@@ -15,7 +15,7 @@
       },
       "job_description":
       {
-        "base_directory": "/tmp/job_descriptions",
+        "base_directory": "/tmp/files/job_descriptions",
         "template_filename": "job_description.json.template",
         "replace_indicators": ["<", ">"],
         "input": {

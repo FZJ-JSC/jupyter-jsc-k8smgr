@@ -8,13 +8,15 @@
             "program": "${workspaceFolder}/manage.py",
             "args": [
                 "runserver",
-                "0.0.0.0:8080",
+                "0.0.0.0:8443",
                 "--insecure"
             ],
             "django": true,
             "justMyCode": false,
             "env": {
-                "SECRET_KEY": "94919419491419419419111"
+                "SECRET_KEY": "94919419491419419419111",
+                "UWSGI_START": "true",
+                "CONFIG_PATH": "/tmp/files/config.json"
             }
         }
     ]
