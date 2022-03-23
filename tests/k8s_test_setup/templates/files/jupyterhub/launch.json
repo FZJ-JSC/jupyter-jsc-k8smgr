@@ -17,6 +17,8 @@
         "RESERVATIONS_PATH": "/home/jupyterhub/reservations.json",
         "MAINTENANCE_PATH": "/home/jupyterhub/maintenance.json",
         "UNICOREMGR_AUTHENTICATION_TOKEN": "<UNICOREMGR_JHUB_BASIC>",
+        "K8SMGRHDFCLOUD_AUTHENTICATION_TOKEN": "<K8SMGR_JHUB_BASIC>",
+        "TUNNEL_AUTHENTICATION_TOKEN": "<TUNNEL_JHUB_BASIC>",
         "TUNNEL_DEPLOYMENT_NAMESPACE": "<NAMESPACE>",
         "TUNNEL_DEPLOYMENT_NAME": "tunnel-<ID>"
       }
