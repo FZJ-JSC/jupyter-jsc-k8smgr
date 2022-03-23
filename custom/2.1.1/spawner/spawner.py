@@ -96,6 +96,17 @@ class BackendSpawner(Spawner):
         svc_name = f"{k8s_tunnel_deployment_name}-{id}"[0:63]
         return f"{svc_name}.{k8s_tunnel_deployment_namespace}.svc"
 
+    def _get_req_prop(self, auth_state):
+        custom_config = self.user.authenticator.custom_config
+        drf_service = custom_config.get("systems", {}).get(
+            self.user_options["system"], {}).get(
+                "drf-service", None)
+        send_access_token = custom_config.get("drf-services", {}).get(
+            drf_service, {}).get("send_access_token", False)
+        access_token = auth_state["access_token"] if send_access_token else None
+        req_prop = drf_request_properties(drf_service, custom_config, self.log, access_token)
+        return req_prop
+
     async def _start_job(self):
         uuidcode = uuid.uuid4().hex
         self.port = 8080
@@ -116,14 +127,7 @@ class BackendSpawner(Spawner):
             "user_options": map_user_options()
         }
 
-        custom_config = self.user.authenticator.custom_config
-        drf_service = custom_config.get("systems", {}).get(
-            self.user_options["system"], {}).get(
-                "drf-service", None)
-        send_access_token = custom_config.get("drf-services", {}).get(
-            drf_service, {}).get("send_access_token", False)
-        access_token = auth_state["access_token"] if send_access_token else None
-        req_prop = drf_request_properties(drf_service, custom_config, self.log, access_token)
+        req_prop = self._get_req_prop(auth_state)
         service_url = req_prop.get("urls", {}).get("services", "None")
         req = HTTPRequest(
             f"{service_url}?uuidcode={uuidcode}",
@@ -164,15 +168,13 @@ class BackendSpawner(Spawner):
 
     async def poll(self):
         uuidcode = uuid.uuid4().hex
-        custom_config = self.user.authenticator.custom_config
-        req_prop = drf_request_properties("backend", custom_config, self.log)
+        auth_state = await self.user.get_auth_state()
+
+        req_prop = self._get_req_prop(auth_state)
         service_url = req_prop.get("urls", {}).get("services", "None")
 
-        auth_state = await self.user.get_auth_state()
-        access_token = auth_state["access_token"]
-
         req = HTTPRequest(
-            f"{service_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
+            f"{service_url}{self.id}/?uuidcode={uuidcode}",
             method="GET",
             headers=req_prop["headers"],
             request_timeout=req_prop["request_timeout"],
@@ -207,15 +209,13 @@ class BackendSpawner(Spawner):
         if not self.id:
             return
         uuidcode = uuid.uuid4().hex
-        custom_config = self.user.authenticator.custom_config
-        req_prop = drf_request_properties("backend", custom_config, self.log)
+        auth_state = await self.user.get_auth_state()
+
+        req_prop = self._get_req_prop(auth_state)
         service_url = req_prop.get("urls", {}).get("services", "None")
 
-        auth_state = await self.user.get_auth_state()
-        access_token = auth_state["access_token"]
-
         req = HTTPRequest(
-            f"{service_url}{self.id}/?access_token={access_token}&uuidcode={uuidcode}",
+            f"{service_url}{self.id}/?uuidcode={uuidcode}",
             method="DELETE",
             headers=req_prop["headers"],
             request_timeout=req_prop["request_timeout"],
