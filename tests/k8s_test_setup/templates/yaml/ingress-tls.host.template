@@ -1,0 +1,3 @@
+  - hosts:
+    - <SVC_NAME>-<ID>.<NAMESPACE>.svc
+    secretName: tls-<SVC_NAME>-<ID>

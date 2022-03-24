@@ -8,36 +8,6 @@ metadata:
   namespace: <NAMESPACE>
 spec:
   rules:
-  - host: tunnel-<ID>.<NAMESPACE>.svc
-    http:
-      paths:
-      - backend:
-          service:
-            name: tunnel-<ID>
-            port:
-              number: 443
-        path: /
-        pathType: Prefix
-  - host: unicoremgr-<ID>.<NAMESPACE>.svc
-    http:
-      paths:
-      - backend:
-          service:
-            name: unicoremgr-<ID>
-            port:
-              number: 443
-        path: /
-        pathType: Prefix
-  - host: k8smgr-<ID>.<NAMESPACE>.svc
-    http:
-      paths:
-      - backend:
-          service:
-            name: k8smgr-<ID>
-            port:
-              number: 443
-        path: /
-        pathType: Prefix
   - host: unity-<ID>.<NAMESPACE>.svc
     http:
       paths:
@@ -58,16 +28,8 @@ spec:
               number: 443
         path: /
         pathType: Prefix
+  # <APPLY_HOST>
   tls:
-  - hosts:
-    - tunnel-<ID>.<NAMESPACE>.svc
-    secretName: tls-tunnel-<ID>
-  - hosts:
-    - unicoremgr-<ID>.<NAMESPACE>.svc
-    secretName: tls-unicoremgr-<ID>
-  - hosts:
-    - k8smgr-<ID>.<NAMESPACE>.svc
-    secretName: tls-k8smgr-<ID>
   - hosts:
     - unity-<ID>.<NAMESPACE>.svc
     secretName: tls-unity-<ID>

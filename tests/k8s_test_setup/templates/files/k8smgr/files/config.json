@@ -14,7 +14,7 @@
   },
   "tunnel": {
     "k8smgr_hostname": "k8smgr_hdfcloud",
-    "restart_url": "https://<TUNNEL_ALT_NAME>/api/restart/",
+    "restart_url": "<TUNNEL_PROTOCOL>://tunnel-<ID>.<NAMESPACE>.svc<TUNNEL_PORT>/api/restart/",
     "credentials_env_name": "TUNNEL_BASIC",
     "credentials_basic64": "<TUNNEL_K8SMGR_BASIC>",
     "timeout": 10,

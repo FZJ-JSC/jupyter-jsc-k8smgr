@@ -4,32 +4,32 @@
       "authentication_token": "Not Set",
       "send_access_token": true,
       "request_timeout": 10,
-      "certificate_path": "/home/jupyterhub/ca-root.pem",
+      "certificate_path": <UNICOREMGR_CERT_PATH>,
       "urls": {
-        "services": "https://unicoremgr-<ID>.<NAMESPACE>.svc/api/services/"
+        "services": "<UNICOREMGR_PROTOCOL>://unicoremgr-<ID>.<NAMESPACE>.svc<UNICOREMGR_PORT>/api/services/"
       }
     },
     "k8smgrhdfcloud": {
       "authentication_token": "Not Set",
       "request_timeout": 10,
-      "certificate_path": "/home/jupyterhub/ca-root.pem",
+      "certificate_path": <K8SMGR_CERT_PATH>,
       "urls": {
-        "services": "https://k8smgr-<ID>.<NAMESPACE>.svc/api/services/"
+        "services": "<K8SMGR_PROTOCOL>://<K8SMGR_ALT_NAME><K8SMGR_PORT>/api/services/"
       }
     },
     "tunnel": {
       "authentication_token": "Not Set",
       "request_timeout": 10,
-      "certificate_path": "/home/jupyterhub/ca-root.pem",
+      "certificate_path": <TUNNEL_CERT_PATH>,
       "urls": {
-        "services": "https://tunnel-<ID>.<NAMESPACE>.svc/api/tunnel/"
+        "services": "<TUNNEL_PROTOCOL>://<TUNNEL_ALT_NAME><TUNNEL_PORT>/api/tunnel/"
       }
     }
   },
   "unity": {
     "revoke": {
       "url": "https://<UNITY_ALT_NAME>/oauth2/revoke",
-      "certificate_path": false,
+      "certificate_path": "/home/jupyterhub/ca-root.pem",
       "request_timeout": 10,
       "client_id": "oauth-client",
       "expected_status_code": 200
@@ -92,7 +92,7 @@
   },
   "systems": {
     "DEMO-SITE": {
-      "base_url": "https://unicore-<ID>.<NAMESPACE>.svc/DEMO-SITE/rest/core",
+      "base_url": "https://<UNICORE_ALT_NAME>/DEMO-SITE/rest/core",
       "interactive_partitions": [
         "LoginNode"
       ],

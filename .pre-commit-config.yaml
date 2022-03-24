@@ -11,7 +11,6 @@ repos:
   rev: v2.4.0
   hooks:
   - id: end-of-file-fixer
-  - id: check-json
   - id: check-case-conflict
   - id: check-executables-have-shebangs
   - id: requirements-txt-fixer

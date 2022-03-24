@@ -5,7 +5,7 @@ if [[ -z ${1} ]]; then
 fi
 
 DEVEL_JUPYTERHUB="true"
-DEVEL_UNICOREMGR="false"
+DEVEL_UNICOREMGR="true"
 DEVEL_K8SMGR="false"
 DEVEL_TUNNEL="false"
 
@@ -132,10 +132,28 @@ select_yaml_file ${DEVEL_K8SMGR} "k8smgr"
 select_yaml_file ${DEVEL_TUNNEL} "tunnel"
 
 cp -rp ${DIR}/templates/files ${DIR}/${ID}/.
+
+set_drf_service_address () {
+    if [[ ${1} == "true" ]]; then
+        find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<${2}_CERT_PATH>@false@g" -e "s@<${2}_PROTOCOL>@http@g" -e "s@<${2}_PORT>@:8080@g" {} \; 2> /dev/null
+        sed -e "s@<SVC_NAME>@${3}@g" ${DIR}/${ID}/yaml/ingress-http.host.template >> ${DIR}/${ID}/yaml/ingress-http.yaml
+    else
+        find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<${2}_CERT_PATH>@\"/home/jupyterhub/ca-root.pem\"@g" -e "s@<${2}_PROTOCOL>@https@g" -e "s@<${2}_PORT>@@g" {} \; 2> /dev/null
+        sed -i -e "/<APPLY_HOST>/r ${DIR}/${ID}/yaml/ingress-https.host.template" ${DIR}/${ID}/yaml/ingress-https.yaml
+        sed -i -e "s@<SVC_NAME>@${3}@g" ${DIR}/${ID}/yaml/ingress-https.yaml
+        sed -e "s@<SVC_NAME>@${3}@g" ${DIR}/${ID}/yaml/ingress-tls.host.template >> ${DIR}/${ID}/yaml/ingress-https.yaml
+    fi
+}
+
+set_drf_service_address ${DEVEL_UNICOREMGR} "UNICOREMGR" "unicoremgr"
+set_drf_service_address ${DEVEL_K8SMGR} "K8SMGR" "k8smgr"
+set_drf_service_address ${DEVEL_TUNNEL} "TUNNEL" "tunnel"
+
 if [[ ${DEVEL_JUPYTERHUB} == "true" ]]; then
     find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@/src/jupyterhub-static@/home/jupyterhub/jupyterhub-static@g" {} \; 2> /dev/null
 fi
 find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<DIR>@${DIR}@g" -e "s@<TUNNEL_JHUB_BASIC>@${TUNNEL_JHUB_BASIC}@g" -e "s@<TUNNEL_K8SMGR_BASIC>@${TUNNEL_K8SMGR_BASIC}@g" -e "s@<UNICOREMGR_JHUB_BASIC>@${UNICOREMGR_JHUB_BASIC}@g" -e "s@<K8SMGR_JHUB_BASIC>@${K8SMGR_JHUB_BASIC}@g" -e "s@<NAMESPACE>@${NAMESPACE}@g" -e "s@<ID>@${ID}@g" -e "s@<K8SMGR_ALT_NAME>@${K8SMGR_ALT_NAME}@g" -e "s@<UNITY_ALT_NAME>@${UNITY_ALT_NAME}@g" -e "s@<UNICORE_ALT_NAME>@${UNICORE_ALT_NAME}@g" -e "s@<TUNNEL_ALT_NAME>@${TUNNEL_ALT_NAME}@g" -e "s@<JUPYTERHUB_ALT_NAME>@${JUPYTERHUB_ALT_NAME}@g" -e "s@<JUPYTERHUB_PORT>@${JUPYTERHUB_PORT}@g" -e "s@<TUNNEL_PUBLIC_KEY>@${ESCAPED_TPK}@g" -e "s@<REMOTE_PUBLIC_KEY>@${ESCAPED_RPK}@g" -e "s@<K8SMGR_PUBLIC_KEY>@${ESCAPED_KPK}@g" -e "s@<LJUPYTER_PUBLIC_KEY>@${ESCAPED_LPK}@g" -e "s@<DEVEL_PUBLIC_KEY>@${ESCAPED_DPK}@g" -e "s@<UNICORE_SSH_PORT>@${UNICORE_SSH_PORT}@g" {} \; 2> /dev/null
+
 tar -czf ${DIR}/${ID}/files/unicoremgr/files.tar.gz -C ${DIR}/${ID}/files/unicoremgr files
 tar -czf ${DIR}/${ID}/files/k8smgr/files.tar.gz -C ${DIR}/${ID}/files/k8smgr files
 

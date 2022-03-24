@@ -8,10 +8,10 @@ spec:
     app: unicoremgr-<ID>
   type: ClusterIP
   ports:
-    - name: https
-      port: 443
+    - name: http
+      port: 8080
       protocol: TCP
-      targetPort: 8443
+      targetPort: 8080
     - name: ssh
       port: 2222
       protocol: TCP
