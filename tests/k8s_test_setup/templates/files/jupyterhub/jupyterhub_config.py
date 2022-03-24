@@ -14,9 +14,11 @@ from apihandler import SpawnProgressStatusAPIHandler
 from apihandler import user_cancel_message
 from apihandler import SpawnNotificationAPIHandler
 from customauthenticator import CustomGenericOAuthenticator
+from logs import create_extra_handlers
 
 c.JupyterHub.log_level = 10
 c.JupyterHub.custom_config_file = "/home/jupyterhub/jupyterhub_custom_config.json"
+c.JupyterHub.extra_log_handlers = create_extra_handlers()
 c.JupyterHub.db_url = "sqlite:////home/jupyterhub/jupyterhub.sqlite"
 c.JupyterHub.pid_file = "/home/jupyterhub/jupyterhub.pid"
 c.JupyterHub.cookie_secret_file = "/home/jupyterhub/jupyterhub_cookie_secret"
