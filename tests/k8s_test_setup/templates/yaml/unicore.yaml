@@ -93,6 +93,9 @@ spec:
         - name: certs
           mountPath: /opt/unicore/certs/ca-root.pem
           subPath: ca-root.pem
+        - name: certs
+          mountPath: /opt/unicore/certs/trusted/ca-root.pem
+          subPath: ca-root.pem
         - name: keypairs
           mountPath: /tmp/ljupyter_ssh/id_ed25519
           subPath: ljupyter

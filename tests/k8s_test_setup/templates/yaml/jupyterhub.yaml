@@ -109,6 +109,6 @@ spec:
           defaultMode: 400
           name: jupyterhub-files-<ID>
       - name: certs
-        configMap:
+        secret:
           defaultMode: 400
-          name: certs-<ID>
+          secretName: certs-<ID>
