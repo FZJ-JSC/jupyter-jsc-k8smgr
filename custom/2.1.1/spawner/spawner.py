@@ -1,8 +1,9 @@
 import asyncio
-import html
+import datetime
 import json
 import os
 
+from async_generator import aclosing
 from custom_utils.backend_services import BackendException
 from custom_utils.backend_services import drf_request
 from custom_utils.backend_services import drf_request_properties
@@ -11,16 +12,17 @@ from custom_utils.options_form import get_options_from_form
 from jupyterhub.spawner import Spawner
 from jupyterhub.utils import maybe_future
 from jupyterhub.utils import url_path_join
+from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
-from traitlets import Unicode
 
 
 class BackendSpawner(Spawner):
+    _cancel_pending = False
+    _cancel_event_yielded = False
+    _yielded_events = []
+
     events = []
-    cancel_event_yielded = False
-    poll_cancel_called = False
     yield_wait_seconds = 1
-    _start_future = None
 
     def status_update_url(self, server_name=""):
         """API path for status update endpoint for a server with a given name"""
@@ -65,11 +67,13 @@ class BackendSpawner(Spawner):
         )
         return req_prop
 
+    async def start(self):
+        self.events = []
+        self._cancel_pending = False
+        self._cancel_event_yielded = False
+        return await self._start()
+
     async def _start(self):
-        self.port = 8080
-
-        auth_state = await self.user.get_auth_state()
-
         def map_user_options():
             config = self.user.authenticator.custom_config
             ret = {}
@@ -77,11 +81,27 @@ class BackendSpawner(Spawner):
                 ret[config.get("map_user_options").get(key, key)] = value
             return ret
 
+        now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+        user_options = map_user_options()
+        start_event = {
+            "failed": False,
+            "progress": 25,
+            "html_message": f"<details><summary>{now}: Start service</summary>{user_options}</details>",
+        }
+        self.ready_event[
+            "html_message"
+        ] = f"<details><summary><now>: Service {user_options['name']} started on {user_options['system']}.</summary>You will be redirected to <a href=\"<url>\"><url></a></details>"
+        self.events = [start_event]
+
+        self.port = 8080
+
+        auth_state = await self.user.get_auth_state()
+
         env = self.get_env()
         popen_kwargs = {
             "auth_state": auth_state,
             "env": env,
-            "user_options": map_user_options(),
+            "user_options": user_options,
         }
 
         req_prop = self._get_req_prop(auth_state, self.name)
@@ -95,39 +115,40 @@ class BackendSpawner(Spawner):
             validate_cert=req_prop["validate_cert"],
             ca_certs=req_prop["ca_certs"],
         )
-        # Todo:
-        # Test behaviour if start.sh is not present
-        # Run job with /bin/bash start2.sh , will never be there. But it should try at least 3 times to start
-        await drf_request(
-            req,
-            self.log,
-            self.user.authenticator.fetch,
-            "start",
-            self.user.name,
-            self._log_name,
-            parse_json=True,
-            raise_exception=True,
-        )
         svc_name = self.get_svc_name(self.name)
         self.log.debug(
             f"Expect JupyterLab at {svc_name}:{self.port}",
             extra={"uuidcode": self.name},
         )
+        try:
+            await drf_request(
+                req,
+                self.log,
+                self.user.authenticator.fetch,
+                "start",
+                self.user.name,
+                self._log_name,
+                parse_json=True,
+                raise_exception=True,
+            )
+        except BackendException as e:
+            failed_event = {
+                "progress": 100,
+                "failed": True,
+                "html_message": e.jupyterhub_html_message,
+            }
+            self.events.append(failed_event)
+            try:
+                self.stop()
+            except:
+                pass
+            raise e
         return (svc_name, self.port)
 
-    async def start(self):
-        self.events = []
-        self.cancel_event_yielded = False
-        self.poll_cancel_called = False
-        return await self._start()
-
     async def poll(self):
-        if self.poll_cancel_called:
-            # avoid loop with poll_cancel during failed spawn
-            if self._spawn_pending:
-                return 0
-            else:
-                return None
+        if self._cancel_pending:
+            # avoid loop with cancel
+            return 0
 
         auth_state = await self.user.get_auth_state()
 
@@ -154,12 +175,19 @@ class BackendSpawner(Spawner):
                 parse_json=True,
                 raise_exception=True,
             )
-        except:
+        except HTTPClientError as e:
+            if e.code == 404:
+                resp_json = {"running": False}
+            else:
+                self.log.warning("Unexpected error", exc_info=True)
+                return None
+        except Exception:
             return None
         if not resp_json.get("running", True):
             if self._spawn_pending:
                 # During the spawn progress we've received that it's already stopped.
                 # We want to show the error message to the user
+                now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
                 summary = resp_json.get("details", {}).get("error", "Start failed.")
                 details = resp_json.get("details", {}).get(
                     "detailed_error", "No details available."
@@ -167,13 +195,14 @@ class BackendSpawner(Spawner):
                 event = {
                     "failed": True,
                     "progress": 100,
-                    "html_message": f"<details><summary>{summary}</summary>{details}</details>",
+                    "html_message": f"<details><summary>{now}: {summary}</summary>{details}</details>",
                 }
-                self.poll_cancel_called = True
-                await self._cancel(event)
+                await self.cancel(event)
                 return 0
+            else:
+                # It's not running anymore. Call stop to delete all resources
+                await self.stop()
             return 0
-
         return None
 
     def stop(self):
@@ -229,6 +258,21 @@ class BackendSpawner(Spawner):
             raise_exception=False,
         )
 
+    async def _generate_progress(self):
+        """Private wrapper of progress generator
+
+        This method is always an async generator and will always yield at least one event.
+        """
+        if not self._spawn_pending:
+            self.log.warning(
+                "Spawn not pending, can't generate progress for %s", self._log_name
+            )
+            return
+
+        async with aclosing(self.progress()) as progress:
+            async for event in progress:
+                yield event
+
     async def progress(self):
         spawn_future = self._spawn_future
         next_event = 0
@@ -239,15 +283,13 @@ class BackendSpawner(Spawner):
             # signal has fired.
             if spawn_future.done():
                 break_while_loop = True
-            events = self.events
 
-            len_events = len(events)
+            len_events = len(self.events)
             if next_event < len_events:
                 for i in range(next_event, len_events):
-                    event = events[i]
-                    yield event
-                    if event["failed"] == True:
-                        self.cancel_event_yielded = True
+                    yield self.events[i]
+                    if self.events[i].get("failed", False) == True:
+                        self._cancel_event_yielded = True
                         break_while_loop = True
                 next_event = len_events
 
@@ -255,7 +297,7 @@ class BackendSpawner(Spawner):
                 break
             await asyncio.sleep(self.yield_wait_seconds)
 
-    async def cancel_future(self, future):
+    async def _cancel_future(self, future):
         if type(future) is asyncio.Task:
             if future._state in ["PENDING"]:
                 try:
@@ -266,18 +308,31 @@ class BackendSpawner(Spawner):
                 return True
         return False
 
-    async def _cancel(self, failed_event):
-        self.events.append(failed_event)
-        for i in range(0, 2):
-            if self.cancel_event_yielded:
+    async def cancel(self, event):
+        self.log.info("Cancel Start")
+        self._cancel_pending = True
+        self.events.append(event)
+
+        # Let generate_progress catch this event.
+        # This will show the new event at the control panel site
+        for _ in range(0, 2):
+            if self._cancel_event_yielded:
                 break
             else:
                 await asyncio.sleep(self.yield_wait_seconds)
-        if self._start_future:
-            await self.cancel_future(self._start_future)
-        await self.cancel_future(self._spawn_future)
-        await self.user.stop(self.name)
-        self.server = None
+        if not self._cancel_event_yielded:
+            self.log.warning("Cancel event will not be displayed at control panel.")
+
+        await self.stop()
+
+        try:
+            await self.user.stop(self.name)
+        except asyncio.CancelledError:
+            pass
+        await self._cancel_future(self._spawn_future)
+
+        self._cancel_pending = False
+        self.log.info("Cancel Done")
 
     async def options_form(self, spawner):
         query_options = {}

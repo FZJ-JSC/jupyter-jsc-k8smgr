@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import json
 
 from custom_utils.backend_services import drf_request
@@ -34,6 +35,18 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
         user = self.find_user(user_name)
         spawner = user.spawners[server_name]
 
+        if event.get("html_message", ""):
+            # Add timestamp
+            now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+            if event["html_message"].startswith("<details><summary>"):
+                event[
+                    "html_message"
+                ] = f"<details><summary>{now}: {event['html_message'][len('<details><summary>'):]}"
+            else:
+                event["html_message"] = f"{now}: {event['html_message']}"
+        logs_extra = {"uuidcode": uuidcode, "event": event}
+        self.log.debug("SpawnProgressUpdate called", extra=logs_extra)
+
         if event and event.get("failed", False):
             if event.get("html_message", "") == user_cancel_message:
                 self.log.debug(
@@ -56,10 +69,10 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                         "event": event,
                     },
                 )
-            cancel_future = asyncio.ensure_future(spawner._cancel(event))
+            await spawner.cancel(event)
             self.set_header("Content-Type", "text/plain")
             self.set_status(204)
-            return cancel_future
+            return
         elif event:
             self.log.debug(
                 "APICall: SpawnUpdate",

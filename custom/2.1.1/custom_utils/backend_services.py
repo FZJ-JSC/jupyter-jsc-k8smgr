@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import uuid
@@ -9,10 +10,12 @@ from tornado.httpclient import HTTPResponse
 class BackendException(Exception):
     error = "Unexpected error."
     error_detail = ""
+    jupyterhub_html_message = ""
 
-    def __init__(self, error, error_detail=""):
+    def __init__(self, error, error_detail="", jupyterhub_html_message=""):
         self.error = error
         self.error_detail = error_detail
+        self.jupyterhub_html_message = jupyterhub_html_message
         super().__init__(f"{error} --- {error_detail}")
 
 
@@ -91,6 +94,11 @@ async def drf_request(
         resp = await auth_fetch(req, parse_json=parse_json)
         return resp
     except Exception as e:
+        if e.code == 404:
+            if raise_exception:
+                raise e
+            else:
+                return {}
         error = "Jupyter-JSC backend service communication failed."
         error_detail = str(e)
         if isinstance(e, HTTPClientError):
@@ -105,7 +113,7 @@ async def drf_request(
                         # returned json is a list not a dictionary
                         # for example for missing access_token key in header
                         error_detail = error_json[0]
-        app_log.exception(
+        app_log.info(
             "Exception while communicating with backend drf service",
             extra={
                 "uuidcode": req.headers["uuidcode"],
@@ -115,7 +123,12 @@ async def drf_request(
                 "error_msg": error,
                 "error_msg_detail": error_detail,
             },
+            exc_info=True,
         )
         if raise_exception:
-            raise BackendException(error, error_detail)
+            now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+            jupyterhub_html_message = (
+                f"<details><summary>{now}: {error}</summary>{error_detail}</details>"
+            )
+            raise BackendException(error, error_detail, jupyterhub_html_message)
     return {}
