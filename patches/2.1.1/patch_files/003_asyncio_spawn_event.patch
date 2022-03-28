@@ -18,11 +18,9 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
  
      def __init__(self, orm_user, settings=None, db=None):
          self.db = db or inspect(orm_user).session
-@@ -676,7 +679,10 @@
-             self.log.debug("Calling Spawner.start for %s", spawner._log_name)
+@@ -677,6 +680,8 @@
              f = maybe_future(spawner.start())
              # commit any changes in spawner.start (always commit db changes before yield)
-+            self.log.debug("Set asyncio spawn event.")
              db.commit()
 +            # Set asyncio spawn Event
 +            self.spawn_event.set()
