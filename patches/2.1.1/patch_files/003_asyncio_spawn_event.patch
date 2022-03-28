@@ -9,22 +9,24 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
  from sqlalchemy import inspect
  from tornado import gen
  from tornado import web
-@@ -226,6 +227,9 @@
+@@ -226,6 +227,8 @@
      log = app_log
      settings = None
      _auth_refreshed = None
 +    # asyncio Event to signal a new spawn event
 +    spawn_event = Event()
-+
  
      def __init__(self, orm_user, settings=None, db=None):
          self.db = db or inspect(orm_user).session
-@@ -789,6 +793,8 @@
-             self.state = {}
-         spawner.orm_spawner.state = spawner.get_state()
-         db.commit()
-+        # Set asyncio spawn Event
-+        self.spawn_event.set()
-         spawner._waiting_for_response = True
-         await self._wait_up(spawner)
+@@ -676,7 +679,10 @@
+             self.log.debug("Calling Spawner.start for %s", spawner._log_name)
+             f = maybe_future(spawner.start())
+             # commit any changes in spawner.start (always commit db changes before yield)
++            self.log.debug("Set asyncio spawn event.")
+             db.commit()
++            # Set asyncio spawn Event
++            self.spawn_event.set()
+             url = await gen.with_timeout(timedelta(seconds=spawner.start_timeout), f)
+             if url:
+                 # get ip, port info from return value of start()
  

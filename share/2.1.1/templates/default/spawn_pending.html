@@ -62,6 +62,7 @@
 
 {%- set name = spawner.name -%}
 {%- set user_options = spawner.user_options -%}
+{%- set display_name = user_options.get("name") -%}
 {%- set service = user_options.get("service") -%}
 {%- set option1 = user_options.get("options", "JupyterLab") -%}
 {%- set system = user_options.get("system", None) -%}
@@ -108,7 +109,7 @@
           <td class="details" data-bs-target="#{{name}}-collapse">
             <div class="d-flex mx-auto accordion-icon collapsed"></div>
           </td>
-          <th scope="row">{{ name }}</th>
+          <th scope="row">{{ display_name }}</th>
           <td class="system-td">{{ system }}</td>
           <td class="partition-td">
             {%- if partition == None -%}
@@ -270,7 +271,7 @@ require(["jquery", "jhapi", "utils"], function (
     var retry_btn = $('#retry');
     var cancel_btn = $('#cancel');
     var progress_bar = $('.progress-bar');
-    var progress_log = $('[id*=progress-log');
+    var progress_log = $('[id*=progress-log]');
 
     if (!retry_btn.is('[disabled=disabled]')) {
       progress_bar.removeClass('bg-danger');
@@ -317,7 +318,7 @@ require(["jquery", "jhapi", "utils"], function (
   function updateStatus() {
     var logged = {};
     var progress_bar = $('.progress-bar');
-    var progress_log = $('[id*=progress-log');
+    var progress_log = $('[id*=progress-log]');
     var interv = setInterval(_updateStatus, {{cancel_progress_refresh_rate}});
 
     function _updateStatus() {
