@@ -168,11 +168,12 @@ require(["jquery", "jhapi", "utils"], function (
     disableRow(tr);
 
     var name = tr.data("server-name");
+    var display_name = tr.find("th").text();
     var url = utils.url_path_join(base_url, "spawn", user, name);
     url = createUrlAndUpdateTr(url, collapse, tr);
     $(this).attr("href", url);
 
-    var options = createDataDict(collapse);
+    var options = createDataDict(collapse, display_name);
 
     // Validate the form and start spawn only after validation
     try {
