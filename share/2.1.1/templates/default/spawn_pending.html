@@ -316,7 +316,7 @@ require(["jquery", "jhapi", "utils"], function (
   }
 
   function updateStatus() {
-    var logged = {};
+    var logged = [];
     var progress_bar = $('.progress-bar');
     var progress_log = $('[id*=progress-log]');
     var interv = setInterval(_updateStatus, {{cancel_progress_refresh_rate}});
@@ -327,8 +327,8 @@ require(["jquery", "jhapi", "utils"], function (
           progress_bar.width(100);
           data["events"].forEach(function(event) {
             const perc = event["progress"];
-            if (Number(perc) && !logged[perc]) {
-              logged[perc] = event;
+            if (Number(perc) && !(logged.includes(event))) {
+              logged.push(event);
               const html_message = event["html_message"];
               progress_bar.attr('aria-valuenow', perc);
               progress_bar.html('<b>' + perc + '%</b>');
