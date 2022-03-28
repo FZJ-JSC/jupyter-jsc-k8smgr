@@ -13,6 +13,7 @@ from apihandler import SpawnProgressUpdateAPIHandler
 from apihandler import SpawnProgressStatusAPIHandler
 from apihandler import user_cancel_message
 from apihandler import SpawnNotificationAPIHandler
+from apihandler import SpawnStopNotificationAPIHandler
 from customauthenticator import CustomGenericOAuthenticator
 from logs import create_extra_handlers
 
@@ -99,7 +100,8 @@ c.JupyterHub.extra_handlers = [
     (r"/api/users/progress/update/([^/]+)/([^/]+)", SpawnProgressUpdateAPIHandler),
     (r"/api/users/progress/status/([^/]+)", SpawnProgressStatusAPIHandler),
     (r"/api/users/progress/status/([^/]+)/([^/]+)", SpawnProgressStatusAPIHandler),
-    (r"/api/users/([^/]+)/notifications/spawners", SpawnNotificationAPIHandler),
+    (r"/api/users/([^/]+)/notifications/spawners/spawn", SpawnNotificationAPIHandler),
+    (r"/api/users/([^/]+)/notifications/spawners/stop", SpawnStopNotificationAPIHandler),
     (r"/api/2FA", twoFA.TwoFAAPIHandler),
     (r"/2FA/([^/]+)", twoFA.TwoFACodeHandler),
     (r"/api/vo/([^/]+)", vo.VOAPIHandler),

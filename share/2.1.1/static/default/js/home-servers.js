@@ -14,11 +14,11 @@ require(["jquery", "jhapi", "utils"], function (
 
 
   /*
-  Listen for new pending spawner notifications
+  Listen for new pending spawner and stopped server notifications
   */
-  var update_url = utils.url_path_join(jhdata.base_url, "api/users", user, "notifications", "spawners");
-  var evtSource = new EventSource(update_url);
-  evtSource.onmessage = function (e) {
+  var update_start_url = utils.url_path_join(jhdata.base_url, "api/users", user, "notifications", "spawners", "spawn");
+  var startEvtSource = new EventSource(update_start_url);
+  startEvtSource.onmessage = function (e) {
     var data = JSON.parse(e.data)
     for (const name in data) {
       if (!(name in evtSources)) {
@@ -41,6 +41,37 @@ require(["jquery", "jhapi", "utils"], function (
         // Update buttons to reflect pending state
         var row = $('tr[data-server-name="' + name + '"]').first();
         enableRow(row, true);
+      }
+    }
+  }
+
+  var update_stop_url = utils.url_path_join(jhdata.base_url, "api/users", user, "notifications", "spawners", "stop");
+  var stopEvtSource = new EventSource(update_stop_url);
+  stopEvtSource.onmessage = function (e) {
+    var data = JSON.parse(e.data);
+    for (const name in data) {
+      const html_message = data[name].html_message
+      var progress_bar = $("#" + name + "-progress-bar");
+      var progress_log = $("#" + name + "-progress-log");
+      var row = $('tr[data-server-name="' + name + '"]').first();
+            
+      // Get already logged messages
+      var logged_messages = [];
+      progress_log.children().each(function() {
+        var logged_html = $(this).children().first();
+        logged_messages.push(logged_html.text());
+      })
+      try {
+        var html_text = $(html_message).text();
+      } catch {
+        var html_text = html_message;
+      }
+      // and only append if message has not been logged yet
+      if ( !logged_messages.includes(html_text) ) {
+        progress_log.append($("<div>").html(html_message));
+        progress_bar.removeClass("bg-success");
+        progress_bar.width(0);
+        enableRow(row, false);
       }
     }
   }
@@ -106,7 +137,7 @@ require(["jquery", "jhapi", "utils"], function (
         // If cancelling, we want to keep the progress indicator
         var progress_bar = tr.find(".progress-bar");
         if (progress_bar.hasClass("bg-success")) {
-          progress_bar.removeClass("bg-success");
+          progress_bar.removeClass("bg-sucess");
           progress_bar.width(0);
           progress_bar.html('');
         }
@@ -129,7 +160,7 @@ require(["jquery", "jhapi", "utils"], function (
         // If cancelling, we want to keep the progress indicator
         var progress_bar = tr.find(".progress-bar");
         if (progress_bar.hasClass("bg-success")) {
-          progress_bar.removeClass("bg-success");
+          progress_bar.removeClass("bg-sucess");
           progress_bar.width(0);
           progress_bar.html('');
         }

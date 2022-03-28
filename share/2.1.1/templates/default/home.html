@@ -1048,17 +1048,17 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     var html_message = evt.message;
     html_message = html_message.replace(/&nbsp;/g, ' ');
   }
-    if (html_message) {
+  if (html_message) {
     // Check current messages
-    current_messages = [];
+    var current_messages = [];
     progress_log.children().each(function() {
-      current_html = $(this).children().first();
+      var current_html = $(this).children().first();
       current_messages.push(current_html.text());
     })
     try {
-      html_text = $(html_message).text();
+      var html_text = $(html_message).text();
     } catch {
-      html_text = html_message;
+      var html_text = html_message;
     }
     // and only append if message has not been logged yet
     if ( !current_messages.includes(html_text) ) {
