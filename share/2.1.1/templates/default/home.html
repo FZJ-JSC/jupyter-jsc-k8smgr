@@ -959,7 +959,8 @@ function updateSpawners() {
   {%- for s in named_spawners -%}
     {%- if s.events %}
       var events = {{s.events | tojson}};
-      var current_progress = events.slice(-1)[0];
+      var last_event = events.slice(-1)[0];
+      var current_progress = last_event.progress;
 
       var name = "{{s.name}}";
       var progress_bar = $("#" + name + "-progress-bar");
@@ -982,7 +983,7 @@ function updateSpawners() {
       progress_bar.css("width", "100%");
       progress_bar.attr("aria-valuenow", current_progress);
       progress_bar.append( $("b").html(current_progress + "%") );
-      // open_btn.addClass("disabled");
+      open_btn.addClass("disabled");
       if (current_progress < {{cancel_progress_activation}}) {
         stop_btn.addClass("disabled");
       }

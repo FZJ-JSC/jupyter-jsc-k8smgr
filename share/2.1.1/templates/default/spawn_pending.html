@@ -327,9 +327,10 @@ require(["jquery", "jhapi", "utils"], function (
           progress_bar.width(100);
           data["events"].forEach(function(event) {
             const perc = event["progress"];
-            if (Number(perc) && !(logged.includes(event))) {
-              logged.push(event);
-              const html_message = event["html_message"];
+            const html_message = event["html_message"];
+
+            if (Number(perc) && !(logged.includes(html_message))) {
+              logged.push(html_message);
               progress_bar.attr('aria-valuenow', perc);
               progress_bar.html('<b>' + perc + '%</b>');
               if (html_message) {
@@ -338,7 +339,7 @@ require(["jquery", "jhapi", "utils"], function (
               // Clear interval on 100%
               if (perc == 100) {
                 clearInterval(interv);
-                if (logged[perc]['failed']) {
+                if (event['failed']) {
                   progress_bar.html('');
                   progress_bar.addClass('bg-danger');
                   $('#retry').attr('disabled', false);
@@ -353,7 +354,8 @@ require(["jquery", "jhapi", "utils"], function (
           // If there is no evtSource for the spawner on the home page,
           // we still need to stop polling.
           // Might not need this code anymore after implementing SSE.
-          if (!data.ready && !data.active && !(100 in logged)) {
+          var last_event = data.events.slice(-1)[0];
+          if (!data.ready && !data.active && !(100 == last_event.progress)) {
             clearInterval(interv);
             progress_bar.html('');
             progress_bar.addClass('bg-danger');

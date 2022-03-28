@@ -106,7 +106,7 @@ require(["jquery", "jhapi", "utils"], function (
         // If cancelling, we want to keep the progress indicator
         var progress_bar = tr.find(".progress-bar");
         if (progress_bar.hasClass("bg-success")) {
-          progress_bar.removeClass("bg-sucess");
+          progress_bar.removeClass("bg-success");
           progress_bar.width(0);
           progress_bar.html('');
         }
@@ -129,7 +129,7 @@ require(["jquery", "jhapi", "utils"], function (
         // If cancelling, we want to keep the progress indicator
         var progress_bar = tr.find(".progress-bar");
         if (progress_bar.hasClass("bg-success")) {
-          progress_bar.removeClass("bg-sucess");
+          progress_bar.removeClass("bg-success");
           progress_bar.width(0);
           progress_bar.html('');
         }
