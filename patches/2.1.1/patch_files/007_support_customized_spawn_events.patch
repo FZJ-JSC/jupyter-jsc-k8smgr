@@ -1,7 +1,7 @@
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/apihandlers/users.py ../jupyterhub-patched/jupyterhub/apihandlers/users.py
---- ../jupyterhub/jupyterhub/apihandlers/users.py	2022-03-25 14:53:06.459816210 +0100
-+++ ../jupyterhub-patched/jupyterhub/apihandlers/users.py	2022-03-25 14:53:25.943773382 +0100
-@@ -703,18 +703,17 @@
+--- ../jupyterhub/jupyterhub/apihandlers/users.py	2022-03-28 14:05:03.851909421 +0200
++++ ../jupyterhub-patched/jupyterhub/apihandlers/users.py	2022-03-28 14:08:05.050471346 +0200
+@@ -703,18 +703,16 @@
          # - spawner failed
          # - spawner pending start (what we expect)
          url = url_path_join(user.url, server_name, '/')
@@ -12,7 +12,6 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 -            'html_message': 'Server ready at <a href="{0}">{0}</a>'.format(url),
 -            'url': url,
 -        }
-+
          failed_event = {'progress': 100, 'failed': True, 'message': "Spawn failed"}
  
          if spawner.ready:
@@ -26,18 +25,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
              await self.send_event(ready_event)
              return
  
-@@ -745,7 +744,9 @@
-                     # don't allow events to sneakily set the 'ready' flag
-                     if 'ready' in event:
-                         event.pop('ready', None)
--                    await self.send_event(event)
-+                    if event["html_message"] not in spawner._yielded_events:
-+                        spawner._yielded_events.append(event)
-+                        await self.send_event(event)
-             except asyncio.CancelledError:
-                 pass
- 
-@@ -758,6 +759,11 @@
+@@ -758,6 +756,11 @@
          if spawner.ready:
              # spawner is ready, signal completion and redirect
              self.log.info("Server %s is ready", spawner._log_name)
@@ -50,16 +38,14 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
          else:
              # what happened? Maybe spawn failed?
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/spawner.py ../jupyterhub-patched/jupyterhub/spawner.py
---- ../jupyterhub/jupyterhub/spawner.py	2022-03-25 14:53:06.443816244 +0100
-+++ ../jupyterhub-patched/jupyterhub/spawner.py	2022-03-25 14:53:45.079731565 +0100
-@@ -342,6 +342,30 @@
+--- ../jupyterhub/jupyterhub/spawner.py	2022-03-28 14:04:01.503893835 +0200
++++ ../jupyterhub-patched/jupyterhub/spawner.py	2022-03-28 14:08:39.061936808 +0200
+@@ -342,6 +342,28 @@
          config=True
      )
  
-+    _yielded_events = []
-+
 +    ready_event = Dict(
-+        default={
++        {
 +            'progress': 100,
 +            'ready': True,
 +            'message': "Server ready at <url>",

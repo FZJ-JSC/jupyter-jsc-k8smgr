@@ -1,7 +1,7 @@
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/handlers/base.py ../jupyterhub-patched/jupyterhub/handlers/base.py
 --- ../jupyterhub/jupyterhub/handlers/base.py	2022-02-07 12:10:50.000000000 +0100
 +++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-02-07 13:31:20.000000000 +0100
-@@ -1208,6 +1209,15 @@
+@@ -1209,6 +1208,15 @@
              "<a href='{home}'>home page</a>.".format(home=home)
          )
  
