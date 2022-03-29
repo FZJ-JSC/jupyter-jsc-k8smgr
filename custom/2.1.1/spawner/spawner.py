@@ -24,6 +24,20 @@ class BackendSpawner(Spawner):
     events = []
     yield_wait_seconds = 1
 
+    def get_state(self):
+        state = super().get_state()
+        if self.events:
+            state["events"] = self.events
+        return state
+    
+    def load_state(self, state):
+        super().load_state(state)
+        if "events" in state:
+            self.events = state["events"]
+    
+    def clear_state(self):
+        super().clear_state()
+
     def status_update_url(self, server_name=""):
         """API path for status update endpoint for a server with a given name"""
         url_parts = ["users", "progress", "update", self.user.escaped_name]

@@ -441,7 +441,7 @@
       </div>
     </div>
   </div>
-  
+ 
   {# Table with existing JupyterLabs #}
   <div class="table-responsive">
     <table id="jupyterlabs-table" class="table table-bordered table-hover table-light align-middle">
@@ -957,7 +957,7 @@ evtSources = {}
 
 function updateSpawners() {
   {%- for s in named_spawners -%}
-    {%- if s.events %}
+        {%- if s.state and s.state.get("events") %}
       var events = {{s.events | tojson}};
       var last_event = events.slice(-1)[0];
       var current_progress = last_event.progress;
@@ -973,7 +973,7 @@ function updateSpawners() {
       // Append log messages
       for (const event in events) {
         var html_message = events[event]["html_message"];
-        progress_log.append($("<div>").html(html_message));
+        no_duplicate_log(html_message, progress_log);
         // tab_log.append($("<div>").html(html_message));
       }
 
@@ -1049,21 +1049,7 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     html_message = html_message.replace(/&nbsp;/g, ' ');
   }
   if (html_message) {
-    // Check current messages
-    var current_messages = [];
-    progress_log.children().each(function() {
-      var current_html = $(this).children().first();
-      current_messages.push(current_html.text());
-    })
-    try {
-      var html_text = $(html_message).text();
-    } catch {
-      var html_text = html_message;
-    }
-    // and only append if message has not been logged yet
-    if ( !current_messages.includes(html_text) ) {
-      progress_log.append($("<div>").html(html_message));
-    }
+    no_duplicate_log(html_message, progress_log);
   }
 
   if (evt.ready) {
@@ -1096,6 +1082,25 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     cancel_btn.addClass("d-none");
     delete_btn.removeClass("disabled");
   }
+}
+
+function no_duplicate_log(html_message, progress_log) {
+  // Check current messages
+    var current_messages = [];
+    progress_log.children().each(function() {
+      var current_html = $(this).children().first();
+      current_messages.push(current_html.text());
+    })
+    try {
+      var html_text = $(html_message).text();
+    } catch {
+      var html_text = html_message;
+    }
+
+    // and only append if message has not been logged yet
+    if ( !current_messages.includes(html_text) ) {
+      progress_log.append($("<div>").html(html_message));
+    }
 }
 </script>
 

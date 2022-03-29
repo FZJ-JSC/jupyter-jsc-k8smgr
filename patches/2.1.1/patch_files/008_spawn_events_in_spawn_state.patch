@@ -1,0 +1,23 @@
+diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/user.py ../jupyterhub-patched/jupyterhub/user.py
+--- ../jupyterhub/jupyterhub/user.py	2022-03-29 11:34:21.000000000 +0000
++++ ../jupyterhub-patched/jupyterhub/user.py	2022-03-29 12:25:15.987819700 +0000
+@@ -840,6 +840,9 @@
+                     ),
+                     exc_info=True,
+                 )
++            # store state again for spawner.events
++            spawner.orm_spawner.state = spawner.get_state()
++            self.db.commit()
+             # raise original TimeoutError
+             raise e
+         else:
+@@ -851,6 +854,9 @@
+         finally:
+             spawner._waiting_for_response = False
+             spawner._start_pending = False
++            # store state again for spawner.events
++            spawner.orm_spawner.state = spawner.get_state()
++            self.db.commit()
+         return spawner
+ 
+     async def stop(self, server_name=''):

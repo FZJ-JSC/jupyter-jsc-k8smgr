@@ -48,7 +48,7 @@ class SpawnStopNotificationAPIHandler(SpawnProgressAPIHandler):
         await event.wait()
         spawners = user.spawners.values()
         # Send last event of stopping spawners only
-        event_data = {s.name: s.events[-1] for s in spawners if s.pending == 'stop' and s.events != []}
+        event_data = {s.name: s.events[-1] for s in spawners if s.pending == 'stop'}
         await self.send_event(event_data)
         # Clear event after sending in case stream has been closed
         event.clear()

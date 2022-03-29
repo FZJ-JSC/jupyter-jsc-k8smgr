@@ -50,29 +50,15 @@ require(["jquery", "jhapi", "utils"], function (
   stopEvtSource.onmessage = function (e) {
     var data = JSON.parse(e.data);
     for (const name in data) {
-      const html_message = data[name].html_message
+      const html_message = data[name].html_message;
       var progress_bar = $("#" + name + "-progress-bar");
       var progress_log = $("#" + name + "-progress-log");
       var row = $('tr[data-server-name="' + name + '"]').first();
-            
-      // Get already logged messages
-      var logged_messages = [];
-      progress_log.children().each(function() {
-        var logged_html = $(this).children().first();
-        logged_messages.push(logged_html.text());
-      })
-      try {
-        var html_text = $(html_message).text();
-      } catch {
-        var html_text = html_message;
-      }
-      // and only append if message has not been logged yet
-      if ( !logged_messages.includes(html_text) ) {
-        progress_log.append($("<div>").html(html_message));
-        progress_bar.removeClass("bg-success");
-        progress_bar.width(0);
-        enableRow(row, false);
-      }
+      // Only log message if it hasn't been logged yet      
+      no_duplicate_log(html_message, progress_log);
+      progress_bar.removeClass("bg-success");
+      progress_bar.width(0);
+      enableRow(row, false);
     }
   }
 
@@ -205,6 +191,7 @@ require(["jquery", "jhapi", "utils"], function (
     $(this).attr("href", url);
 
     var options = createDataDict(collapse, display_name);
+    updateTr(collapse, tr);
 
     // Validate the form and start spawn only after validation
     try {
