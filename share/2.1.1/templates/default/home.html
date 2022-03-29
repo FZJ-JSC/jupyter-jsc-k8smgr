@@ -957,7 +957,7 @@ evtSources = {}
 
 function updateSpawners() {
   {%- for s in named_spawners -%}
-    {%- if s.events %}
+        {%- if s.state and s.state.get("events") %}
       var events = {{s.events | tojson}};
       var last_event = events.slice(-1)[0];
       var current_progress = last_event.progress;
