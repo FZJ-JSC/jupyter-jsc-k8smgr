@@ -1,7 +1,7 @@
 {
   "drf-services": {
     "unicoremgr": {
-      "authentication_token": "Not Set",
+      "authentication_token": "",
       "send_access_token": true,
       "request_timeout": 10,
       "certificate_path": <UNICOREMGR_CERT_PATH>,
@@ -10,7 +10,7 @@
       }
     },
     "k8smgrhdfcloud": {
-      "authentication_token": "Not Set",
+      "authentication_token": "",
       "request_timeout": 10,
       "certificate_path": <K8SMGR_CERT_PATH>,
       "urls": {
@@ -18,7 +18,7 @@
       }
     },
     "tunnel": {
-      "authentication_token": "Not Set",
+      "authentication_token": "",
       "request_timeout": 10,
       "certificate_path": <TUNNEL_CERT_PATH>,
       "urls": {

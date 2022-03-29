@@ -1,8 +1,9 @@
 #!/bin/bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-env
-curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 25, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "k8smgr_hdfcloud", "target_node": "svc-'"${SERVERNAME}"'", "target_port": "8443", "startuuidcode": "'"${SERVERNAME}"'"}}' -X "POST" http://<JUPYTERHUB_ALT_NAME>/hub/api/${JUPYTERHUB_STATUS_URL}?uuidcode=setup_tunnel_${SERVERNAME}
+echo "Setup tunnel call"
+curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 35, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "k8smgr_hdfcloud", "target_node": "svc-'"${SERVERNAME}"'", "target_port": "8443", "startuuidcode": "'"${SERVERNAME}"'"}}' -X "POST" http://<JUPYTERHUB_ALT_NAME>/hub/api/${JUPYTERHUB_STATUS_URL}?uuidcode=setup_tunnel_${SERVERNAME} 2>&1
+echo "Setup tunnel called"
 # curl to remote node to build up tunnel
 
 

@@ -31,8 +31,9 @@ c.JupyterHub.allow_named_servers = True
 
 c.JupyterHub.spawner_class = BackendSpawner
 c.BackendSpawner.http_timeout = 900
+c.BackendSpawner.poll_interval = 10
 # See https://github.com/jupyterhub/jupyterhub/issues/1222#issuecomment-415264385
-c.JupyterHub.tornado_settings = {"slow_spawn_timeout": 0 }  
+c.JupyterHub.tornado_settings = {"slow_spawn_timeout": 0}
 
 c.JupyterHub.authenticator_class = CustomGenericOAuthenticator
 
@@ -101,7 +102,10 @@ c.JupyterHub.extra_handlers = [
     (r"/api/users/progress/status/([^/]+)", SpawnProgressStatusAPIHandler),
     (r"/api/users/progress/status/([^/]+)/([^/]+)", SpawnProgressStatusAPIHandler),
     (r"/api/users/([^/]+)/notifications/spawners/spawn", SpawnNotificationAPIHandler),
-    (r"/api/users/([^/]+)/notifications/spawners/stop", SpawnStopNotificationAPIHandler),
+    (
+        r"/api/users/([^/]+)/notifications/spawners/stop",
+        SpawnStopNotificationAPIHandler,
+    ),
     (r"/api/2FA", twoFA.TwoFAAPIHandler),
     (r"/2FA/([^/]+)", twoFA.TwoFACodeHandler),
     (r"/api/vo/([^/]+)", vo.VOAPIHandler),

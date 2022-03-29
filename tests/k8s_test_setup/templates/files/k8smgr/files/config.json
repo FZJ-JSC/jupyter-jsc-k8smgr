@@ -2,11 +2,16 @@
   "services": {
     "base": "/tmp/files/services",
     "yaml_filename": "service.yaml",
-    "descriptions": "/tmp/files/service_descriptions",
+    "descriptions": "/tmp/files/services_descriptions",
+    "deployment_main_name_prefix": "depl-",
+    "container_main_name": "main",
     "replace_indicators": ["<",">"],
     "replace_servername_keyword": "servername",
     "replace_uniqueuserid_keyword": "unique_user_id",
-    "replace_secretname_keyword": "secret_name"
+    "replace_secretname_keyword": "secret_name",
+    "env": {
+        "JUPYTERHUB_API_URL": "http://k8smgr-<ID>.<NAMESPACE>.svc:56789/hub/api"
+    }
   },
   "userhomes": {
     "base": "/tmp/userhomes",

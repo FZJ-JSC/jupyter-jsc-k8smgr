@@ -6,7 +6,7 @@ metadata:
 binaryData:
   # Oneliner to get binary data from input directory:
   # tar -czf input.tar.gz input && base64 -w 0 input.tar.gz && echo && rm input.tar.gz
-  input.tar.gz: H4sIAIXbKWIAA+3VS2rDMBQFUI+9itdk3FqKPt5Cd9Bh8Udgt4plZInSrr5WQiEJhBCoU0LvmQhjgSXfp6d+GGMoskWxWVmqNPJSscPxR8blhm+EUorN8/iGa56RWnZZe3EKlSfK3r2JX8afnXfp/Z3qd/mnfxCepm6Zb6SAtZZn8+dcnuQvtNQZsWWWc+yf579+KOp+KOpq6vJ8TU30loIjb7YuGBpca9JjHXvbUhwpxGEwNk9TdzWTv8XxMxj/aKs6/+u9wPX257+ZT4HbLnUNXNH/hWIynX9ZMvT/WzjKvzPWutcP5237m5fBpf7PRHmSvxYC/f8mDvu/aTpHq+dUBPSSimCFlg4AAAAAAAAAAAAAAAAAcC++ASp37M0AKAAA
+  input.tar.gz: H4sIAAAAAAAAA+2W/U/iSBjH+bl/xXPVyG6ypeVFMN7ppSpZ2FXxKJy7MaYp7UBHS6fXmaKs4X/fZ1rdAw17e4l6l+x8QsQOzzPzvHyfARonmTBLL4qFtFrb8r3a2raW3x8oVRu1mlXHP9VWyapatZZVgu2XDasg48JLAUrXO3w6SV/jxP8VNO+/j1Vg05eSwb/ofxUlgP2vNi3V/1dhpf8hiSLm3rA0Cio8fLYzZIObzcb6/tdbj/rfaDSaJbCeLYLv8JP3f+MXc0Rjc+TxUCN+yEDvSBHAuRSBrv3X4SlemGL+5QyI5xz5Ff5h/mutev3x/d9CczX/r8Dy/GtH3f6evvkG/ADkW0DT2JsS/P/uwHY6rtMb9g/bF9blQoe3OuybAZmZcRZFUNvfqsLWFiQ3AX6ikXim+VkagdEB3c5EyFL6xROUxbsg2DWJYfPuw/Ds86Dd7wwPXPus6w56H9unuK/0OGSxILEwBvOE7IKXJBH1c2/zirMYbQIo3+lJyiYp4Vzfhdr2O9DHHo1IgE9jL+IEF0IxjdwpWngTgsu6Q0SWwCCLYxLp+DmXz64onnfhTg8ZFzJhaVzIwQ2DsR+xLJD2qJMJEW7MgtyCz3yjjKVx2v0/2/1T+6S90MtLdglLhbTbaTTq+XFyxrKMBv79Bk+dF4syGJ9AP+s5Ax1CIZJd07zKkrkgaZiNjIBYrR2/3qxg4UlUwQhMXDa9hJorBXUG9mDouMP+8eL3hxP3ltN1V07WNiDvlmCQkikTBGSO8nGU0SgArFrhpmloehgS/xr+ypjwgMYQkpRUcPmclFEIoTcj4MXgpyy+YiO4CakfAl4xHDxfZF70t2PGScohZCgwFBrxBUvnmkbHcHEBxhgV0ulhbGYloPzazWQT3REWgsPl5a8gQhJrgBx1nY/u0LHft90DTN/Z23yDWlnv/Tb32lj2O7E/AcX4goAEMKMezFgepPHbjO0DinFMJyde8tTx3O6fdk/f/7Bzkdvm45DBmIiVVRnQSpLFyXmPPnSyEaB4PrOsnMpGCfDw+/oGT8d+Ffc4nEXE4wR8nCOsOgY3pTHlIvWwxvrSjsUX/tOt3sEo8vC1YntLBVS/LRSut4UFiX40tYeSfS+9IjupD7iFyQjYeGUL+/i4d94+kiPVHQMVZQ5ThvGLEHVXqVRgvr40KM25CGk8eVqF+8jwWgOTCN/EOQgeZTt/yJaTNXEfodrgj1zhvhwTPPpbCvdxV8DGOZkwtmb3MdXwhQOVB6wJOiUsE1APYOki4JhCROQEgWH4uchQ8nh9L8ziqZLM1W83hUKhUCgUCoVCoVAoFAqFQqFQKH5WvgIof92/ACgAAA==
 ---
 apiVersion: v1
 kind: Service
@@ -15,7 +15,7 @@ metadata:
   namespace: <namespace>
 spec:
   selector:
-    app: deployment-<servername>
+    app: depl-<servername>
   ports:
     - name: https
       protocol: TCP
@@ -27,18 +27,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: <namespace>
-  name: deployment-<servername>
+  name: depl-<servername>
   labels:
-    app: deployment-<servername>
+    app: depl-<servername>
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: deployment-<servername>
+      app: depl-<servername>
   template:
     metadata:
       labels:
-        app: deployment-<servername>
+        app: depl-<servername>
         user-jupyterlab: "true"
     spec:
       imagePullSecrets:
@@ -50,7 +50,7 @@ spec:
 #          value: "true"
 #          effect: "NoSchedule"
       containers:
-        - name: deployment-<servername>-main
+        - name: main
           image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/user-jupyterlab:venv-latest
 #          image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/k8s-service-images/jupyterlab-lmod:0.1
           imagePullPolicy: Always

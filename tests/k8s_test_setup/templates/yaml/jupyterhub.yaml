@@ -72,7 +72,7 @@ spec:
               name: tunnel-drf-<ID>
               key: JUPYTERHUB_USER_BASIC
               optional: false
-        - name: K8SMGR_HDFCLOUD_AUTHENTICATION_TOKEN
+        - name: K8SMGRHDFCLOUD_AUTHENTICATION_TOKEN
           valueFrom:
             secretKeyRef:
               name: k8smgr-drf-<ID>

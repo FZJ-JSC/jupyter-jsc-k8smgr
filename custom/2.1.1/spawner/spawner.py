@@ -85,7 +85,7 @@ class BackendSpawner(Spawner):
         user_options = map_user_options()
         start_event = {
             "failed": False,
-            "progress": 25,
+            "progress": 10,
             "html_message": f"<details><summary>{now}: Start service</summary>{user_options}</details>",
         }
         self.ready_event[
@@ -143,6 +143,14 @@ class BackendSpawner(Spawner):
             except:
                 pass
             raise e
+
+        now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+        submitted_event = {
+            "failed": False,
+            "progress": 30,
+            "html_message": f"<details><summary>{now}: Request submitted to Jupyter-JSC backend</summary></details>",
+        }
+        self.events.append(submitted_event)
         return (svc_name, self.port)
 
     async def poll(self):
