@@ -6,7 +6,7 @@ fi
 
 DEVEL_JUPYTERHUB="false"
 DEVEL_UNICOREMGR="false"
-DEVEL_K8SMGR="true"
+DEVEL_K8SMGR="false"
 DEVEL_TUNNEL="false"
 
 
@@ -15,7 +15,7 @@ UNITY_VERSION="3.8.1-1"
 UNICORE_VERSION="8.3.0-p1"
 UNICOREMGR_VERSION="1.0.1-6"
 TUNNEL_VERSION="1.0.1-4"
-K8SMGR_VERSION="1.0.1-15"
+K8SMGR_VERSION="1.0.1-16"
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -87,7 +87,7 @@ DEVEL_PUBLIC_KEY="$(cat ${DIR}/${ID}/keypairs/devel.pub)"
 ESCAPED_DPK=$(printf '%s\n' "$DEVEL_PUBLIC_KEY" | sed -e 's/[\@&]/\\&/g')
 UNICORE_SSH_PORT="22"
 
-JUPYTERHUB_PORT="30800"
+JUPYTERHUB_PORT="80"
 
 # Create passwords / secrets for Django services
 UNICOREMGR_SECRET=$(uuidgen)

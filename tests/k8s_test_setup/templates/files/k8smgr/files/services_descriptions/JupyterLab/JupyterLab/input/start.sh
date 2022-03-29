@@ -1,8 +1,11 @@
 #!/bin/bash
 
+# Update env variables
+export JUPYTERHUB_ACTIVITY_URL=${JUPYTERHUB_API_URL}/users/${JUPYTERHUB_USER}/activity
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 echo "Setup tunnel call"
-curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 35, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "k8smgr_hdfcloud", "target_node": "svc-'"${SERVERNAME}"'", "target_port": "8443", "startuuidcode": "'"${SERVERNAME}"'"}}' -X "POST" http://<JUPYTERHUB_ALT_NAME>/hub/api/${JUPYTERHUB_STATUS_URL}?uuidcode=setup_tunnel_${SERVERNAME} 2>&1
+curl -H "uuidcode: ${SERVERNAME}" -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 35, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "k8smgr_hdfcloud", "target_node": "svc-'"${SERVERNAME}"'", "target_port": "8443", "startuuidcode": "'"${SERVERNAME}"'"}}' -X "POST" ${JUPYTERHUB_API_URL}/${JUPYTERHUB_STATUS_URL} 2>&1
 echo "Setup tunnel called"
 # curl to remote node to build up tunnel
 
@@ -30,4 +33,4 @@ if [[ -f ${HOME}/.disk_usage_bytes ]]; then
 fi
 
 # start
-timeout 3d jupyterhub-singleuser --config ${DIR}/config.py
+timeout 3d /home/jovyan/venv/bin/jupyterhub-singleuser --config ${DIR}/config.py

@@ -1,7 +1,6 @@
 c = get_config()
 c.ServerApp.ip = "0.0.0.0"
 c.ServerApp.root_dir = "/home/jovyan"
-c.ServerApp.default_url = "/lab/workspaces/"
 c.ContentsManager.allow_hidden = True
 c.ServerApp.port = 8443
 c.ServerApp.terminado_settings = {"shell_command": ["/bin/bash"]}
