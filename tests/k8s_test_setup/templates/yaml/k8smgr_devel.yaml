@@ -55,18 +55,14 @@ spec:
     app: k8smgr-<ID>
   type: ClusterIP
   ports:
-    - name: https
-      port: 443
+    - name: http
+      port: 8080
       protocol: TCP
-      targetPort: 8443
+      targetPort: 8080
     - name: ssh
       port: 2222
       protocol: TCP
       targetPort: 2222
-    - name: fwd
-      port: 56789
-      protocol: TCP
-      targetPort: 56789
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -88,7 +84,7 @@ spec:
       - name: gitlab-registry
       serviceAccountName: k8smgr-<ID>-svc-acc
       containers:
-      - image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/k8s-service-manager:<K8SMGR_VERSION>
+      - image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/k8s-service-manager:devel
         imagePullPolicy: Always
         name: k8smgr-<ID>
         command: ["/bin/bash"]
@@ -143,6 +139,12 @@ spec:
         - name: keypairs
           mountPath: /tmp/k8smgr_ssh/k8smgr
           subPath: k8smgr
+        - name: files
+          mountPath: /tmp/k8smgr_vscode/launch.json
+          subPath: launch.json
+        - name: files
+          mountPath: /tmp/k8smgr_vscode/settings.json
+          subPath: settings.json
       volumes:
       - name: files
         configMap:

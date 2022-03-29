@@ -4,18 +4,18 @@ if [[ -z ${1} ]]; then
     exit 1
 fi
 
-DEVEL_JUPYTERHUB="true"
+DEVEL_JUPYTERHUB="false"
 DEVEL_UNICOREMGR="false"
-DEVEL_K8SMGR="false"
+DEVEL_K8SMGR="true"
 DEVEL_TUNNEL="false"
 
 
 JUPYTERHUB_VERSION="latest"
 UNITY_VERSION="3.8.1-1"
 UNICORE_VERSION="8.3.0-p1"
-UNICOREMGR_VERSION="1.0.1-3"
-TUNNEL_VERSION="1.0.1-3"
-K8SMGR_VERSION="1.0.1-10"
+UNICOREMGR_VERSION="1.0.1-6"
+TUNNEL_VERSION="1.0.1-4"
+K8SMGR_VERSION="1.0.1-15"
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -266,6 +266,7 @@ if [[ ${DEVEL_JUPYTERHUB} == "true" || ${DEVEL_TUNNEL} == "true" || ${DEVEL_UNIC
         exit 0
     fi
 
+    mkdir -p ${DIR}/${ID}/rsync
     cp -p ${DIR}/templates/rsync.sh ${DIR}/${ID}/rsync/rsync.sh
     sed -i -e "s!<DIR>!${DIR}!g" -e "s!<ID>!${ID}!g" ${DIR}/${ID}/rsync/rsync.sh
     /bin/bash ${DIR}/${ID}/rsync/rsync.sh &
