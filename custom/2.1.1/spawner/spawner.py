@@ -21,12 +21,14 @@ class BackendSpawner(Spawner):
     _cancel_event_yielded = False
     _yielded_events = []
 
-    events = []
+    current_events = []
+    events = {}
     yield_wait_seconds = 1
 
     def get_state(self):
         state = super().get_state()
         if self.events:
+            self.events["current"] = self.current_events
             state["events"] = self.events
         return state
     
@@ -82,7 +84,13 @@ class BackendSpawner(Spawner):
         return req_prop
 
     async def start(self):
-        self.events = []
+        # Save current events
+        if self.current_events != []:
+            self.events["previous"] = self.current_events
+        # Reset current events only
+        self.current_events = []
+        self.events["current"] = self.current_events
+
         self._cancel_pending = False
         self._cancel_event_yielded = False
         return await self._start()
@@ -105,7 +113,7 @@ class BackendSpawner(Spawner):
         self.ready_event[
             "html_message"
         ] = f"<details><summary><now>: Service {user_options['name']} started on {user_options['system']}.</summary>You will be redirected to <a href=\"<url>\"><url></a></details>"
-        self.events = [start_event]
+        self.current_events = [start_event]
 
         self.port = 8080
 
@@ -151,7 +159,7 @@ class BackendSpawner(Spawner):
                 "failed": True,
                 "html_message": e.jupyterhub_html_message,
             }
-            self.events.append(failed_event)
+            self.current_events.append(failed_event)
             try:
                 self.stop()
             except:
@@ -164,7 +172,7 @@ class BackendSpawner(Spawner):
             "progress": 30,
             "html_message": f"<details><summary>{now}: Request submitted to Jupyter-JSC backend</summary></details>",
         }
-        self.events.append(submitted_event)
+        self.current_events.append(submitted_event)
         return (svc_name, self.port)
 
     async def poll(self):
@@ -306,11 +314,11 @@ class BackendSpawner(Spawner):
             if spawn_future.done():
                 break_while_loop = True
 
-            len_events = len(self.events)
+            len_events = len(self.current_events)
             if next_event < len_events:
                 for i in range(next_event, len_events):
-                    yield self.events[i]
-                    if self.events[i].get("failed", False) == True:
+                    yield self.current_events[i]
+                    if self.current_events[i].get("failed", False) == True:
                         self._cancel_event_yielded = True
                         break_while_loop = True
                 next_event = len_events
@@ -333,7 +341,7 @@ class BackendSpawner(Spawner):
     async def cancel(self, event):
         self.log.info("Cancel Start")
         self._cancel_pending = True
-        self.events.append(event)
+        self.current_events.append(event)
 
         # Let generate_progress catch this event.
         # This will show the new event at the control panel site

@@ -22,7 +22,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 +            ready_event["message"] = ready_event.get("message", "").replace("<url>", url).replace("<now>", now)
 +            ready_event["html_message"] = ready_event.get("html_message", "").replace("<url>", url).replace("<now>", now)
 +            ready_event["url"] = ready_event.get("url", "").replace("<url>", url)
-+            spawner.events.append(ready_event)
++            spawner.current_events.append(ready_event)
              await self.send_event(ready_event)
              return
  
@@ -35,7 +35,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 +            ready_event["message"] = ready_event.get("message", "").replace("<url>", url).replace("<now>", now)
 +            ready_event["html_message"] = ready_event.get("html_message", "").replace("<url>", url).replace("<now>", now)
 +            ready_event["url"] = ready_event.get("url", "").replace("<url>", url)
-+            spawner.events.append(ready_event)
++            spawner.current_events.append(ready_event)
              await self.send_event(ready_event)
          else:
              # what happened? Maybe spawn failed?
@@ -43,7 +43,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
                  self.log.warning(
                      "Server %s didn't start for unknown reason", spawner._log_name
                  )
-+            spawner.events.append(failed_event)
++            spawner.current_events.append(failed_event)
              await self.send_event(failed_event)
  
  
