@@ -1,19 +1,7 @@
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/apihandlers/users.py ../jupyterhub-patched/jupyterhub/apihandlers/users.py
 --- ../jupyterhub/jupyterhub/apihandlers/users.py	2022-03-28 14:05:03.851909421 +0200
 +++ ../jupyterhub-patched/jupyterhub/apihandlers/users.py	2022-03-28 14:08:05.050471346 +0200
-@@ -703,18 +703,16 @@
-         # - spawner failed
-         # - spawner pending start (what we expect)
-         url = url_path_join(user.url, server_name, '/')
--        ready_event = {
--            'progress': 100,
--            'ready': True,
--            'message': f"Server ready at {url}",
--            'html_message': 'Server ready at <a href="{0}">{0}</a>'.format(url),
--            'url': url,
--        }
-         failed_event = {'progress': 100, 'failed': True, 'message': "Spawn failed"}
- 
+@@ -708,6 +708,12 @@
          if spawner.ready:
              # spawner already ready. Trigger progress-completion immediately
              self.log.info("Server %s is already started", spawner._log_name)
@@ -22,10 +10,11 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 +            ready_event["message"] = ready_event.get("message", "").replace("<url>", url).replace("<now>", now)
 +            ready_event["html_message"] = ready_event.get("html_message", "").replace("<url>", url).replace("<now>", now)
 +            ready_event["url"] = ready_event.get("url", "").replace("<url>", url)
++            spawner.events.append(ready_event)
              await self.send_event(ready_event)
              return
  
-@@ -758,6 +756,11 @@
+@@ -751,6 +757,12 @@
          if spawner.ready:
              # spawner is ready, signal completion and redirect
              self.log.info("Server %s is ready", spawner._log_name)
@@ -34,9 +23,16 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 +            ready_event["message"] = ready_event.get("message", "").replace("<url>", url).replace("<now>", now)
 +            ready_event["html_message"] = ready_event.get("html_message", "").replace("<url>", url).replace("<now>", now)
 +            ready_event["url"] = ready_event.get("url", "").replace("<url>", url)
++            spawner.events.append(ready_event)
              await self.send_event(ready_event)
          else:
              # what happened? Maybe spawn failed?
+@@ -766,6 +778,7 @@
+                 self.log.warning(
+                     "Server %s didn't start for unknown reason", spawner._log_name
+                 )
++            spawner.events.append(failed_event)
+             await self.send_event(failed_event)
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/spawner.py ../jupyterhub-patched/jupyterhub/spawner.py
 --- ../jupyterhub/jupyterhub/spawner.py	2022-03-28 14:04:01.503893835 +0200
 +++ ../jupyterhub-patched/jupyterhub/spawner.py	2022-03-28 14:08:39.061936808 +0200
