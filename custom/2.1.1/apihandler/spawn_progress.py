@@ -85,7 +85,7 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                 },
             )
             spawner = user.spawners[server_name]
-            spawner.events.append(event)
+            spawner.current_events.append(event)
             if "setup_tunnel" in event.keys():
                 event["setup_tunnel"]["startuuidcode"] = spawner.name
                 event["setup_tunnel"]["svc_port"] = spawner.port
@@ -136,7 +136,7 @@ class SpawnProgressStatusAPIHandler(APIHandler):
             raise web.HTTPError(404)
         spawner = user.spawners[server_name]
         data = {
-            "events": spawner.events,
+            "events": spawner.current_events,
             "active": spawner.active,
             "ready": spawner.ready,
         }

@@ -438,7 +438,7 @@ require(["jquery", "jhapi", "utils"], function (
   $(".reset").click(revertChanges);
 
   // Check if there are changes and thus if the save and revert buttons should be enabled
-  $("select, input").change(function () {
+  $("select, input").not($("select[id*=log]")).change(function () {
     var that = $(this);
     var id = get_id(that);
     var option = $(this).attr("id").split('-')[1];
