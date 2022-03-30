@@ -93,7 +93,7 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                 req_prop = drf_request_properties(
                     "tunnel", custom_config, self.log, {}, uuidcode
                 )
-                service_url = req_prop.get("urls", {}).get("services", "None")
+                service_url = req_prop.get("urls", {}).get("tunnel", "None")
                 req = HTTPRequest(
                     service_url,
                     method="POST",

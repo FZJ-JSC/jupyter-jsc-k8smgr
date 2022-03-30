@@ -19,7 +19,7 @@
   },
   "tunnel": {
     "k8smgr_hostname": "k8smgr_hdfcloud",
-    "restart_url": "<TUNNEL_PROTOCOL>://tunnel-<ID>.<NAMESPACE>.svc<TUNNEL_PORT>/api/restart/",
+    "restart_url": "http://jupyterhub-<ID>.<NAMESPACE>.svc/hub/api/restarttunnel",
     "credentials_env_name": "TUNNEL_BASIC",
     "credentials_basic64": "<TUNNEL_K8SMGR_BASIC>",
     "timeout": 10,

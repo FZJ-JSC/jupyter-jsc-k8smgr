@@ -22,7 +22,8 @@
       "request_timeout": 10,
       "certificate_path": <TUNNEL_CERT_PATH>,
       "urls": {
-        "services": "<TUNNEL_PROTOCOL>://<TUNNEL_ALT_NAME><TUNNEL_PORT>/api/tunnel/"
+        "tunnel": "<TUNNEL_PROTOCOL>://<TUNNEL_ALT_NAME><TUNNEL_PORT>/api/tunnel/",
+        "restart": "<TUNNEL_PROTOCOL>://<TUNNEL_ALT_NAME><TUNNEL_PORT>/api/restart/"
       }
     }
   },

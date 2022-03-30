@@ -8,6 +8,7 @@ custom_path = "/src/jupyterhub-custom"
 sys.path.insert(1, custom_path)
 
 from spawner import BackendSpawner
+from apihandler import ForwardTunnelRestartAPIHandler
 from apihandler import SpawnUpdateOptionsAPIHandler
 from apihandler import SpawnProgressUpdateAPIHandler
 from apihandler import SpawnProgressStatusAPIHandler
@@ -106,6 +107,7 @@ c.JupyterHub.extra_handlers = [
         r"/api/users/([^/]+)/notifications/spawners/stop",
         SpawnStopNotificationAPIHandler,
     ),
+    (r"/api/restarttunnel", ForwardTunnelRestartAPIHandler),
     (r"/api/2FA", twoFA.TwoFAAPIHandler),
     (r"/2FA/([^/]+)", twoFA.TwoFACodeHandler),
     (r"/api/vo/([^/]+)", vo.VOAPIHandler),
