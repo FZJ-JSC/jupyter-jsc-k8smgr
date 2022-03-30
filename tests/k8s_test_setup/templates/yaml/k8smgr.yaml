@@ -77,6 +77,8 @@ spec:
   selector:
     matchLabels:
       app: k8smgr-<ID>
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:

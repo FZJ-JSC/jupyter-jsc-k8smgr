@@ -55,6 +55,8 @@ spec:
   selector:
     matchLabels:
       app: tunnel-<ID>
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
