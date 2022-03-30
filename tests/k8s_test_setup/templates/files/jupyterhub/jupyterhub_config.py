@@ -2,6 +2,7 @@ from traitlets.config.application import get_config
 
 c = get_config()
 
+import os
 import sys
 
 custom_path = "/src/jupyterhub-custom"
@@ -21,7 +22,8 @@ from logs import create_extra_handlers
 c.JupyterHub.log_level = 10
 c.JupyterHub.custom_config_file = "/home/jupyterhub/jupyterhub_custom_config.json"
 c.JupyterHub.extra_log_handlers = create_extra_handlers()
-c.JupyterHub.db_url = "sqlite:////home/jupyterhub/jupyterhub.sqlite"
+db_path = os.environ.get("SQL_DATABASE", "/home/jupyterhub/jupyterhub.sqlite")
+c.JupyterHub.db_url = f"sqlite:///{db_path}"
 c.JupyterHub.pid_file = "/home/jupyterhub/jupyterhub.pid"
 c.JupyterHub.cookie_secret_file = "/home/jupyterhub/jupyterhub_cookie_secret"
 c.ConfigurableHTTPProxy.pid_file = "/home/jupyterhub/jupyterhub-proxy.pid"

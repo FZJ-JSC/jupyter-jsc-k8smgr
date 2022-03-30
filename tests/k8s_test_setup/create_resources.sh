@@ -4,7 +4,7 @@ if [[ -z ${1} ]]; then
     exit 1
 fi
 
-DEVEL_JUPYTERHUB="true"
+DEVEL_JUPYTERHUB="false"
 DEVEL_UNICOREMGR="false"
 DEVEL_K8SMGR="false"
 DEVEL_TUNNEL="false"
@@ -228,7 +228,7 @@ if [[ ! ${DEVEL_K8SMGR} == "true" ]]; then
     wait_for_service "https://${K8SMGR_ALT_NAME}/api/health/" 
 fi
 if [[ ! ${DEVEL_JUPYTERHUB} == "true" ]]; then
-    wait_for_service "http://${JUPYTERHUB_ALT_NAME}/hub/login" 
+    wait_for_service "http://${JUPYTERHUB_ALT_NAME}/hub/api" 
 fi
 
 

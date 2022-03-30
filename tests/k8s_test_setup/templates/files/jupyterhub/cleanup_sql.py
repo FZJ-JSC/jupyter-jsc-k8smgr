@@ -25,8 +25,7 @@ def now():
     return datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
 
 
-def get_jhub_server():
-    db = os.environ.get("SQL_DATABASE", "/home/jupyterhub/jupyterhub.sqlite")
+def get_jhub_server(db):
     connection = sql.connect(db)
     query = "SELECT spawners.name FROM servers INNER JOIN spawners ON spawners.server_id = servers.id"
     cur = connection.cursor()
@@ -87,9 +86,15 @@ def cleanup_drf_services(jhub_server):
 
 if __name__ == "__main__":
     sleep_time = int(os.environ.get("SLEEP", 60))
+    db = os.environ.get("SQL_DATABASE", "/home/jupyterhub/jupyterhub.sqlite")
+    while True:
+        if os.path.exists(db):
+            break
+        print(f"{now()} {uuidcode} - Wait for {db}")
+        time.sleep(5)
     while True:
         print(f"{now()} {uuidcode} - Cleanup falsely running services ...")
-        jhub_server_tuple = get_jhub_server()
+        jhub_server_tuple = get_jhub_server(db)
         jhub_server = [x[0] for x in jhub_server_tuple]
         cleanup_drf_services(jhub_server)
         print(f"{now()} {uuidcode} - Cleanup falsely running services ... done")

@@ -43,6 +43,8 @@ spec:
         env:
         - name: DEVEL
           value: "true"
+        - name: SQL_DATABASE
+          value: "/tmp/shared-data/jupyterhub.sqlite"
         - name: RESERVATIONS_PATH
           value: "/home/jupyterhub/reservations.json"
         - name: MAINTENANCE_PATH
@@ -75,6 +77,8 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         volumeMounts:
+        - name: shared-data
+          mountPath: /tmp/shared-data
         - name: files
           mountPath: /tmp/ssh/authorized_keys
           subPath: authorized_keys
@@ -105,7 +109,32 @@ spec:
         - name: certs
           mountPath: /tmp/home/ca-root.pem
           subPath: ca-root.pem
+      - image: python:3.9-alpine3.14
+        name: cleanup-sql-<ID>
+        imagePullPolicy: Always
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - >-
+            pip install requests &&
+            python3 -u /tmp/cleanup_sql.py
+        env:
+        - name: SQL_DATABASE
+          value: "/tmp/shared-data/jupyterhub.sqlite"
+        - name: SLEEP
+          value: "30"
+        volumeMounts:
+        - name: shared-data
+          mountPath: /tmp/shared-data
+        - name: files
+          mountPath: /home/jupyterhub/jupyterhub_custom_config.json
+          subPath: jupyterhub_custom_config.json
+        - name: files
+          mountPath: /tmp/cleanup_sql.py
+          subPath: cleanup_sql.py
       volumes:
+      - name: shared-data
+        emptyDir: {}
       - name: files
         configMap:
           defaultMode: 400
