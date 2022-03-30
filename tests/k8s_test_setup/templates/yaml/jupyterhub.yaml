@@ -103,6 +103,22 @@ spec:
         - name: certs
           mountPath: /home/jupyterhub/ca-root.pem
           subPath: ca-root.pem
+      - image: python:3.9-alpine3.14
+        name: cleanup-sql-<ID>
+        imagePullPolicy: Always
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - >-
+            pip install -y requests &&
+            python3 /tmp/cleanup_sql.py
+        env:
+        - name: SLEEP
+          value: "30"
+        volumeMounts:
+        - name: files
+          mountPath: /tmp/cleanup_sql.py
+          subPath: cleanup_sql.py
       volumes:
       - name: files
         configMap:
