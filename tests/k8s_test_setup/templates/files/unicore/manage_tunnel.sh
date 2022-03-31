@@ -12,7 +12,7 @@ done
 HOSTNAME_=$(hostname | cut -d'.' -f1)
 LOCAL_PORT=56789
 
-PRIVATE_KEY="~k8smgr/.ssh/k8smgr"
+PRIVATE_KEY="~ljupyter/.ssh/id_ed25519"
 TUNNEL_SSH_PORT=2222
 TUNNEL_SSH_USER=tunnel
 TUNNEL_SSH_HOST=<TUNNEL_ALT_NAME>
