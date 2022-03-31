@@ -71,9 +71,17 @@ def cleanup_drf_services(jhub_server, custom_conf, grace_period):
             .get(drf_name, {})
             .get("request_timeout", 20)
         )
-        r = requests.get(
-            services_url, headers=drf_headers, verify=verify, timeout=request_timeout
-        )
+        try:
+            r = requests.get(
+                services_url,
+                headers=drf_headers,
+                verify=verify,
+                timeout=request_timeout,
+            )
+            r.raise_for_status()
+        except:
+            print(f"{now()} {uuidcode} - Could not reach {services_url}. Continue")
+            continue
         services_to_delete = [
             x["servername"]
             for x in r.json()
