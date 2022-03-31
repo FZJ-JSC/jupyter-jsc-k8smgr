@@ -3,17 +3,15 @@ import json
 import os
 import sqlite3 as sql
 import time
-import uuid
 
 import requests
 
 custom_conf_file = os.environ.get(
     "CUSTOM_CONFIG_PATH", "/home/jupyterhub/jupyterhub_custom_config.json"
 )
-with open(custom_conf_file, "r") as f:
-    custom_conf = json.load(f)
 
-uuidcode = uuid.uuid4().hex
+uuidcode = "jupyterhubs-side-cleanup-cronjob"
+
 drf_headers = {
     "Content-Type": "application/json",
     "Accept": "application/json",
@@ -27,15 +25,24 @@ def now():
 
 def get_jhub_server(db):
     connection = sql.connect(db)
-    query = "SELECT spawners.name FROM servers INNER JOIN spawners ON spawners.server_id = servers.id"
+    query = "SELECT spawners.name FROM spawners WHERE spawners.started IS NOT NULL"
     cur = connection.cursor()
-    # Execute the query and then fetch the results
     cur.execute(query)
     output = cur.fetchall()
-    return output
+    ret = [x[0] for x in output]
+    return ret
 
 
-def cleanup_drf_services(jhub_server):
+def started_n_minutes_ago(n, started):
+    now = datetime.datetime.now()
+    started_d = datetime.datetime.strptime(started, "%Y-%m-%dT%H:%M:%S.%fZ")
+    running_since = (now - started_d).total_seconds()
+    if divmod(running_since, 60)[0] > n:
+        return True
+    return False
+
+
+def cleanup_drf_services(jhub_server, custom_conf, grace_period):
     drf_services = [
         k
         for k, v in custom_conf.get("drf-services", {}).items()
@@ -68,7 +75,10 @@ def cleanup_drf_services(jhub_server):
             services_url, headers=drf_headers, verify=verify, timeout=request_timeout
         )
         services_to_delete = [
-            x["servername"] for x in r.json() if x["servername"] not in jhub_server
+            x["servername"]
+            for x in r.json()
+            if started_n_minutes_ago(grace_period, x["start_date"])
+            and x["servername"] not in jhub_server
         ]
         if not services_to_delete:
             print(f"{now()} {uuidcode} - Nothing to cleanup for {drf_name}")
@@ -87,6 +97,7 @@ def cleanup_drf_services(jhub_server):
 if __name__ == "__main__":
     sleep_time = int(os.environ.get("SLEEP", 60))
     db = os.environ.get("SQL_DATABASE", "/home/jupyterhub/jupyterhub.sqlite")
+    grace_period = int(os.environ.get("START_DATE_GRACE_PERIOD_IN_MIN", 5))
     while True:
         if os.path.exists(db):
             break
@@ -94,8 +105,9 @@ if __name__ == "__main__":
         time.sleep(5)
     while True:
         print(f"{now()} {uuidcode} - Cleanup falsely running services ...")
-        jhub_server_tuple = get_jhub_server(db)
-        jhub_server = [x[0] for x in jhub_server_tuple]
-        cleanup_drf_services(jhub_server)
+        with open(custom_conf_file, "r") as f:
+            custom_conf = json.load(f)
+        jhub_server = get_jhub_server(db)
+        cleanup_drf_services(jhub_server, custom_conf, grace_period)
         print(f"{now()} {uuidcode} - Cleanup falsely running services ... done")
         time.sleep(sleep_time)

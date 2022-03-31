@@ -36,7 +36,7 @@ spec:
       - image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/jupyterhub-relaunch:<JUPYTERHUB_VERSION>
         imagePullPolicy: Always
         args: ["-f", "/home/jupyterhub/jupyterhub_config.py"]
-        name: jupyterhub-<ID>
+        name: main
         env:
         - name: SQL_DATABASE
           value: "/tmp/shared-data/jupyterhub.sqlite"
@@ -102,7 +102,7 @@ spec:
           mountPath: /home/jupyterhub/ca-root.pem
           subPath: ca-root.pem
       - image: python:3.9-alpine3.14
-        name: cleanup-sql-<ID>
+        name: cleanup-sql
         imagePullPolicy: Always
         command: ["/bin/sh"]
         args:
