@@ -18,7 +18,6 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
     @needs_scope("access:servers")
     async def post(self, user_name, server_name=""):
         self.set_header("Cache-Control", "no-cache")
-        uuidcode = self.request.headers.get("uuidcode", "<no_uuidcode>")
         if server_name is None:
             server_name = ""
         user = self.find_user(user_name)
@@ -34,6 +33,7 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
 
         user = self.find_user(user_name)
         spawner = user.spawners[server_name]
+        uuidcode = self.request.headers.get("uuidcode", server_name)
 
         if event.get("html_message", ""):
             # Add timestamp
