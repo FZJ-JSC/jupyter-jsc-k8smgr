@@ -107,7 +107,7 @@ spec:
             - name: keypairs
               mountPath: /tmp/tunnel_ssh/remote
               subPath: remote
-        - name: check-remote
+        - name: remote-check
           image: alpine:3.14
           imagePullPolicy: Always
           command: ["/bin/sh"]
@@ -115,7 +115,7 @@ spec:
           - -c
           - >-
               apk add curl &&
-              while true; do sleep 60; curl -X "GET" -H "Authorization: ${REMOTECHECK_TOKEN}" -H "uuidcode: tunnel-side-check-remote-cronjob" --cacert /tmp/ca-root.pem https://${DEPLOYMENT_NAME}.${DEPLOYMENT_NAMESPACE}.svc/api/remotecheck/ ; done
+              while true; do sleep 60; curl -X "GET" -H "Authorization: ${REMOTECHECK_TOKEN}" -H "uuidcode: tunnel-side-remote-check-cronjob" --cacert /tmp/ca-root.pem https://${DEPLOYMENT_NAME}.${DEPLOYMENT_NAMESPACE}.svc/api/remotecheck/ ; done
           env:
             - name: REMOTECHECK_TOKEN
               valueFrom:

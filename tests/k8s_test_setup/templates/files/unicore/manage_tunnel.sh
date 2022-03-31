@@ -20,9 +20,11 @@ TUNNEL_SSH_HOST=<TUNNEL_ALT_NAME>
 JUPYTERHUB_HOST=<JUPYTERHUB_ALT_NAME>
 JUPYTERHUB_PORT=<JUPYTERHUB_PORT>
 
+FORWARD_BLOCK="${HOSTNAME_}:${LOCAL_PORT}:${JUPYTERHUB_HOST}:${JUPYTERHUB_PORT}" 
+FORWARD_OPTIONS="-oLogLevel=ERROR -oUserKnownHostsFile=/dev/null -oServerAliveInterval=30 -oExitOnForwardFailure=yes -oStrictHostKeyChecking=no"
+
 get_pid () {
-    PID=$(netstat -ltnp 2>/dev/null | tr -s ' ' | grep ":${LOCAL_PORT}" | cut -d' ' -f7 | cut -d'/' -f1)
-    echo $PID
+    pgrep -f $FORWARD_BLOCK
 }
 
 check_tunnel () {
@@ -47,7 +49,7 @@ check_tunnel () {
 }
 
 start_tunnel () {
-    ssh -p ${TUNNEL_SSH_PORT} -i ${PRIVATE_KEY} -oLogLevel=ERROR -oUserKnownHostsFile=/dev/null -oServerAliveInterval=30 -oExitOnForwardFailure=yes -oStrictHostKeyChecking=no -L${HOSTNAME_}:${LOCAL_PORT}:${JUPYTERHUB_HOST}:${JUPYTERHUB_PORT} ${TUNNEL_SSH_USER}@${TUNNEL_SSH_HOST} -f -N
+    ssh -p ${TUNNEL_SSH_PORT} -i ${PRIVATE_KEY} ${FORWARD_OPTIONS} -L${FORWARD_BLOCK} ${TUNNEL_SSH_USER}@${TUNNEL_SSH_HOST} -f -N
 }
 
 stop_tunnel () {

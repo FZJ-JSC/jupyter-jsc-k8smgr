@@ -87,7 +87,7 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
             spawner = user.spawners[server_name]
             spawner.current_events.append(event)
             if "setup_tunnel" in event.keys():
-                event["setup_tunnel"]["startuuidcode"] = spawner.name
+                event["setup_tunnel"]["servername"] = spawner.name
                 event["setup_tunnel"]["svc_port"] = spawner.port
                 custom_config = user.authenticator.custom_config
                 req_prop = drf_request_properties(
