@@ -56,12 +56,6 @@ spec:
           value: "/home/jupyterhub/jupyterhub-static/templates/default"
         - name: TEMPLATE_FILES_DEST
           value: "/home/jupyterhub/jupyterhub-static/templates/<JUPYTERHUB_ALT_NAME>"
-        - name: K8SMGR_AUTHENTICATION_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: k8smgr-drf-<ID>
-              key: JUPYTERHUB_USER_BASIC
-              optional: false
         - name: UNICOREMGR_AUTHENTICATION_TOKEN
           valueFrom:
             secretKeyRef:
@@ -121,6 +115,18 @@ spec:
           value: "/tmp/shared-data/jupyterhub.sqlite"
         - name: SLEEP
           value: "30"
+        - name: UNICOREMGR_AUTHENTICATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: unicoremgr-drf-<ID>
+              key: JUPYTERHUB_USER_BASIC
+              optional: false
+        - name: K8SMGRHDFCLOUD_AUTHENTICATION_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: k8smgr-drf-<ID>
+              key: JUPYTERHUB_USER_BASIC
+              optional: false
         volumeMounts:
         - name: shared-data
           mountPath: /tmp/shared-data
@@ -130,6 +136,9 @@ spec:
         - name: files
           mountPath: /tmp/cleanup_sql.py
           subPath: cleanup_sql.py
+        - name: certs
+          mountPath: /home/jupyterhub/ca-root.pem
+          subPath: ca-root.pem
       volumes:
       - name: shared-data
         emptyDir: {}
