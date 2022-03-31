@@ -28,12 +28,11 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
             # user has no such server
             raise web.HTTPError(404)
         body = self.request.body.decode("utf8")
-        self.log.info(body)
         event = json.loads(body) if body else {}
 
         user = self.find_user(user_name)
         spawner = user.spawners[server_name]
-        uuidcode = self.request.headers.get("uuidcode", server_name)
+        uuidcode = server_name
 
         if event.get("html_message", ""):
             # Add timestamp
@@ -44,8 +43,6 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                 ] = f"<details><summary>{now}: {event['html_message'][len('<details><summary>'):]}"
             else:
                 event["html_message"] = f"{now}: {event['html_message']}"
-        logs_extra = {"uuidcode": uuidcode, "event": event}
-        self.log.debug("SpawnProgressUpdate called", extra=logs_extra)
 
         if event and event.get("failed", False):
             if event.get("html_message", "") == user_cancel_message:
@@ -56,10 +53,11 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                         "log_name": f"{user_name}:{server_name}",
                         "user": user_name,
                         "action": "cancel",
+                        "event": event,
                     },
                 )
             else:
-                self.log.info(
+                self.log.debug(
                     "APICall: SpawnUpdate",
                     extra={
                         "uuidcode": uuidcode,
@@ -91,7 +89,7 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                 event["setup_tunnel"]["svc_port"] = spawner.port
                 custom_config = user.authenticator.custom_config
                 req_prop = drf_request_properties(
-                    "tunnel", custom_config, self.log, {}, uuidcode
+                    "tunnel", custom_config, self.log, uuidcode
                 )
                 service_url = req_prop.get("urls", {}).get("tunnel", "None")
                 req = HTTPRequest(

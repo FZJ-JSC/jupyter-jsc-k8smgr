@@ -28,9 +28,7 @@ class ForwardTunnelRestartAPIHandler(APIHandler):
         }
         self.log.info("Forward request to restart ssh-tunnels", extra=log_extras)
         custom_config = self.authenticator.custom_config
-        req_prop = drf_request_properties(
-            "tunnel", custom_config, self.log, None, uuidcode
-        )
+        req_prop = drf_request_properties("tunnel", custom_config, self.log, uuidcode)
         req_prop["headers"]["Authorization"] = self.request.headers["Authorization"]
         tunnel_url = req_prop.get("urls", {}).get("restart", "None")
         req = HTTPRequest(

@@ -65,7 +65,7 @@ class BackendSpawner(Spawner):
         svc_name = f"{k8s_tunnel_deployment_name}-{id}"[0:63]
         return f"{svc_name}.{k8s_tunnel_deployment_namespace}.svc"
 
-    def _get_req_prop(self, auth_state, uuidcode=""):
+    def _get_req_prop(self, auth_state):
         custom_config = self.user.authenticator.custom_config
         drf_service = (
             custom_config.get("systems", {})
@@ -79,7 +79,7 @@ class BackendSpawner(Spawner):
         )
         access_token = auth_state["access_token"] if send_access_token else None
         req_prop = drf_request_properties(
-            drf_service, custom_config, self.log, access_token, uuidcode
+            drf_service, custom_config, self.log, self.name, access_token
         )
         return req_prop
 
@@ -126,7 +126,7 @@ class BackendSpawner(Spawner):
             "user_options": user_options,
         }
 
-        req_prop = self._get_req_prop(auth_state, self.name)
+        req_prop = self._get_req_prop(auth_state)
         service_url = req_prop.get("urls", {}).get("services", "None")
         req = HTTPRequest(
             service_url,
@@ -265,7 +265,7 @@ class BackendSpawner(Spawner):
 
         custom_config = self.user.authenticator.custom_config
         tunnel_req_prop = drf_request_properties(
-            "tunnel", custom_config, self.log, {}, req.headers["uuidcode"]
+            "tunnel", custom_config, self.log, self.name
         )
 
         tunnel_service_url = tunnel_req_prop.get("urls", {}).get("tunnel", "None")

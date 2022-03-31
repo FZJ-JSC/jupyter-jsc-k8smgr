@@ -20,33 +20,17 @@ class BackendException(Exception):
 
 
 def drf_request_properties(
-    drf_service, custom_config, app_log, access_token=None, uuidcode=""
+    drf_service, custom_config, app_log, uuidcode, access_token=None
 ):
     drf_config = custom_config.get("drf-services")
-    authentication_token_os = os.environ.get(
+    authentication_token = os.environ.get(
         f"{drf_service.upper()}_AUTHENTICATION_TOKEN", None
     )
-    if authentication_token_os:
-        authentication_token = authentication_token_os
-    else:
-        app_log.warning(
-            f"{drf_service.upper()}_AUTHENTICATION_TOKEN not set in environment."
+    if not authentication_token:
+        app_log.critical(
+            f"{drf_service.upper()}_AUTHENTICATION_TOKEN env variable not defined. Cannot communicate with {drf_service}."
         )
-        authentication_token_config = drf_config.get(drf_service, {}).get(
-            "authentication_token", None
-        )
-        if authentication_token_config:
-            app_log.warning(
-                f"{drf_service}.authentication_token found in custom_config. You should not store secrets in config files in production"
-            )
-            authentication_token = authentication_token_config
-        else:
-            app_log.critical(
-                f"{drf_service} authentication_token in custom_config not defined. Cannot communicate with {drf_service}."
-            )
-            return {}
-    if not uuidcode:
-        uuidcode = uuid.uuid4().hex
+        return {}
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
@@ -81,7 +65,7 @@ async def drf_request(
     raise_exception=False,
 ):
     safe_url = req.url.split("?")[0]
-    app_log.debug(
+    app_log.info(
         f"Communicate {action} with backend service {safe_url}",
         extra={
             "uuidcode": req.headers["uuidcode"],

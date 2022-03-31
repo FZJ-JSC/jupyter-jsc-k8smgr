@@ -1,0 +1,20 @@
+diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/app.py ../jupyterhub-patched/jupyterhub/app.py
+--- ../jupyterhub/jupyterhub/app.py	2022-03-31 11:52:36.223390171 +0200
++++ ../jupyterhub-patched/jupyterhub/app.py	2022-03-31 11:55:04.672930542 +0200
+@@ -1502,11 +1502,11 @@
+             log.name = self.log.name
+ 
+         # hook up tornado's and oauthlib's loggers to our own
+-        for name in ("tornado", "oauthlib"):
+-            logger = logging.getLogger(name)
+-            logger.propagate = True
+-            logger.parent = self.log
+-            logger.setLevel(self.log.level)
++        # for name in ("tornado", "oauthlib"):
++        #    logger = logging.getLogger(name)
++        #    logger.propagate = True
++        #    logger.parent = self.log
++        #    logger.setLevel(self.log.level)
+ 
+     @staticmethod
+     def add_url_prefix(prefix, handlers):
