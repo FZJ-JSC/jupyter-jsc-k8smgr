@@ -4,7 +4,7 @@ if [[ -z ${1} ]]; then
     exit 1
 fi
 
-DEVEL_JUPYTERHUB="true"
+DEVEL_JUPYTERHUB="false"
 DEVEL_UNICOREMGR="false"
 DEVEL_K8SMGR="false"
 DEVEL_TUNNEL="false"
@@ -14,7 +14,7 @@ JUPYTERHUB_VERSION="latest"
 UNITY_VERSION="3.8.1-1"
 UNICORE_VERSION="8.3.0-p1"
 UNICOREMGR_VERSION="1.0.1-7"
-TUNNEL_VERSION="1.0.1-6"
+TUNNEL_VERSION="1.0.1-7"
 K8SMGR_VERSION="1.0.1-17"
 
 
@@ -97,6 +97,7 @@ TUNNEL_SECRET=$(uuidgen)
 TUNNEL_SUPERUSER_PASS=$(uuidgen)
 TUNNEL_K8SMGR_PASS=$(uuidgen)
 TUNNEL_JHUB_PASS=$(uuidgen)
+TUNNEL_REMOTECHECK_PASS=$(uuidgen)
 UNICOREMGR_SUPERUSER_PASS=$(uuidgen)
 UNICOREMGR_JHUB_PASS=$(uuidgen)
 K8SMGR_SUPERUSER_PASS=$(uuidgen)
@@ -113,6 +114,7 @@ get_basic_token () {
 }
 TUNNEL_K8SMGR_BASIC=$(get_basic_token "k8smgr" ${TUNNEL_K8SMGR_PASS})
 TUNNEL_JHUB_BASIC=$(get_basic_token "jupyterhub" ${TUNNEL_JHUB_PASS})
+TUNNEL_REMOTECHECK_BASIC=$(get_basic_token "remotecheck" ${TUNNEL_REMOTECHECK_PASS})
 UNICOREMGR_JHUB_BASIC=$(get_basic_token "jupyterhub" ${UNICOREMGR_JHUB_PASS})
 K8SMGR_JHUB_BASIC=$(get_basic_token "jupyterhub" ${K8SMGR_JHUB_PASS})
 
@@ -165,7 +167,7 @@ kubectl -n ${NAMESPACE} create configmap --dry-run=client tunnel-files-${ID} --f
 kubectl -n ${NAMESPACE} create configmap --dry-run=client jupyterhub-files-${ID} --from-file=${DIR}/${ID}/files/jupyterhub --output yaml > ${DIR}/${ID}/yaml/cm-jupyterhub-files.yaml
 kubectl -n ${NAMESPACE} create secret generic --dry-run=client unicoremgr-drf-${ID} --from-literal=SECRET_KEY=${UNICOREMGR_SECRET} --from-literal=SUPERUSER_PASS=${UNICOREMGR_SUPERUSER_PASS} --from-literal=JUPYTERHUB_USER_PASS=${UNICOREMGR_JHUB_PASS} --from-literal=JUPYTERHUB_USER_BASIC="${UNICOREMGR_JHUB_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-unicoremgr-drf.yaml
 kubectl -n ${NAMESPACE} create secret generic --dry-run=client k8smgr-drf-${ID} --from-literal=SECRET_KEY=${K8SMGR_SECRET} --from-literal=SUPERUSER_PASS=${K8SMGR_SUPERUSER_PASS} --from-literal=JUPYTERHUB_USER_PASS=${K8SMGR_JHUB_PASS} --from-literal=JUPYTERHUB_USER_BASIC="${K8SMGR_JHUB_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-k8smgr-drf.yaml
-kubectl -n ${NAMESPACE} create secret generic --dry-run=client tunnel-drf-${ID} --from-literal=SECRET_KEY=${TUNNEL_SECRET} --from-literal=SUPERUSER_PASS=${TUNNEL_SUPERUSER_PASS} --from-literal=JUPYTERHUB_USER_PASS=${TUNNEL_JHUB_PASS} --from-literal=JUPYTERHUB_USER_BASIC="${TUNNEL_JHUB_BASIC}" --from-literal=K8SMGR_USER_PASS=${TUNNEL_K8SMGR_PASS} --from-literal=K8SMGR_USER_BASIC="${TUNNEL_K8SMGR_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-tunnel-drf.yaml
+kubectl -n ${NAMESPACE} create secret generic --dry-run=client tunnel-drf-${ID} --from-literal=SECRET_KEY=${TUNNEL_SECRET} --from-literal=SUPERUSER_PASS=${TUNNEL_SUPERUSER_PASS} --from-literal=JUPYTERHUB_USER_PASS=${TUNNEL_JHUB_PASS} --from-literal=JUPYTERHUB_USER_BASIC="${TUNNEL_JHUB_BASIC}" --from-literal=REMOTECHECK_USER_PASS=${TUNNEL_REMOTECHECK_PASS} --from-literal=REMOTECHECK_USER_BASIC="${TUNNEL_REMOTECHECK_BASIC}" --from-literal=K8SMGR_USER_PASS=${TUNNEL_K8SMGR_PASS} --from-literal=K8SMGR_USER_BASIC="${TUNNEL_K8SMGR_BASIC}" --output yaml > ${DIR}/${ID}/yaml/secret-tunnel-drf.yaml
 kubectl -n ${NAMESPACE} create secret generic --dry-run=client --output yaml --from-file=${DIR}/${ID}/keypairs keypairs-${ID} > ${DIR}/${ID}/yaml/secret-keypairs.yaml
 kubectl -n ${NAMESPACE} create secret generic --dry-run=client --output yaml --from-file=${DIR}/${ID}/certs certs-${ID} > ${DIR}/${ID}/yaml/secret-certs.yaml
 kubectl -n ${NAMESPACE} create secret tls --dry-run=client --output yaml --cert=${DIR}/${ID}/certs/k8smgr.crt --key=${DIR}/${ID}/certs/k8smgr.key tls-k8smgr-${ID} > ${DIR}/${ID}/yaml/tls-k8smgr.yaml

@@ -84,7 +84,7 @@ spec:
                   fieldPath: metadata.namespace
           image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/tunneling-relaunch:<TUNNEL_VERSION>
           imagePullPolicy: Always
-          name: tunnel-<ID>
+          name: main
           volumeMounts:
             - name: certs
               mountPath: /home/tunnel/certs/ca-root.pem
@@ -107,6 +107,34 @@ spec:
             - name: keypairs
               mountPath: /tmp/tunnel_ssh/remote
               subPath: remote
+        - name: check-remote
+          image: alpine:3.14
+          imagePullPolicy: Always
+          command: ["/bin/sh"]
+          args:
+          - -c
+          - >-
+              apk add curl &&
+              while true; do sleep 60; curl -X "GET" -H "Authorization: ${REMOTECHECK_TOKEN}" -H "uuidcode: tunnel-side-check-remote-cronjob" --cacert /tmp/ca-root.pem https://${DEPLOYMENT_NAME}.${DEPLOYMENT_NAMESPACE}.svc/api/remotecheck/ ; done
+          env:
+            - name: REMOTECHECK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: tunnel-drf-<ID>
+                  key: REMOTECHECK_USER_BASIC
+                  optional: false
+            - name: DEPLOYMENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app']
+            - name: DEPLOYMENT_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: certs
+              mountPath: /tmp/ca-root.pem
+              subPath: ca-root.pem
       volumes:
       - name: files
         configMap:
