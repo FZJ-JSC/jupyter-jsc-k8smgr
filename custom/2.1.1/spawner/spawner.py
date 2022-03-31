@@ -31,12 +31,12 @@ class BackendSpawner(Spawner):
             self.events["current"] = self.current_events
             state["events"] = self.events
         return state
-    
+
     def load_state(self, state):
         super().load_state(state)
         if "events" in state:
             self.events = state["events"]
-    
+
     def clear_state(self):
         super().clear_state()
 
@@ -268,7 +268,7 @@ class BackendSpawner(Spawner):
             "tunnel", custom_config, self.log, {}, req.headers["uuidcode"]
         )
 
-        tunnel_service_url = tunnel_req_prop.get("urls", {}).get("services", "None")
+        tunnel_service_url = tunnel_req_prop.get("urls", {}).get("tunnel", "None")
         tunnel_req = HTTPRequest(
             f"{tunnel_service_url}{self.name}/",
             method="DELETE",
