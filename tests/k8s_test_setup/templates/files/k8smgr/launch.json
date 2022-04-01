@@ -16,7 +16,7 @@
             "env": {
                 "CONFIG_PATH": "/tmp/files/config.json",
                 "SECRET_KEY": "94912219491419419419111",
-                "UWSGI_START": "true",
+                "GUNICORN_START": "true",
                 "KUBERNETES_SERVICE_HOST": "<KUBERNETES_SERVICE_HOST>",
                 "KUBERNETES_SERVICE_PORT": "<KUBERNETES_SERVICE_PORT>",
                 "DEPLOYMENT_NAMESPACE": "<NAMESPACE>",

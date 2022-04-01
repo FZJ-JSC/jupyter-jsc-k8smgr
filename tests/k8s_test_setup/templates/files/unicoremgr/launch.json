@@ -15,7 +15,7 @@
             "justMyCode": false,
             "env": {
                 "SECRET_KEY": "94919419491419419419111",
-                "UWSGI_START": "true",
+                "GUNICORN_START": "true",
                 "CONFIG_PATH": "/tmp/files/config.json"
             }
         }

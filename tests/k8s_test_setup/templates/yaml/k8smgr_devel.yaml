@@ -63,6 +63,10 @@ spec:
       port: 2222
       protocol: TCP
       targetPort: 2222
+    - name: fwd
+      port: 56789
+      protocol: TCP
+      targetPort: 56789
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -73,6 +77,8 @@ spec:
   selector:
     matchLabels:
       app: k8smgr-<ID>
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
