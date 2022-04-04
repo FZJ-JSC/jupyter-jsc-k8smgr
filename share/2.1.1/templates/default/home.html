@@ -508,7 +508,9 @@ var spawn_events = {}
   user_options["{{spawner.name}}"] = {{ user_options | tojson }}
   {%- endif -%}
   {%- if spawner.state and spawner.state.get("events") %}
-  spawn_events["{{spawner.name}}"] = {{ spawner.state.get("events") | tojson }}
+  spawn_events["{{spawner.name}}"] = {{ spawner.state.get("events") | tojson }};
+  {%- else %}
+  spawn_events["{{spawner.name}}"] = {"current": []};
   {%- endif -%}
 {%- endfor %}
 </script>
@@ -975,12 +977,13 @@ evtSources = {}
 
 function updateSpawners() {
   {%- for s in named_spawners -%}
-    {%- set spawner = s.orm_spawner -%}
-    {%- if spawner.state and spawner.state.get("events") -%}
-      {%- set current_events = spawner.state.get("events").get("current") %}
-      var current_events = {{current_events | tojson}};
-      var last_event = current_events.slice(-1)[0];
-      var current_progress = last_event.progress;
+    {%- if s.events -%}
+      var current_events = {{s.events.get("current") | tojson}};
+      if (current_events.length > 0) {
+        var last_event = current_events.slice(-1)[0];
+        var current_progress = last_event.progress;
+      }
+      else var current_progress = 0;
 
       var name = "{{s.name}}";
       var progress_bar = $("#" + name + "-progress-bar");
@@ -998,9 +1001,12 @@ function updateSpawners() {
       }
 
       // Add options to log select
-      for (const log in {{spawner.state.get("events") | tojson}}) {
-        $("#" + name + "-log-select").append(`<option value="${log}">${log}</option>`);
+      var log_select = $("#" + name + "-log-select");
+      for (const log in {{s.events | tojson}}) {
+        if (log == "current") log_select.prepend(`<option value="${log}">${log}</option>`);
+        else log_select.append(`<option value="${log}">${log}</option>`);
       }
+      log_select.val("current");
 
       // Make progress td visible and set the progress bar to the correct width
       // if the spawner if currenty spawning
@@ -1049,9 +1055,11 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
   var cancel_btn = tr.find(".cancel");
   var stop_btn = tr.find(".stop");
   var delete_btn = collapse.find(".delete").addClass("disabled");
+  var log_select = $("#" + server_name + "-log-select");
 
   var evt = JSON.parse(event.data);
   // console.log(evt);
+  spawn_events[server_name]["current"].push(evt);
 
   if (evt.progress !== undefined && evt.progress != 0) {
     // update progress
@@ -1074,7 +1082,9 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     html_message = html_message.replace(/&nbsp;/g, ' ');
   }
   if (html_message) {
-    no_duplicate_log(html_message, progress_log);
+    // only append if current log is selected
+    if (log_select.val() == "current")
+      no_duplicate_log(html_message, progress_log);
   }
 
   if (evt.ready) {
@@ -1125,7 +1135,7 @@ function no_duplicate_log(html_message, progress_log) {
     // and only append if message has not been logged yet
     if ( !current_messages.includes(html_text) ) {
       progress_log.append($("<div>").html(html_message));
-    }
+    } 
 }
 </script>
 

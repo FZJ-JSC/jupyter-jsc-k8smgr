@@ -1,7 +1,7 @@
 import asyncio
-import datetime
 import json
 import os
+import re
 
 from async_generator import aclosing
 from custom_utils.backend_services import BackendException
@@ -9,6 +9,7 @@ from custom_utils.backend_services import drf_request
 from custom_utils.backend_services import drf_request_properties
 from custom_utils.options_form import get_options_form
 from custom_utils.options_form import get_options_from_form
+from datetime import datetime
 from jupyterhub.spawner import Spawner
 from jupyterhub.utils import maybe_future
 from jupyterhub.utils import url_path_join
@@ -27,15 +28,25 @@ class BackendSpawner(Spawner):
     yield_wait_seconds = 1
 
     def get_state(self):
+        """get the current state"""
         state = super().get_state()
         if self.svc_name:
             state["svc_name"] = self.svc_name
         if self.events:
             self.events["current"] = self.current_events
+            # Clear logs older than 24h
+            for key, value in self.events.items():
+                stime = self._get_event_time(value[0])
+                dtime = datetime.strptime(stime, "%Y_%m_%d %H:%M:%S")
+                now = datetime.now()
+                delta = now - dtime
+                if delta.days:
+                    del self.events[key]
             state["events"] = self.events
         return state
 
     def load_state(self, state):
+        """load state from the database"""
         super().load_state(state)
         if "events" in state:
             self.events = state["events"]
@@ -43,6 +54,7 @@ class BackendSpawner(Spawner):
             self.svc_name = state["svc_name"]
 
     def clear_state(self):
+        """clear any state (called after shutdown)"""
         self.svc_name = ""
         super().clear_state()
 
@@ -95,10 +107,19 @@ class BackendSpawner(Spawner):
         )
         return req_prop
 
+    def _get_event_time(self, event):
+        # Regex for date time
+        pattern = re.compile(r"([0-9]+(_[0-9]+)+).*[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?")
+        message = event["html_message"]
+        match = re.search(pattern, message)
+        return match.group()
+
     async def start(self):
-        # Save current events
+        # Save current events with start event time
         if self.current_events != []:
-            self.events["previous"] = self.current_events
+            start_event = self.current_events[0]
+            start_event_time = self._get_event_time(start_event)
+            self.events[start_event_time] = self.current_events
         # Reset current events only
         self.current_events = []
         self.events["current"] = self.current_events
@@ -115,7 +136,7 @@ class BackendSpawner(Spawner):
                 ret[config.get("map_user_options").get(key, key)] = value
             return ret
 
-        now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+        now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
         user_options = map_user_options()
         start_event = {
             "failed": False,
@@ -179,7 +200,7 @@ class BackendSpawner(Spawner):
             f"Expect JupyterLab at {self.svc_name}{svc_name_suffix}:{self.port}",
             extra={"uuidcode": self.name},
         )
-        now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+        now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
         submitted_event = {
             "failed": False,
             "progress": 30,
@@ -230,7 +251,7 @@ class BackendSpawner(Spawner):
             if self._spawn_pending:
                 # During the spawn progress we've received that it's already stopped.
                 # We want to show the error message to the user
-                now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+                now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
                 summary = resp_json.get("details", {}).get("error", "Start failed.")
                 details = resp_json.get("details", {}).get(
                     "detailed_error", "No details available."
