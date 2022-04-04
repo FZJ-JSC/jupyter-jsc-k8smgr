@@ -199,6 +199,7 @@ require(["jquery", "jhapi", "utils"], function (
       var progress_bar = $("#" + name + "-progress-bar");
       // Get the card instead of the parent div for the log
       var progress_log = $("#" + name + "-progress-log");
+      var log_select = $("#" + name + "-log-select");
       progress_bar.removeClass("bg-success bg-danger");
       progress_bar.css("width", "0%");
       progress_log.html("");
@@ -207,6 +208,15 @@ require(["jquery", "jhapi", "utils"], function (
       api.start_named_server(user, name, {
         data: JSON.stringify(options),
         success: function () {
+          // Save current log to time stamp and empty it
+          const start_event = spawn_events[name]["current"][0];
+          const start_message = start_event.html_message;
+          var re = /([0-9]+(_[0-9]+)+).*[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?/;
+          var start_time = re.exec(start_message)[0];
+          spawn_events[name][start_time] = spawn_events[name]["current"];
+          spawn_events[name]["current"] = [];
+          log_select.append(`<option value="${start_time}">${start_time}</option>`);
+
           newTab.location.href = url;
           // hook up event-stream for progress
           var progress_url = utils.url_path_join(jhdata.base_url, "api/users", jhdata.user, "servers", name, "progress");
@@ -222,7 +232,7 @@ require(["jquery", "jhapi", "utils"], function (
 
         },
         error: function (xhr, textStatus, errorThrown) {
-          // newTab.location.reload();
+          newTab.close();
           progress_bar.css("width", "100%");
           progress_bar.attr("aria-valuenow", 100);
           progress_bar.addClass("bg-danger");
@@ -380,7 +390,7 @@ require(["jquery", "jhapi", "utils"], function (
         // Update table data entries
         updateTr(collapse, tr);
         // Update user options
-        user_options[name] = options;
+        user_options[server_name] = options;
         // Update alert message
         alert.children("span").text(`Successfully updated ${display_name}.`);
         alert.removeClass("alert-danger pe-none");
@@ -404,7 +414,7 @@ require(["jquery", "jhapi", "utils"], function (
 
     var server_name = get_id($(this));
     var display_name = collapse.find("input[id*=name]").val();
-    var options = user_options[name];
+    var options = user_options[server_name];
 
     api.update_named_server(user, server_name, {
       data: JSON.stringify(options),
