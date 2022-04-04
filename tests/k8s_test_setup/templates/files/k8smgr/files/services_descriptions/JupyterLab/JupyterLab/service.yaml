@@ -1,21 +1,21 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cm-<servername>
+  name: cm-<id>
   namespace: <namespace>
 binaryData:
   # Oneliner to get binary data from input directory:
   # tar -czf input.tar.gz input && base64 -w 0 input.tar.gz && echo && rm input.tar.gz
-  input.tar.gz: H4sIALtyRWIAA+1Y60/jOBDnc/6KuYAonLZNX5QVdyAV6G67y+v6WBYhFLmJ2xjSOGs7hYL6v984Aa6h6sGHLafV5ddKaewZe94elwVhpKyVpaKI2N7e0s/S9lZx9vmElVK1XC6Va9VaFcdL5VKtuAJbyxUrQSQVEQArN4JG91QspHtt/hcFi/2vbaAK0lvOHtrBtVp1kf8rRZxL+79S26quQHE54qTxP/f/6m9WnwVWn0jPMFahF7pEUaDBGMZEMNL3qTToXciFgi+9s4tuo93s7dv1g27rW6t7YffaR7trD7MzZy09OLUiSYW0UnO9TqM9tYij2JipiWEcttq75toGOC7oh8tEQEYUfz/s1ztNu3Paax80LotXUxM2TdizXDq2gsj3oby3XoL1dQhvXZwxqONxMDtURSGoKAioDw7xfdNwIuFDvglmPVIeF+yeKMaDHVD8hgYwJ3f39GvjBDfTHAc8UDRQ+e4kpDtAwtBnTsxtXUseII0LuQczFHwoqJTmDlS2PoA5IMynLr4NiC8pDnhq5NsjpCBDisOPQnZjIU2cl/rdToTG+QfT41JpK2jim49yNBS25w4cn0eupsdYHVJlB9yNKeTYyefQXmjYb432Sf24MTVzM3Tab5ruY7VaMafTHOS/g3l22uma89rHXkuNdrr1bq8TT8QmX2Ro1BhDJza24iDoiGMIaRH1az9ivgvPDIaOsgOPOjfwI+KKAAvAo4IWcPic5tC5HhlTIAE4ggfXvA+3HnM8wColAUMnIv4/jHGMgccxaDB4qKO4wLBiA7i8hPwAVWyeokWsgsvkjR1pH9j9iaISrq7+AOXRwADEYavzFWOz/rlh76Pqnd21DXT1Yu7NmGt1lu+4/h0Yyue61IUxIzDmsZD5P8d8DzCWBmx4TMJ5xvN6+6R18vnNzIluay9FhvxQpUa1QCklk51jH31pRn3AoLjgUU5oRylAJ/Jb3B39lRwFcOZTIik4mAZodRRuxAImlSBoY3NmxSQk5pf6AH0fqwdJ0d4xBaXngYT1LqGg/ltVezLZv6mXaKfjA+5g2Ac+SC1RPzo6PW8c6kRpDYCpnIQRR/mVh3FXKBRgstg0GJoT5bFgOG+FR8mwVIFFlWNhHrgvtJ08aSvpArkPMdrgrzjCHZ0muPWzCo9yF6COeTLkfMHqA2bgFxMqFthQbER5pKDigqVzxbrm4wkJrDFW+bj4X0chxrXwon5eomI+1XkF+bwThx4mAhbqqZW8FcKJ8V+fWRl+HpL+79m3S9njlf4P27+k/ytubdfK+p5QquI36//eAw7sgu4UkgjY2DScQoeKMRX1MCywEGfNYiH+mKkpwbmy8dDVBLNVRVM99k7ymAR4aIpCXEJtj+EBFyB9V0Q0tVbcXe6CblJS41iT8NQhLrexTVJYmSRSPZjSo76PAo9GJNC91qX53MKaV9P0ClzM89/SvuRYWJU9IndPzZkt2b1uqUrFchV+n32kV9Qs/WgwoCLmwAXnOeYZuDt5I/mPiCncQCmuTfVJt5FLrbeP+Y9ZwEfL+hvgjfd/vP6Vy5VqTd//qtuV7P7/Hkj5XycWt2+58N2f+WfAa/W/WNl+4f9apVrK6v97YPb+nzSRTR0EcK6DwMxavQwZMmTIkCFDhgwZMmTIkCFDhgwZfmX8DSYzHzgAKAAA
+  input.tar.gz: H4sIAFXWSmIAA+1YbU/bSBDms3/F1EVNe2pi573qHUiBpCUtFC4vRxFC1sbexAuO191dBwLKf79ZG7iYKFc+ND1V5yeRHO/O7M77zoaFUaysrY3CRjSbdf0sN+v28vMBW+VapVKp16t2s7JllyvlRnkL6psVK0UsFREAW1eCxrdUrKX73vwvCpb4X9tAlaS/mT20gxuN2jr/V+3GU/9XG3X0v70ZcbL4n/v/5QtrxEJrRKRvGC9hGHlEUaDhDGZEMDIKqDToTcSFgk/Dk7NBp3cw3HNa+4PuX93BmTPsHe5s3y3PnHT14MKKJRXSyswN+53ewiKuYjOm5obR7vZ2zO3X4HqgHx4TIZlS/H231+ofOP3jYW+/c25fLEx4Y8Ku5dGZFcZBAJXdV2V49Qqiaw9nDOr6HMw+VXEEKg5DGoBLgsA03FgEUDwAsxUrnwt2SxTj4XtQ/IqGsCL34Phz5wtupjn2eahoqIqDeUTfA4migLkJt3UpeYg0HhTuzEjwiaBSmu+hWn8L5piwgHr4NiaBpDjgq2ngTJGCTCgO3ws5SIQ0cV7qdycVGufvTJ9Lpa2gia/eyelEOL43dgMee5oeY3VClRNyL6GQM7dYQHu1ex+cbnthFpZotM80zbtarWouFgUofgXz5Lg/MFc1TzyWGe0PWoNhP5lIzL3OyKgthk1iaMVB0CnH8NHi6ddRzAIPHhkMHWH7PnWv4FvMFQEWgk8FLeHwKS2gY30yo0BCcAUPL/kIrn3m+oAVSgKGTUyCfxiT+AKfY8Bg4FBXcYEhxcZwfg7FMap4cHzUWVglj8krJ9b2d0ZzRSVcXPwOyqehAYh2t/8Z47L1sePsoer9ne3X6Ob13G8SrpfLfEetr8BQPs+jHswYgRlPhCz+MeO7gHE0ZpMjEq0ynrZ6X7pfPj6bOdVt+6nIUJyozKgWKKNkunPio08H8QgwKM54XBDaUQrQifwad0d/pccAnASUSAoupgBaHYWbspBJJQja2FxaMQ2J1aXewijAykEytDdMQflxIGW9SSlo8FzVHkz2b+ql2un4gBuYjICPM0u0Dg+PTzttnSjdMTBVkDDlKL/yMe5KpRLM15sGQ3OufBZOVq1wLxmWKbCoci3MA++JtvMHbSVdI3cbow3+TCLc1WmCWz+qcC93CVqYJxPO16w+ZgZ+MaESgQ3FppTHCqoeWDpXrEs+m5PQmmGFTwr/ZRxhXAs/HhUlKhZQnVdQLLpJ6GEiYJFeWOlbKZob//V5lePHIu3/Hv27kT2+0//ZjVot6f/serNR0feEcg2/ef/3M+DCDuhuIY2A128Mt9SnYkZFK4pKLMJZ0y4lHzMzJThXDh68mmC5smiq+95JHpEQD05RSsqo4zM85EKkH4iYZtZKussd0I1KZhzrEp48xOMOtkkKq5NEqjtT+jQIUODplIS61zo3H1tY82KRXYGLVf5rOpIci6typuTmoTlzJLvVLVXZrtTgt+VHdkXNMorHYyoSDlxwlWOVgXvzZ5J/i5nCDZTi2lQfdBu50Zp7n/+YBXy6qb8Bnnn/L1calUq11tD3v1qzmt//fwYy/teJxZ1rLgLvR/4Z8L36b1ebT/zfqNby+/9PwfL9P20kD3QQwKkOAjNv93LkyJEjR44cOXLkyJEjR44cOXLk+JXxNwE5auUAKAAA
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-<servername>
+  name: svc-<id>
   namespace: <namespace>
 spec:
   selector:
-    app: depl-<servername>
+    app: depl-<id>
   ports:
     - name: https
       protocol: TCP
@@ -27,18 +27,18 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: <namespace>
-  name: depl-<servername>
+  name: depl-<id>
   labels:
-    app: depl-<servername>
+    app: depl-<id>
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: depl-<servername>
+      app: depl-<id>
   template:
     metadata:
       labels:
-        app: depl-<servername>
+        app: depl-<id>
         user-jupyterlab: "true"
     spec:
       imagePullSecrets:
@@ -78,4 +78,4 @@ spec:
         - name: files
           configMap:
             defaultMode: 400
-            name: cm-<servername>
+            name: cm-<id>

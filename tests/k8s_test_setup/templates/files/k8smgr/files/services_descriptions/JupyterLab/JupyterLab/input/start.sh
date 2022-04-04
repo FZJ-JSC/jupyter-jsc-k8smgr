@@ -5,7 +5,7 @@ export JUPYTERHUB_ACTIVITY_URL=${JUPYTERHUB_API_URL}/users/${JUPYTERHUB_USER}/ac
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 echo "Setup tunnel call"
-curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 35, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "k8smgr_hdfcloud", "target_node": "svc-'"${SERVERNAME}"'", "target_port": "8443"}}' -X "POST" ${JUPYTERHUB_API_URL}/${JUPYTERHUB_STATUS_URL} 2>&1
+curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 35, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "k8smgr_hdfcloud", "target_node": "svc-'"${DRF_ID}"'", "target_port": "8443"}}' -X "POST" ${JUPYTERHUB_API_URL}/${JUPYTERHUB_STATUS_URL} 2>&1
 echo "Setup tunnel called"
 # curl to remote node to build up tunnel
 

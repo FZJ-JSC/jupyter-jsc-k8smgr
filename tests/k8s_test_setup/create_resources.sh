@@ -4,18 +4,18 @@ if [[ -z ${1} ]]; then
     exit 1
 fi
 
-DEVEL_JUPYTERHUB="false"
+DEVEL_JUPYTERHUB="true"
 DEVEL_UNICOREMGR="false"
 DEVEL_K8SMGR="false"
-DEVEL_TUNNEL="true"
+DEVEL_TUNNEL="false"
 
 
 JUPYTERHUB_VERSION="latest"
 UNITY_VERSION="3.8.1-1"
 UNICORE_VERSION="8.3.0-p1"
-UNICOREMGR_VERSION="1.0.3-0"
-TUNNEL_VERSION="1.0.3-0"
-K8SMGR_VERSION="1.0.3-0"
+UNICOREMGR_VERSION="1.0.3-1"
+TUNNEL_VERSION="1.0.3-1"
+K8SMGR_VERSION="1.0.3-1"
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"

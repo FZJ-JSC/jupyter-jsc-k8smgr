@@ -20,6 +20,7 @@ class BackendSpawner(Spawner):
     _cancel_pending = False
     _cancel_event_yielded = False
     _yielded_events = []
+    svc_name = ""
 
     current_events = []
     events = {}
@@ -27,6 +28,8 @@ class BackendSpawner(Spawner):
 
     def get_state(self):
         state = super().get_state()
+        if self.svc_name:
+            state["svc_name"] = self.svc_name
         if self.events:
             self.events["current"] = self.current_events
             state["events"] = self.events
@@ -36,8 +39,11 @@ class BackendSpawner(Spawner):
         super().load_state(state)
         if "events" in state:
             self.events = state["events"]
+        if "svc_name" in state:
+            self.svc_name = state["svc_name"]
 
     def clear_state(self):
+        self.svc_name = ""
         super().clear_state()
 
     def status_update_url(self, server_name=""):
@@ -57,13 +63,19 @@ class BackendSpawner(Spawner):
         env["JUPYTERHUB_USER_ID"] = self.user.orm_user.id
         return env
 
-    def get_svc_name(self, id):
-        k8s_tunnel_deployment_name = os.environ.get(
-            "TUNNEL_DEPLOYMENT_NAME", "tunneling"
-        )[0:30]
+    def get_svc_name(self, resp_json):
+        custom_config = self.user.authenticator.custom_config
+        drf_service = (
+            custom_config.get("systems", {})
+            .get(self.user_options["system"], {})
+            .get("drf-service", None)
+        )
+        svc_name = f"{drf_service}-{resp_json['id']}"[0:63]
+        return f"{svc_name}"
+
+    def get_svc_name_suffix(self):
         k8s_tunnel_deployment_namespace = os.environ.get("TUNNEL_DEPLOYMENT_NAMESPACE")
-        svc_name = f"{k8s_tunnel_deployment_name}-{id}"[0:63]
-        return f"{svc_name}.{k8s_tunnel_deployment_namespace}.svc"
+        return f".{k8s_tunnel_deployment_namespace}.svc"
 
     def _get_req_prop(self, auth_state):
         custom_config = self.user.authenticator.custom_config
@@ -137,13 +149,8 @@ class BackendSpawner(Spawner):
             validate_cert=req_prop["validate_cert"],
             ca_certs=req_prop["ca_certs"],
         )
-        svc_name = self.get_svc_name(self.name)
-        self.log.debug(
-            f"Expect JupyterLab at {svc_name}:{self.port}",
-            extra={"uuidcode": self.name},
-        )
         try:
-            await drf_request(
+            resp_json = await drf_request(
                 req,
                 self.log,
                 self.user.authenticator.fetch,
@@ -166,6 +173,12 @@ class BackendSpawner(Spawner):
                 pass
             raise e
 
+        self.svc_name = self.get_svc_name(resp_json)
+        svc_name_suffix = self.get_svc_name_suffix()
+        self.log.debug(
+            f"Expect JupyterLab at {self.svc_name}{svc_name_suffix}:{self.port}",
+            extra={"uuidcode": self.name},
+        )
         now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
         submitted_event = {
             "failed": False,
@@ -173,7 +186,7 @@ class BackendSpawner(Spawner):
             "html_message": f"<details><summary>{now}: Request submitted to Jupyter-JSC backend</summary></details>",
         }
         self.current_events.append(submitted_event)
-        return (svc_name, self.port)
+        return (f"{self.svc_name}{svc_name_suffix}", self.port)
 
     async def poll(self):
         if self._cancel_pending:
