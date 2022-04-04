@@ -2,21 +2,25 @@ import copy
 import json
 import os
 import re
+import time
 from datetime import datetime
 from datetime import timedelta
+from urllib.error import HTTPError
+from urllib.parse import urlencode
 
-from custom_utils import get_vos, VoException
+from custom_utils import get_vos
+from custom_utils import VoException
 from jupyterhub.utils import new_token
 from oauthenticator.generic import GenericOAuthenticator
-from oauthenticator.oauth2 import OAuthLoginHandler, OAuthLogoutHandler
+from oauthenticator.oauth2 import OAuthLoginHandler
+from oauthenticator.oauth2 import OAuthLogoutHandler
 from oauthenticator.traitlets import Callable
 from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
+from traitlets import Bool
 from traitlets import Dict
 from traitlets import Unicode
 from traitlets import Union
-from urllib.error import HTTPError
-from urllib.parse import urlencode
 
 
 class TimedCacheProperty(object):
@@ -67,13 +71,17 @@ class CustomLogoutHandler(OAuthLogoutHandler):
                 if refresh_token:
                     tokens["refresh_token"] = refresh_token
                     auth_state["refresh_token"] = None
-                
+
             unity_revoke_config = user.authenticator.custom_config.get("unity", {}).get(
                 "revoke", {}
             )
             unity_revoke_url = unity_revoke_config.get("url", "")
-            unity_revoke_certificate = unity_revoke_config.get("certificate_path", False)
-            unity_revoke_request_timeout = unity_revoke_config.get("request_timeout", 10)
+            unity_revoke_certificate = unity_revoke_config.get(
+                "certificate_path", False
+            )
+            unity_revoke_request_timeout = unity_revoke_config.get(
+                "request_timeout", 10
+            )
             unity_revoke_expected_status_code = unity_revoke_config.get(
                 "expected_status_code", 200
             )
@@ -116,14 +124,16 @@ class CustomLogoutHandler(OAuthLogoutHandler):
                         )
                 except (HTTPError, HTTPClientError):
                     self.log.critical(
-                        f"Could not revoke token", extra=log_extras, exc_info=True
+                        "Could not revoke token", extra=log_extras, exc_info=True
                     )
                 except:
                     self.log.critical(
                         "Could not revoke token.", extra=log_extras, exc_info=True
                     )
                 else:
-                    self.log.debug(f"Unity revoke {key} call successful.", extra=log_extras)
+                    self.log.debug(
+                        f"Unity revoke {key} call successful.", extra=log_extras
+                    )
             await user.save_auth_state(auth_state)
 
         # Set new cookie_id to invalidate previous cookies
@@ -174,6 +184,26 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         help="""The url retrieving information about the access token""",
     )
 
+    # low auth_refresh_age for debugging
+    auth_refresh_age = 10
+
+    # Change default to True
+    refresh_pre_spawn = Bool(
+        True,
+        config=True,
+        help="""Force refresh of auth prior to spawn.
+
+        This forces :meth:`.refresh_user` to be called prior to launching
+        a server, to ensure that auth state is up-to-date.
+
+        This can be important when e.g. auth tokens that may have expired
+        are passed to the spawner via environment variables from auth_state.
+
+        If refresh_user cannot refresh the user auth data,
+        launch will fail until the user logs in again.
+        """,
+    )
+
     @TimedCacheProperty(timeout=custom_config_timeout)
     def custom_config(self):
         self.log.debug("Load custom config file.")
@@ -210,7 +240,65 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         return ret
 
     async def refresh_user(self, user, handler=None):
-        return await super().refresh_user(user, handler)
+        auth_state = await user.get_auth_state()
+        threshold = (
+            self.custom_config.get("unity", {})
+            .get("refresh", {})
+            .get("treshold", 6000000)
+        )
+        now = time.time()
+        rest_time = int(auth_state.get("exp", now)) - now
+        if threshold >= rest_time:
+            try:
+                refresh_token_save = auth_state.get("refresh_token", None)
+                self.log.debug(
+                    f"Refresh {user.name} authentication. Rest time: {rest_time}"
+                )
+                if not refresh_token_save:
+                    self.log.debug("Auth state has no refresh token. Return False.")
+                    return False
+                params = {
+                    "refresh_token": auth_state.get("refresh_token"),
+                    "grant_type": "refresh_token",
+                    "scope": " ".join(self.scope),
+                }
+                headers = self._get_headers()
+                try:
+                    token_resp_json = await self._get_token(headers, params)
+                except HTTPClientError:
+                    self.log.exception("Could not receive new access token.")
+                    return False
+                user_data_resp_json = await self._get_user_data(token_resp_json)
+                if callable(self.username_key):
+                    name = self.username_key(user_data_resp_json)
+                else:
+                    name = user_data_resp_json.get(self.username_key)
+                    if not name:
+                        self.log.error(
+                            "OAuth user contains no key %s: %s",
+                            self.username_key,
+                            user_data_resp_json,
+                        )
+                        return
+
+                    if not token_resp_json.get("refresh_token", None):
+                        token_resp_json["refresh_token"] = refresh_token_save
+                    authentication = {
+                        "auth_state": self._create_auth_state(
+                            token_resp_json, user_data_resp_json
+                        )
+                    }
+                    ret = await self.run_post_auth_hook(handler, authentication)
+            except:
+                self.log.exception(
+                    "Refresh of user's {name} access token failed".format(
+                        name=user.name
+                    )
+                )
+                ret = False
+        else:
+            ret = True
+        return ret
 
     async def post_auth_hook(self, authenticator, handler, authentication):
         access_token = authentication["auth_state"]["access_token"]
@@ -280,5 +368,4 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         if hpc_list:
             authentication["auth_state"]["oauth_user"]["hpc_infos_attribute"] = hpc_list
 
-        authenticator.log.info(authentication)
         return authentication
