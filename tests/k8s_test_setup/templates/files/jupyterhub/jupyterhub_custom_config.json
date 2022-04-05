@@ -217,5 +217,8 @@
     "jureca-dc_gpu": [
       "jureca-dc_gpu-devel"
     ]
+  },
+  "selfapihandler": {
+    "allowed_auth_state_keys": ["access_token", "exp", "last_login", "vo_active", "vo_available", "used_authenticator_attr", "username_attr"]
   }
 }

@@ -184,9 +184,6 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         help="""The url retrieving information about the access token""",
     )
 
-    # low auth_refresh_age for debugging
-    auth_refresh_age = 10
-
     # Change default to True
     refresh_pre_spawn = Bool(
         True,
@@ -241,11 +238,7 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
 
     async def refresh_user(self, user, handler=None):
         auth_state = await user.get_auth_state()
-        threshold = (
-            self.custom_config.get("unity", {})
-            .get("refresh", {})
-            .get("treshold", 6000000)
-        )
+        threshold = 2 * self.auth_refresh_age
         now = time.time()
         rest_time = int(auth_state.get("exp", now)) - now
         if threshold >= rest_time:
