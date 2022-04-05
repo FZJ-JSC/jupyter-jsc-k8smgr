@@ -310,7 +310,7 @@ require(["jquery", "jhapi", "utils"], function (
           location.reload();
         },
         error: function (xhr, textStatus, errorThrown) {
-          // newTab.location.reload();
+          newTab.close();
           spinner.addClass("d-none");
           button.removeAttr("disabled");
           alert.removeClass("alert-dark").addClass("show alert-danger");
