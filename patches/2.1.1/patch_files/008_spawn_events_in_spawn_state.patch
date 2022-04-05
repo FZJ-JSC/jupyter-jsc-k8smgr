@@ -1,17 +1,35 @@
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/user.py ../jupyterhub-patched/jupyterhub/user.py
---- ../jupyterhub/jupyterhub/user.py	2022-03-29 11:34:21.000000000 +0000
-+++ ../jupyterhub-patched/jupyterhub/user.py	2022-03-29 12:25:15.987819700 +0000
-@@ -840,6 +840,9 @@
+--- ../jupyterhub/jupyterhub/user.py	2022-04-05 12:31:55.109927424 +0000
++++ ../jupyterhub-patched/jupyterhub/user.py	2022-04-05 12:29:27.356533908 +0000
+@@ -785,6 +785,9 @@
                      ),
                      exc_info=True,
                  )
 +            # store state again for spawner.events
 +            spawner.orm_spawner.state = spawner.get_state()
 +            self.db.commit()
+             # raise original exception
+             spawner._start_pending = False
+             raise e
+@@ -835,6 +838,9 @@
+                     extra={"action": "stoporigin"}
+                 )
+                 self.settings['statsd'].incr('spawner.failure.http_error')
++            # store state again for spawner.events
++            spawner.orm_spawner.state = spawner.get_state()
++            self.db.commit()
+             try:
+                 await self.stop(spawner.name)
+             except Exception:
+@@ -844,6 +850,7 @@
+                     ),
+                     exc_info=True,
+                 )
++
              # raise original TimeoutError
              raise e
          else:
-@@ -851,6 +854,9 @@
+@@ -855,6 +862,9 @@
          finally:
              spawner._waiting_for_response = False
              spawner._start_pending = False
