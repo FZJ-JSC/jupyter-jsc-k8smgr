@@ -25,6 +25,7 @@ class BackendSpawner(Spawner):
 
     current_events = []
     events = {}
+    clear_events = True
     yield_wait_seconds = 1
 
     def get_state(self):
@@ -56,6 +57,9 @@ class BackendSpawner(Spawner):
     def clear_state(self):
         """clear any state (called after shutdown)"""
         self.svc_name = ""
+        if self.clear_events:
+            self.events = {}
+            self.clear_events = False
         super().clear_state()
 
     def status_update_url(self, server_name=""):

@@ -25,6 +25,10 @@ require(["jquery", "jhapi", "utils"], function (
         var progress_url = utils.url_path_join(jhdata.base_url, "api/users", user, "servers", name, "progress");
         var progress_bar = $("#" + name + "-progress-bar");
         var progress_log = $("#" + name + "-progress-log");
+        var log_select = $("#" + name + "-log-select");
+
+        // Save current logs and update log select
+        update_spawn_events_dict(name, log_select);
 
         evtSources[name] = new EventSource(progress_url);
         evtSources[name]["name"] = name;
@@ -209,13 +213,7 @@ require(["jquery", "jhapi", "utils"], function (
         data: JSON.stringify(options),
         success: function () {
           // Save current log to time stamp and empty it
-          const start_event = spawn_events[name]["current"][0];
-          const start_message = start_event.html_message;
-          var re = /([0-9]+(_[0-9]+)+).*[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?/;
-          var start_time = re.exec(start_message)[0];
-          spawn_events[name][start_time] = spawn_events[name]["current"];
-          spawn_events[name]["current"] = [];
-          log_select.append(`<option value="${start_time}">${start_time}</option>`);
+          update_spawn_events_dict(name, log_select);
 
           newTab.location.href = url;
           // hook up event-stream for progress
@@ -590,6 +588,17 @@ require(["jquery", "jhapi", "utils"], function (
     partition_td.text(collapse.find("select[id*=partition]").val());
     var project_td = tr.find(".project-td");
     project_td.text(collapse.find("select[id*=project]").val());
+  }
+
+  function update_spawn_events_dict(name, log_select) {
+    // Save current log to time stamp and empty it
+    const start_event = spawn_events[name]["current"][0];
+    const start_message = start_event.html_message;
+    var re = /([0-9]+(_[0-9]+)+).*[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?/;
+    var start_time = re.exec(start_message)[0];
+    spawn_events[name][start_time] = spawn_events[name]["current"];
+    spawn_events[name]["current"] = [];
+    log_select.append(`<option value="${start_time}">${start_time}</option>`);
   }
 
   /* Moved to home.html */
