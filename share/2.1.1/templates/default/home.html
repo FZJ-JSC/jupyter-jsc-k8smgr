@@ -976,66 +976,64 @@ evtSources = {}
 {%- set cancel_progress_activation = 30 %}
 
 function updateSpawners() {
-  {%- for s in named_spawners -%}
-    {%- if s.events -%}
-      var current_events = {{s.events.get("current") | tojson}};
-      if (current_events.length > 0) {
-        var last_event = current_events.slice(-1)[0];
-        var current_progress = last_event.progress;
-      }
-      else var current_progress = 0;
+  {%- for s in named_spawners %}
+    var current_events = spawn_events["{{s.name}}"]["current"];
+    if (current_events.length > 0) {
+      var last_event = current_events.slice(-1)[0];
+      var current_progress = last_event.progress;
+    }
+    else var current_progress = 0;
 
-      var name = "{{s.name}}";
-      var progress_bar = $("#" + name + "-progress-bar");
-      var progress_log = $("#" + name + "-progress-log");
+    var name = "{{s.name}}";
+    var progress_bar = $("#" + name + "-progress-bar");
+    var progress_log = $("#" + name + "-progress-log");
 
-      var tr = progress_bar.parents("tr");
-      var open_btn = tr.find(".open");
-      var stop_btn = tr.find(".stop, .cancel");
-      
-      // Append log messages
-      for (const event in current_events) {
-        var html_message = current_events[event]["html_message"];
-        no_duplicate_log(html_message, progress_log);
-        // tab_log.append($("<div>").html(html_message));
-      }
+    var tr = progress_bar.parents("tr");
+    var open_btn = tr.find(".open");
+    var stop_btn = tr.find(".stop, .cancel");
+    
+    // Append log messages
+    for (const event in current_events) {
+      var html_message = current_events[event]["html_message"];
+      no_duplicate_log(html_message, progress_log);
+      // tab_log.append($("<div>").html(html_message));
+    }
 
-      // Add options to log select
-      var log_select = $("#" + name + "-log-select");
-      for (const log in {{s.events | tojson}}) {
-        if (log == "current") log_select.prepend(`<option value="${log}">${log}</option>`);
-        else log_select.append(`<option value="${log}">${log}</option>`);
-      }
-      log_select.val("current");
+    // Add options to log select
+    var log_select = $("#" + name + "-log-select");
+    for (const log in spawn_events["{{s.name}}"]) {
+      if (log == "current") log_select.prepend(`<option value="${log}">${log}</option>`);
+      else log_select.append(`<option value="${log}">${log}</option>`);
+    }
+    log_select.val("current");
 
-      // Make progress td visible and set the progress bar to the correct width
-      // if the spawner if currenty spawning
-      {%- if not s.ready and s.active %}
-      progress_bar.css("width", "100%");
-      progress_bar.attr("aria-valuenow", current_progress);
-      progress_bar.append( $("b").html(current_progress + "%") );
-      open_btn.addClass("disabled");
-      if (current_progress < {{cancel_progress_activation}}) {
-        stop_btn.addClass("disabled");
-      }
-      // Disable the delete button during the spawn process
-      var collapse = $(`.collapse-tr[data-server-name=${name}]`);
-      collapse.find(".delete").addClass("disabled");
+    // Make progress td visible and set the progress bar to the correct width
+    // if the spawner if currenty spawning
+    {%- if not s.ready and s.active %}
+    progress_bar.css("width", "100%");
+    progress_bar.attr("aria-valuenow", current_progress);
+    progress_bar.append( $("b").html(current_progress + "%") );
+    open_btn.addClass("disabled");
+    if (current_progress < {{cancel_progress_activation}}) {
+      stop_btn.addClass("disabled");
+    }
+    // Disable the delete button during the spawn process
+    var collapse = $(`.collapse-tr[data-server-name=${name}]`);
+    collapse.find(".delete").addClass("disabled");
 
-      // Reattach event listener
-      var progress_url = `${jhdata.base_url}api/users/${jhdata.user}/servers/${name}/progress`;
-      evtSources[name] = new EventSource(progress_url);
-      // save variables in evtSource Object and use outside of loop to avoid overwriting
-      // what is a better solution for this?
-      evtSources[name]["name"] = name;
-      evtSources[name]["progress_bar"] = progress_bar;
-      evtSources[name]["progress_log"] = progress_log;
+    // Reattach event listener
+    var progress_url = `${jhdata.base_url}api/users/${jhdata.user}/servers/${name}/progress`;
+    evtSources[name] = new EventSource(progress_url);
+    // save variables in evtSource Object and use outside of loop to avoid overwriting
+    // what is a better solution for this?
+    evtSources[name]["name"] = name;
+    evtSources[name]["progress_bar"] = progress_bar;
+    evtSources[name]["progress_log"] = progress_log;
 
-      {%- elif s.active %}
-      progress_bar.css("width", "100%");
-      progress_bar.attr("aria-valuenow", current_progress);
-      progress_bar.addClass('bg-success');
-      {%- endif %}
+    {%- elif s.active %}
+    progress_bar.css("width", "100%");
+    progress_bar.attr("aria-valuenow", current_progress);
+    progress_bar.addClass('bg-success');
     {%- endif %}
   {%- endfor %}
 
