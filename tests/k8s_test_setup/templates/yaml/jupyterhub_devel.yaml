@@ -135,6 +135,18 @@ spec:
               name: k8smgr-drf-<ID>
               key: JUPYTERHUB_USER_BASIC
               optional: false
+        volumeMounts:
+        - name: shared-data
+          mountPath: /tmp/shared-data
+        - name: files
+          mountPath: /home/jupyterhub/jupyterhub_custom_config.json
+          subPath: jupyterhub_custom_config.json
+        - name: files
+          mountPath: /tmp/cleanup_sql.py
+          subPath: cleanup_sql.py
+        - name: certs
+          mountPath: /home/jupyterhub/ca-root.pem
+          subPath: ca-root.pem
       - image: python:3.9-alpine3.14
         name: maintenance-check
         imagePullPolicy: Always
@@ -161,18 +173,6 @@ spec:
         - name: files
           mountPath: /tmp/maintenance-check.py
           subPath: maintenance-check.py
-        volumeMounts:
-        - name: shared-data
-          mountPath: /tmp/shared-data
-        - name: files
-          mountPath: /home/jupyterhub/jupyterhub_custom_config.json
-          subPath: jupyterhub_custom_config.json
-        - name: files
-          mountPath: /tmp/cleanup_sql.py
-          subPath: cleanup_sql.py
-        - name: certs
-          mountPath: /home/jupyterhub/ca-root.pem
-          subPath: ca-root.pem
       volumes:
       - name: shared-data
         emptyDir: {}
