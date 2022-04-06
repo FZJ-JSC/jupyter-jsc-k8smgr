@@ -4,7 +4,7 @@ if [[ -z ${1} ]]; then
     exit 1
 fi
 
-DEVEL_JUPYTERHUB="true"
+DEVEL_JUPYTERHUB="false"
 DEVEL_UNICOREMGR="false"
 DEVEL_K8SMGR="false"
 DEVEL_TUNNEL="false"
