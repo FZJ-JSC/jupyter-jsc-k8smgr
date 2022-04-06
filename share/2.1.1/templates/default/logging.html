@@ -1,0 +1,160 @@
+{%- extends hostname + "/page.html" %}
+
+{%- macro create_select(label, options, setting, log, system) -%}
+<div class="mb-3 row">
+  <label for="{{system}}-{{log}}-{{setting}}" class="col-sm-2 col-form-label">{{ label }}</label>
+  <div class="col-sm-10">
+    <select class="form-select" id="{{system}}-{{log}}-{{setting}}">
+      {% for key, option in options.items() %}
+      <option value="{{key}}">{{ option }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</div>
+{%- endmacro -%}
+
+{%- macro create_form_input(label, setting, log, system, type="text") -%}
+<div class="mb-3 row">
+  <label for="{{system}}-{{log}}-{{setting}}" class="col-sm-2 col-form-label">{{ label }}</label>
+  <div class="col-sm-10">
+    <input type="{{type}}" class="form-control" id="{{system}}-{{log}}-{{setting}}">
+  </div>
+</div>
+{%- endmacro -%}
+
+{%- macro create_annotated_form_input(label, annotation, setting, log, system, type="text") -%}
+<div class="mb-3 row">
+  <label for="{{system}}-{{log}}-{{setting}}" class="col-sm-2 col-form-label">{{ label }}</label>
+  <div class="col-sm-10">
+    <input type="{{type}}" class="form-control" id="{{system}}-{{log}}-{{setting}}">
+    <div class="form-text">{{ annotation }}</div>
+  </div>
+</div>
+{%- endmacro -%}
+
+{%- macro request_buttons(log, system) -%}
+<div class="mb-2">
+  <button id="{{system}}-{{log}}-create" type="button" class="btn btn-success">Create</button>
+  <button id="{{system}}-{{log}}-patch" type="button" class="btn btn-warning">Patch</button>
+  <button id="{{system}}-{{log}}-delete" type="button" class="btn btn-danger">Delete</button>
+  <div id="{{system}}-{{log}}-alert" class="alert alert-secondary mt-2" role="alert">Output area</div>
+</div>
+{%- endmacro -%}
+
+{%- macro loglevel(log, system) -%}
+{{ create_select("LogLevel", {
+    0: "NotSet",
+    5: "Trace",
+    10: "Debug",
+    20: "Info",
+    30: "Warning",
+    40: "Error",
+    50: "Critical",
+    99: "Deactivate"
+  }, "loglevel", log, system) }}
+{%- endmacro -%}
+
+{%- macro formatter(log, system) -%}
+{{ create_select("Formatter", {
+    "json": "JSON",
+    "simple": "Simple"
+  }, "formatter", log, system) }}
+{%- endmacro -%}
+
+{%- macro file_log(system) -%}
+{%- set log = "file" -%}
+<h5>File</h5>
+{{ request_buttons(log, system) }}
+{{ loglevel(log, system) }}
+{{ formatter(log, system) }}
+{{ create_form_input("File Name", "filename", log, system) }}
+  {# "s": "seconds",
+  "m": "minutes",
+  "h": "hours",
+  "d": "days", #}
+{{ create_select("Rotate at", {
+    "w0": "Monday",
+    "w1": "Tueday",
+    "w2": "Wednesday",
+    "w3": "Thursday",
+    "w4": "Friday", 
+    "w5": "Saturday",
+    "w6": "Sunday",
+    "midnight": "Midnight"
+  }, "when", log, system) }}
+{{ create_form_input("Backup Count", "backupcount", log, system, type="number") }}
+{%- endmacro -%}
+
+{%- macro stream_log(system) -%}
+{%- set log = "stream" -%}
+<h5>Stream</h5>
+{{ request_buttons(log, system) }}
+{{ loglevel(log, system) }}
+{{ formatter(log, system) }}
+{{ create_select("Stream", {
+    "ext://sys.stdout": "stdout",
+    "ext://sys.stderr": "stderr"
+  }, "stream", log, system) }}
+{%- endmacro -%}
+
+{%- macro smtp_log(system) -%}
+{%- set log = "smtp" -%}
+<h5>Mail</h5>
+{{ request_buttons(log, system) }}
+{{ loglevel(log, system) }}
+{{ formatter(log, system) }}
+{{ create_form_input("Mail Host ", "mailhost", log, system) }}
+{{ create_form_input("From Address ", "fromaddr", log, system) }}
+{{ create_annotated_form_input("To Address", 
+  "Use ; to separate multiple addresses.", 
+  "toaddr", log, system) }}
+{# {{ to_addr_input(log, system) }} #}
+{{ create_form_input("Subject ", "subject", log, system) }}
+{%- endmacro -%}
+
+{%- macro syslog_log(system) -%}
+{%- set log = "syslog" -%}
+<h5>Syslog</h5>
+{{ request_buttons(log, system) }}
+{{ loglevel(log, system) }}
+{{ formatter(log, system) }}
+{{ create_annotated_form_input("Address", 
+  "Enter host and port in this field as `host:port`.", 
+  "address", log, system) }}
+{{ create_select("Socket Type", {
+    "ext://socket.SOCK_DGRAM": "SOCK_DGRAM",
+    "ext://socket.SOCK_STREAM": "SOCK_STREAM"
+  }, "socktype", log, system) }}
+{%- endmacro -%}
+
+{%- macro create_accordion_item(heading, system, parent_id) -%}
+<div class="accordion-item">
+  <h2 class="accordion-header" id="{{system}}-accordion-heading">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#{{system}}-log-settings-collapse" aria-expanded="true" aria-controls="{{system}}-logs-collapse">
+      {{ heading }}
+    </button>
+  </h2>
+  <div id="{{system}}-log-settings-collapse" class="accordion-collapse collapse" aria-labelledby="{{system}}-accordion-heading" data-bs-parent="#{{parent_id}}">
+    <div class="accordion-body">
+      {{ file_log(system) }}
+      <hr>
+      {{ stream_log(system) }}
+      <hr>
+      {{ smtp_log(system) }}
+      <hr>
+      {{ syslog_log(system) }}
+    </div>
+  </div>
+</div>
+{%- endmacro %}
+
+{%- block main -%}
+<div class="p-4">
+  <div class="accordion text-black" id="logs-accordion">
+    {{ create_accordion_item("JupyterHub", "jhub", "logs-accordion") }}
+    {{ create_accordion_item("Unicore Manager", "unicore-mgr", "logs-accordion") }}
+    {{ create_accordion_item("Kubernetes Manager", "k8s-mgr", "logs-accordion") }}
+    {{ create_accordion_item("Tunnel", "tunnel", "logs-accordion") }}
+  </div>
+</div>
+{%- endblock -%}

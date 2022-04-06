@@ -2,9 +2,9 @@ import json
 import os
 
 from tornado import web
-
-from jupyterhub.handlers.base import BaseHandler
 from custom_utils import get_vos
+from jupyterhub.handlers.base import BaseHandler
+from jupyterhub.utils import admin_only
 
 
 async def get_user_auth_state_with_vos(user):
@@ -62,6 +62,15 @@ class ToSHandler(BaseHandler):
         user = self.current_user
         ns = await _create_ns(user)
         html = await self.render_template("tos.html", **ns)
+        self.finish(html)
+
+
+class LoggingHandler(BaseHandler):
+    @admin_only
+    async def get(self):
+        user = self.current_user
+        ns = await _create_ns(user)
+        html = await self.render_template("logging.html", **ns)
         self.finish(html)
 
 

@@ -12,13 +12,10 @@ $(document).ready(function () {
       setActive("JupyterLab");
     }
     else if (pathname.includes("/hub/admin")) {
-      var hash = window.location.href;
-      if (hash.includes("#logging")) {
+      setActive("Admin");
+    }
+    else if (pathname.includes("/hub/logging")) {
         setActive("Logging");
-      }
-      else if (hash.includes("#users")) {
-        setActive("User Labs");
-      }
     }
 })
 

@@ -97,6 +97,7 @@ c.JupyterHub.extra_handlers = [
     (r"/privacy", page_handlers.DPSHandler),
     (r"/terms", page_handlers.ToSHandler),
     (r"/groups", page_handlers.VOHandler),
+    (r"/logging", page_handlers.LoggingHandler),
     # APIHandlers
     (r"/api/users/([^/]+)/server/update", SpawnUpdateOptionsAPIHandler),
     (r"/api/users/([^/]+)/servers/([^/]*)/update", SpawnUpdateOptionsAPIHandler),

@@ -1,3 +1,5 @@
+// Copyright (c) Jupyter Development Team.
+// Distributed under the terms of the Modified BSD License.
 
 require(["jquery", "moment", "jhapi", "utils"], function (
   $,
@@ -6,7 +8,7 @@ require(["jquery", "moment", "jhapi", "utils"], function (
   utils
 ) {
   "use strict";
-  // User Lab table code
+
   var base_url = window.jhdata.base_url;
   var prefix = window.jhdata.prefix;
   var admin_access = window.jhdata.admin_access;
@@ -16,12 +18,14 @@ require(["jquery", "moment", "jhapi", "utils"], function (
 
   function getRow(element) {
     var original = element;
-    var parents = element.parents("tr");
-    if (parents.length != 1) {
-      console.error("Couldn't find row for", original);
-      throw new Error("No server row found");
+    while (!element.hasClass("server-row")) {
+      element = element.parent();
+      if (element[0].tagName === "BODY") {
+        console.error("Couldn't find row for", original);
+        throw new Error("No server-row found");
+      }
     }
-    return parents;
+    return element;
   }
 
   function resort(col, order) {
@@ -44,7 +48,7 @@ require(["jquery", "moment", "jhapi", "utils"], function (
     }
     query.unshift("sort=" + col);
     // reload page with new order
-    window.location = window.location.pathname + "?" + query.join("&") + "#users";
+    window.location = window.location.pathname + "?" + query.join("&");
   }
 
   $("th").map(function (i, th) {
@@ -82,9 +86,9 @@ require(["jquery", "moment", "jhapi", "utils"], function (
     }
     stop({
       success: function () {
-        el.text("stop " + serverName).addClass("d-none");
-        row.find(".access-server").addClass("d-none");
-        row.find(".start-server-admin").removeClass("d-none");
+        el.text("stop " + serverName).addClass("hidden");
+        row.find(".access-server").addClass("hidden");
+        row.find(".start-server").removeClass("hidden");
       },
     });
   });
@@ -116,7 +120,7 @@ require(["jquery", "moment", "jhapi", "utils"], function (
   if (admin_access && options_form) {
     // if admin access and options form are enabled
     // link to spawn page instead of making API requests
-    $(".start-server-admin").map(function (i, el) {
+    $(".start-server").map(function (i, el) {
       el = $(el);
       var row = getRow(el);
       var user = row.data("user");
@@ -128,9 +132,9 @@ require(["jquery", "moment", "jhapi", "utils"], function (
     });
     // cannot start all servers in this case
     // since it would mean opening a bunch of tabs
-    $("#start-all-servers").addClass("d-none");
+    $("#start-all-servers").addClass("hidden");
   } else {
-    $(".start-server-admin-admin").click(function () {
+    $(".start-server").click(function () {
       var el = $(this);
       var row = getRow(el);
       var user = row.data("user");
@@ -146,9 +150,9 @@ require(["jquery", "moment", "jhapi", "utils"], function (
       }
       start({
         success: function () {
-          el.text("start " + serverName).addClass("d-none");
-          row.find(".stop-server").removeClass("d-none");
-          row.find(".access-server").removeClass("d-none");
+          el.text("start " + serverName).addClass("hidden");
+          row.find(".stop-server").removeClass("hidden");
+          row.find(".access-server").removeClass("hidden");
         },
       });
     });
@@ -253,7 +257,7 @@ require(["jquery", "moment", "jhapi", "utils"], function (
     .find(".stop-all-button")
     .click(function () {
       // stop all clicks all the active stop buttons
-      $(".stop-server").not(".d-none").click();
+      $(".stop-server").not(".hidden").click();
     });
 
   function start(el) {
@@ -265,8 +269,8 @@ require(["jquery", "moment", "jhapi", "utils"], function (
   $("#start-all-servers-dialog")
     .find(".start-all-button")
     .click(function () {
-      $(".start-server-admin")
-        .not(".d-none")
+      $(".start-server")
+        .not(".hidden")
         .each(function (i) {
           setTimeout(start(this), i * 500);
         });

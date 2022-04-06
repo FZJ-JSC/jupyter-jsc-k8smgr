@@ -11,14 +11,14 @@
     <h2 class="col col-auto">2-Factor Authentication for Jupyter-JSC</h2>
     <div class="col col-auto">
       {%- if user %}
-      <a id="activate-2fa" role="button" class="activate-2fa btn btn-rounded btn-primary mr-2 mb-1">Request
+      <a id="activate-2fa" role="button" class="activate-2fa btn btn-primary mr-2 mb-1">Request
         2FA</a>
-      <a id="remove-2fa" role="button" class="remove-2fa btn btn-rounded btn-danger mr-2 mb-1">Remove 2FA</a>
+      <a id="remove-2fa" role="button" class="remove-2fa btn btn-danger mr-2 mb-1">Remove 2FA</a>
       {%- else %}
-      <a role="button" class="btn btn-rounded btn-primary mr-2 mb-1" href="/hub/oauth_login?next=2FA">Login
+      <a role="button" class="btn btn-primary mr-2 mb-1" href="/hub/oauth_login?next=2FA">Login
         required</a>
       {%- endif %}
-      <a role="button" class="btn btn-rounded btn-warning mb-1"
+      <a role="button" class="btn btn-warning mb-1"
         href="https://docs.jupyter-jsc.fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/Activate_JupyterJSC_2-factor-authentication.ipynb"
         target="_blank">Detailed Information</a>
     </div>

@@ -19,7 +19,7 @@ class LogLevelAPIHandler(APIHandler):
     def validate_data(self, data):
         pass
 
-    # @admin_only
+    @admin_only
     async def get(self, handler=''):
         with open(os.environ.get("LOGGING_CONFIG_FILE", "logging.json"), "r") as f:
             config = json.load(f)
@@ -34,7 +34,7 @@ class LogLevelAPIHandler(APIHandler):
         except:
             self.set_status(400)
 
-    # @admin_only
+    @admin_only
     async def post(self, handler):
         with open(os.environ.get("LOGGING_CONFIG_FILE", "logging.json"), "r") as f:
             config = json.load(f)
@@ -65,7 +65,7 @@ class LogLevelAPIHandler(APIHandler):
         self.log.info(f"Updated {handler} log handler", extra={"data": data})
         self.set_status(200)
 
-    # @admin_only
+    @admin_only
     async def patch(self, handler):
         with open(os.environ.get("LOGGING_CONFIG_FILE", "logging.json"), "r") as f:
             config = json.load(f)
@@ -96,7 +96,7 @@ class LogLevelAPIHandler(APIHandler):
         create_logging_handler(config, handler)
         self.set_status(200)
 
-    # @admin_only
+    @admin_only
     async def delete(self, handler):
         with open(os.environ.get("LOGGING_CONFIG_FILE", "logging.json"), "r") as f:
             config = json.load(f)
