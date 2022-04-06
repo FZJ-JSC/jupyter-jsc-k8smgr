@@ -5,7 +5,6 @@
       "name": "JupyterHub",
       "type": "python",
       "request": "launch",
-      "preLaunchTask": "deletedb",
       "program": "/usr/bin/jupyterhub",
       "args": [
         "-f",

@@ -48,7 +48,7 @@ spec:
         - name: RESERVATIONS_PATH
           value: "/home/jupyterhub/reservations.json"
         - name: MAINTENANCE_PATH
-          value: "/home/jupyterhub/maintenance.json"
+          value: "/tmp/shared-data/maintenance-check/maintenance.json"
         - name: STATIC_FILES_SRC
           value: "/home/jupyterhub/jupyterhub-static/static/default"
         - name: STATIC_FILES_DEST
@@ -147,6 +147,32 @@ spec:
         - name: certs
           mountPath: /home/jupyterhub/ca-root.pem
           subPath: ca-root.pem
+      - image: python:3.9-alpine3.14
+        name: maintenance-check
+        imagePullPolicy: Always
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - >-
+            pip install jsonformatter python-dateutil requests &&
+            mkdir -p $OUTPUT_DIR &&
+            python3 -u /tmp/maintenance-check.py
+        env:
+        - name: CUSTOM_CONFIG_PATH
+          value: "/tmp/jupyterhub_custom_config.json"
+        - name: OUTPUT_DIR
+          value: "/tmp/shared-data/maintenance-check"
+        - name: LOGGER_NAME
+          value: "MaintenanceCheck"
+        volumeMounts:
+        - name: shared-data
+          mountPath: /tmp/shared-data
+        - name: files
+          mountPath: /tmp/jupyterhub_custom_config.json
+          subPath: jupyterhub_custom_config.json
+        - name: files
+          mountPath: /tmp/maintenance-check.py
+          subPath: maintenance-check.py
       volumes:
       - name: shared-data
         emptyDir: {}

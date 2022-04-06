@@ -220,5 +220,24 @@
   },
   "selfapihandler": {
     "allowed_auth_state_keys": ["access_token", "exp", "last_login", "vo_active", "vo_available", "used_authenticator_attr", "username_attr"]
+  },
+  "maintenance-check": {
+    "interval": 60,
+    "health_threshold": 40,
+    "url": "https://status.jsc.fz-juelich.de/api",
+    "services": {
+      "JUWELS": "13",
+      "JURECA": "1",
+      "JUSUF": "30",
+      "HDFML": "21"
+    },
+    "logger_name": "MaintenanceCheck",
+    "logger": {
+      "stream": {
+        "formatter": "simple",
+        "level": 10,
+        "stream": "ext://sys.stdout"
+      }
+    }
   }
 }
