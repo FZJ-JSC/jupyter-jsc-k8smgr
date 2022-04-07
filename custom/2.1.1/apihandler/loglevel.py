@@ -36,86 +36,71 @@ class JHubLogLevelAPIHandler(APIHandler):
 
     @admin_only
     async def get(self, handler=''):
-        config = get_config()
+        current_config = get_config()
         try:
             if handler:
-                log_info = config.get(handler)
+                log_config = current_config.get(handler)
+                data = {
+                    "handler": handler,
+                    "configuration": log_config
+                }
             else:
-                log_info = config
-            self.write(json.dumps(log_info))
+                data = []
+                for handler in current_config:
+                    data.append({
+                        "handler": handler,
+                        "configuration": current_config.get(handler)
+                    })
+            self.write(json.dumps(data))
             self.set_status(200)
         except:
             self.set_status(400)
 
     @admin_only
-    async def post(self, handler):
-        config = get_config()
-
-        if handler in config:
-            self.set_status(400, f"{handler} handler already exists")
+    async def post(self):
+        current_config = get_config()
+        data = self.get_json_body()
+        handler = data.get("handler")
+        handler_config = data.get("configuration")
+        if handler in current_config:
+            self.set_status(400)
             return
-
-        data = self.request.body.decode("utf8")
-        if type(data) != dict:
-            try:
-                data = json.loads(data)
-            except:
-                self.log.exception(
-                    "Incoming data not correct",
-                    extra={"class": self.__class__.__name__, "data": data},
-                )
-                self.set_status(400, "Incoming data not correct")
-                return
-
         try:
-            self.validate_data(data)
+            self.validate_data(handler_config)
         except:
             self.set_status(400)
             return
-
-        create_logging_handler(config, handler, **data)
+        create_logging_handler(current_config, handler, **handler_config)
         self.log.info(f"Created {handler} log handler", extra={"data": data})
         self.set_status(200)
 
     @admin_only
     async def patch(self, handler):
-        config = get_config()
-
-        if handler not in config:
-            self.set_status(400, f"{handler} handler does not exist")
+        current_config = get_config()
+        if handler not in current_config:
+            self.set_status(400)
             return
-
-        data = self.request.body.decode("utf8")
-        if type(data) != dict:
-            try:
-                data = json.loads(data)
-            except:
-                self.log.exception(
-                    "Incoming data not correct",
-                    extra={"class": self.__class__.__name__, "data": data},
-                )
-                self.set_status(400, "Incoming data not correct")
-                return
-
+        data = self.get_json_body()
+        handler = data.get("handler")
+        handler_config = data.get("configuration")
         try:
-            self.validate_data(data)
+            self.validate_data(handler_config)
         except:
             self.set_status(400)
             return
 
-        remove_logging_handler(config, handler)
-        create_logging_handler(config, handler)
+        remove_logging_handler(current_config, handler)
+        create_logging_handler(current_config, handler, **handler_config)
+        self.log.info(f"Updated {handler} log handler", extra={"data": data})
         self.set_status(200)
 
     @admin_only
     async def delete(self, handler):
-        config = get_config()
-
-        if handler not in config:
-            self.set_status(400, f"{handler} handler does not exist")
+        current_config = get_config()
+        if handler not in current_config:
+            self.set_status(400)
             return
-
-        remove_logging_handler(config, handler)
+        remove_logging_handler(current_config, handler)
         self.log.info(f"Removed {handler} log handler")
         self.set_status(200)
         
