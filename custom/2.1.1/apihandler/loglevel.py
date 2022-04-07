@@ -3,12 +3,16 @@ import os
 
 from jupyterhub.apihandlers import APIHandler
 from jupyterhub.utils import admin_only
+from tornado.httpclient import HTTPRequest
 
+from custom_utils.backend_services import drf_request
+from custom_utils.backend_services import drf_request_properties
 from logs import create_logging_handler
 from logs import remove_logging_handler
 from logs.extra_handlers import default_configurations
 from logs.utils import supported_handler_classes
 from logs.utils import supported_formatter_classes
+
 
 valid_handlers = [h for h in supported_handler_classes]
 valid_formatters = [f for f in supported_formatter_classes]
@@ -117,20 +121,56 @@ class JHubLogLevelAPIHandler(APIHandler):
         
 
 class DRFServiceLogLevelAPIHandler(APIHandler):
+    async def _drf_request(self, service, handler="", method="GET", body=None):
+        custom_config = self.authenticator.custom_config
+        req_prop = drf_request_properties(
+            service, custom_config, self.log, None
+        )
+        log_url = req_prop.get("urls", {}).get("logs", "None")
+        if handler:
+            log_url = log_url + handler + "/"
+        req = HTTPRequest(
+            log_url ,
+            method=method,
+            headers=req_prop["headers"],
+            request_timeout=req_prop["request_timeout"],
+            validate_cert=req_prop["validate_cert"],
+            ca_certs=req_prop["ca_certs"],
+        )
+        if body:
+            req.body = json.dumps(body)
+        resp = await drf_request(
+            req,
+            self.log,
+            self.authenticator.fetch,
+            parse_json=True,
+            raise_exception=True,
+        )
+        return resp
+
     @admin_only
     async def get(self, service, handler=''):
-        self.write(json.dumps(service))
+        resp = await self._drf_request(service, handler)
+        self.write(json.dumps(resp))
         self.set_status(200)
 
     @admin_only
-    async def post(self, service, handler):
+    async def post(self, service):
+        await self._drf_request(service, method="POST", body=self.get_json_body())
         self.set_status(200)
 
     @admin_only
     async def patch(self, service, handler):
+        if not handler:
+            self.set_status(400)
+            return
+        await self._drf_request(service, handler, method="PUT", body=self.get_json_body())
         self.set_status(200)
 
     @admin_only
     async def delete(self, service, handler):
+        if not handler:
+            self.set_status(400)
+            return
+        await self._drf_request(service, handler, method="DELETE")
         self.set_status(200)
-        return
