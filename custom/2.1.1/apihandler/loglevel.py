@@ -26,7 +26,7 @@ def get_config():
     return config
 
 
-class LogLevelAPIHandler(APIHandler):
+class JHubLogLevelAPIHandler(APIHandler):
     def validate_data(self, data):
         pass
 
@@ -70,8 +70,8 @@ class LogLevelAPIHandler(APIHandler):
             return
 
         create_logging_handler(config, handler, **data)
-        self.log.info(f"Updated {handler} log handler", extra={"data": data})
-        self.set_status(200, f"Created {handler} handler")
+        self.log.info(f"Created {handler} log handler", extra={"data": data})
+        self.set_status(200)
 
     @admin_only
     async def patch(self, handler):
@@ -101,7 +101,7 @@ class LogLevelAPIHandler(APIHandler):
 
         remove_logging_handler(config, handler)
         create_logging_handler(config, handler)
-        self.set_status(200, f"Updated {handler} handler")
+        self.set_status(200)
 
     @admin_only
     async def delete(self, handler):
@@ -113,6 +113,24 @@ class LogLevelAPIHandler(APIHandler):
 
         remove_logging_handler(config, handler)
         self.log.info(f"Removed {handler} log handler")
-        self.set_status(200, f"Removed {handler} handler")
+        self.set_status(200)
         
-    
+
+class DRFServiceLogLevelAPIHandler(APIHandler):
+    @admin_only
+    async def get(self, service, handler=''):
+        self.write(json.dumps(service))
+        self.set_status(200)
+
+    @admin_only
+    async def post(self, service, handler):
+        self.set_status(200)
+
+    @admin_only
+    async def patch(self, service, handler):
+        self.set_status(200)
+
+    @admin_only
+    async def delete(self, service, handler):
+        self.set_status(200)
+        return

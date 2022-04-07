@@ -91,6 +91,7 @@ c.JupyterHub.extra_handlers = [
     (r"/terms", page_handlers.ToSHandler),
     (r"/groups", page_handlers.VOHandler),
     (r"/logging", page_handlers.LoggingHandler),
+    (r"/logging", page_handlers.LoggingHandler),
     # APIHandlers
     (r"/api/users/([^/]+)/server/update", SpawnUpdateOptionsAPIHandler),
     (r"/api/users/([^/]+)/servers/([^/]*)/update", SpawnUpdateOptionsAPIHandler),
@@ -108,6 +109,8 @@ c.JupyterHub.extra_handlers = [
     (r"/2FA/([^/]+)", twoFA.TwoFACodeHandler),
     (r"/api/vo/([^/]+)", vo.VOAPIHandler),
     (r"/api/votoken/([^/]+)", vo.VOTokenAPIHandler),
-    (r"/api/logs/handler", LogLevelAPIHandler),
-    (r"/api/logs/handler/([^/]+)", LogLevelAPIHandler),
+    (r"/api/logs/jhub/handler", JHubLogLevelAPIHandler),
+    (r"/api/logs/jhub/handler/([^/]+)", JHubLogLevelAPIHandler),
+    (r"/api/logs/([^/]+)/handler", JHubLogLevelAPIHandler),
+    (r"/api/logs/([^/]+)/handler/([^/]+)", JHubLogLevelAPIHandler),
 ]
