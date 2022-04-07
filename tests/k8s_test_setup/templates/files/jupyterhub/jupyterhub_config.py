@@ -8,14 +8,11 @@ import sys
 custom_path = "/src/jupyterhub-custom"
 sys.path.insert(1, custom_path)
 
+from handler import page_handlers
+from apihandler import *
+from apihandler import twoFA
+from apihandler import vo
 from spawner import BackendSpawner
-from apihandler import ForwardTunnelRestartAPIHandler
-from apihandler import SpawnUpdateOptionsAPIHandler
-from apihandler import SpawnProgressUpdateAPIHandler
-from apihandler import SpawnProgressStatusAPIHandler
-from apihandler import user_cancel_message
-from apihandler import SpawnNotificationAPIHandler
-from apihandler import SpawnStopNotificationAPIHandler
 from customauthenticator import CustomGenericOAuthenticator
 from logs import create_extra_handlers
 
@@ -85,10 +82,6 @@ c.JupyterHub.template_vars = {
 }
 c.JupyterHub.data_files_path = "/src/jupyterhub-static"
 
-
-from handler import page_handlers
-from apihandler import twoFA, vo
-
 c.JupyterHub.extra_handlers = [
     # PageHandlers
     (r"/links", page_handlers.LinksHandler),
@@ -115,4 +108,6 @@ c.JupyterHub.extra_handlers = [
     (r"/2FA/([^/]+)", twoFA.TwoFACodeHandler),
     (r"/api/vo/([^/]+)", vo.VOAPIHandler),
     (r"/api/votoken/([^/]+)", vo.VOTokenAPIHandler),
+    (r"/api/logs/handler", LogLevelAPIHandler),
+    (r"/api/logs/handler/([^/]+)", LogLevelAPIHandler),
 ]
