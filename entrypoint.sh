@@ -1,6 +1,8 @@
 #!/bin/bash
 export PYTHONPATH=${PYTHONPATH}:/src/jupyterhub:/src/jupyterhub-custom
 
+USERNAME=jupyterhub
+
 if [[ -d /tmp/${USERNAME}_certs ]]; then
     mkdir -p /home/${USERNAME}/certs
     cp -rp /tmp/${USERNAME}_certs/* /home/${USERNAME}/certs/.
@@ -19,7 +21,7 @@ if [[ ${DEVEL,,} == "true" ]]; then
     apt update && apt install -y vim rsync openssh-server libc6 libstdc++6 ca-certificates tar bash curl wget
     sed -i -r -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g" -e "s/^AllowTcpForwarding no/AllowTcpForwarding yes/g" -e "s/^#Port 22/Port 2222/g" /etc/ssh/sshd_config
     mkdir -p /run/sshd
-    /usr/sbin/sshd -f /etc/ssh/sshd_config -E /home/jupyterhub/sshd.log
+    /usr/sbin/sshd -f /etc/ssh/sshd_config -E /home/${USERNAME}/sshd.log
 
     if [[ -d /tmp/${USERNAME}_vscode ]]; then
         mkdir -p /home/${USERNAME}/.vscode
@@ -48,7 +50,7 @@ if [[ ${DEVEL,,} == "true" ]]; then
         ln -s ${TEMPLATE_FILES_SRC} ${TEMPLATE_FILES_DEST}
     fi
 
-    chown -R jupyterhub:users /home/jupyterhub
+    chown -R ${USERNAME}:users /home/${USERNAME}
     while true; do
         sleep 30
     done
