@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import json
 
@@ -8,9 +7,7 @@ from custom_utils.backend_services import drf_request_properties
 from jupyterhub.apihandlers.base import APIHandler
 from jupyterhub.scopes import needs_scope
 from tornado import web
-from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
-from tornado.httpclient import HTTPResponse
 
 user_cancel_message = "Start cancelled by user."
 

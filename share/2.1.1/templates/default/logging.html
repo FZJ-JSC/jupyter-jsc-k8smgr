@@ -51,7 +51,7 @@
     40: "Error",
     50: "Critical",
     99: "Deactivate"
-  }, "loglevel", log, system) }}
+  }, "level", log, system) }}
 {%- endmacro -%}
 
 {%- macro formatter(log, system) -%}
@@ -82,7 +82,7 @@
     "w6": "Sunday",
     "midnight": "Midnight"
   }, "when", log, system) }}
-{{ create_form_input("Backup Count", "backupcount", log, system, type="number") }}
+{{ create_form_input("Backup Count", "backupCount", log, system, type="number") }}
 {%- endmacro -%}
 
 {%- macro stream_log(system) -%}
@@ -136,13 +136,13 @@
   </h2>
   <div id="{{system}}-log-settings-collapse" class="accordion-collapse collapse" aria-labelledby="{{system}}-accordion-heading" data-bs-parent="#{{parent_id}}">
     <div class="accordion-body">
-      {{ file_log(system) }}
+      <div id="{{system}}-file-settings">{{ file_log(system) }}</div>
       <hr>
-      {{ stream_log(system) }}
+      <div id="{{system}}-stream-settings">{{ stream_log(system) }}</div>
       <hr>
-      {{ smtp_log(system) }}
+      <div id="{{system}}-smtp-settings">{{ smtp_log(system) }}</div>
       <hr>
-      {{ syslog_log(system) }}
+      <div id="{{system}}-syslog-settings">{{ syslog_log(system) }}</div>
     </div>
   </div>
 </div>
@@ -150,11 +150,16 @@
 
 {%- block main -%}
 <div class="p-4">
-  <div class="accordion text-black" id="logs-accordion">
+  <h1>LogHandler Settings</h1>
+  <div class="accordion text-black mt-3" id="logs-accordion">
     {{ create_accordion_item("JupyterHub", "jhub", "logs-accordion") }}
-    {{ create_accordion_item("Unicore Manager", "unicore-mgr", "logs-accordion") }}
-    {{ create_accordion_item("Kubernetes Manager", "k8s-mgr", "logs-accordion") }}
+    {{ create_accordion_item("Unicore Manager", "unicoremgr", "logs-accordion") }}
+    {{ create_accordion_item("HDF Cloud Kubernetes Manager", "k8smgrhdfcloud", "logs-accordion") }}
     {{ create_accordion_item("Tunnel", "tunnel", "logs-accordion") }}
   </div>
 </div>
+{%- endblock -%}
+
+{%- block script -%}
+<script src='{{static_url("js/logging.js")}}'></script>
 {%- endblock -%}

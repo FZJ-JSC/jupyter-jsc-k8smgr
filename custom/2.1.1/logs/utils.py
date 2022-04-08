@@ -123,10 +123,10 @@ def create_logging_handler(config, handler_name, **configuration):
     logger = logging.getLogger('JupyterHub')
     logger.addHandler(handler)
 
-    current_handler_config = config[handler_name]
     current_handler_config = {}
     for key, value in configuration_copy.items():
         current_handler_config[key] = value
+    config[handler_name] = current_handler_config
 
     with open(os.environ.get("LOGGING_CONFIG_FILE", "logging.json"), "w") as f:
         f.write(json.dumps(config, indent=2, sort_keys=True))

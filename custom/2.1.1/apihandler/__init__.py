@@ -1,4 +1,5 @@
-from .loglevel import LogLevelAPIHandler
+from .loglevel import JHubLogLevelAPIHandler
+from .loglevel import DRFServiceLogLevelAPIHandler
 from .spawn_notifications import SpawnNotificationAPIHandler
 from .spawn_notifications import SpawnStopNotificationAPIHandler
 from .spawn_options import SpawnUpdateOptionsAPIHandler
