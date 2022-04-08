@@ -2,6 +2,8 @@ import asyncio
 import json
 import os
 import re
+import uuid
+from datetime import datetime
 
 from async_generator import aclosing
 from custom_utils.backend_services import BackendException
@@ -9,7 +11,6 @@ from custom_utils.backend_services import drf_request
 from custom_utils.backend_services import drf_request_properties
 from custom_utils.options_form import get_options_form
 from custom_utils.options_form import get_options_from_form
-from datetime import datetime
 from jupyterhub.spawner import Spawner
 from jupyterhub.utils import maybe_future
 from jupyterhub.utils import url_path_join
@@ -25,6 +26,7 @@ class BackendSpawner(Spawner):
 
     current_events = []
     events = {}
+    start_id = ""
     clear_events = True
     yield_wait_seconds = 1
 
@@ -33,6 +35,8 @@ class BackendSpawner(Spawner):
         state = super().get_state()
         if self.svc_name:
             state["svc_name"] = self.svc_name
+        if self.start_id:
+            state["start_id"] = self.start_id
         if self.events:
             self.events["current"] = self.current_events
             # Clear logs older than 24h
@@ -53,10 +57,13 @@ class BackendSpawner(Spawner):
             self.events = state["events"]
         if "svc_name" in state:
             self.svc_name = state["svc_name"]
+        if "start_id" in state:
+            self.start_id = state["start_id"]
 
     def clear_state(self):
         """clear any state (called after shutdown)"""
         self.svc_name = ""
+        self.start_id = ""
         if self.clear_events:
             self.events = {}
             self.clear_events = False
@@ -79,19 +86,21 @@ class BackendSpawner(Spawner):
         env["JUPYTERHUB_USER_ID"] = self.user.orm_user.id
         return env
 
-    def get_svc_name(self, resp_json):
+    def get_svc_name(self):
         custom_config = self.user.authenticator.custom_config
         drf_service = (
             custom_config.get("systems", {})
             .get(self.user_options["system"], {})
             .get("drf-service", None)
         )
-        svc_name = f"{drf_service}-{resp_json['id']}"[0:63]
-        return f"{svc_name}"
+        # max length for svc names: 63 (without suffix)
+        # drf_service + "-" + self.name + "-" + self.start_id
+        #      21     +  1  +    32     +  1  + 8 = 63
+        drf_service_short = drf_service[:21]
 
-    def get_svc_name_suffix(self):
         k8s_tunnel_deployment_namespace = os.environ.get("TUNNEL_DEPLOYMENT_NAMESPACE")
-        return f".{k8s_tunnel_deployment_namespace}.svc"
+        svc_name = f"{drf_service_short}-{self.name}-{self.start_id}.{k8s_tunnel_deployment_namespace}.svc"
+        return f"{svc_name}"
 
     def _get_req_prop(self, auth_state):
         custom_config = self.user.authenticator.custom_config
@@ -113,7 +122,9 @@ class BackendSpawner(Spawner):
 
     def _get_event_time(self, event):
         # Regex for date time
-        pattern = re.compile(r"([0-9]+(_[0-9]+)+).*[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?")
+        pattern = re.compile(
+            r"([0-9]+(_[0-9]+)+).*[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?"
+        )
         message = event["html_message"]
         match = re.search(pattern, message)
         return match.group()
@@ -132,6 +143,18 @@ class BackendSpawner(Spawner):
         self._cancel_event_yielded = False
         return await self._start()
 
+    async def create_certs(self):
+        self.start_id = uuid.uuid4().hex[:8]
+        self.ssl_alt_names = [f"DNS:{self.get_svc_name()}"]
+        return await super().create_certs()
+
+    async def get_certs(self):
+        ret = {}
+        for key, path in self.cert_paths.items():
+            with open(path, "r") as f:
+                ret[key] = f.read()
+        return ret
+
     async def _start(self):
         def map_user_options():
             config = self.user.authenticator.custom_config
@@ -140,12 +163,29 @@ class BackendSpawner(Spawner):
                 ret[config.get("map_user_options").get(key, key)] = value
             return ret
 
+        if not self.internal_ssl:
+            # Create certs was never called, so no start_id was defined yet
+            self.start_id = uuid.uuid4().hex[:8]
+
+        self.svc_name = self.get_svc_name()
+
         now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
         user_options = map_user_options()
+
+        self.log.info(
+            "Spawn submit ... ",
+            extra={
+                "uuidcode": self.name,
+                "svc_name": self.svc_name,
+                "action": "start",
+                "user_options": user_options,
+            },
+        )
+
         start_event = {
             "failed": False,
             "progress": 10,
-            "html_message": f"<details><summary>{now}: Start service</summary>{user_options}</details>",
+            "html_message": f"<details><summary>{now}: Start service. Start ID: {self.start_id}</summary>&nbsp;&nbsp;Options:<br>{json.dumps(user_options, indent=2)}</details>",
         }
         self.ready_event[
             "html_message"
@@ -161,7 +201,11 @@ class BackendSpawner(Spawner):
             "auth_state": auth_state,
             "env": env,
             "user_options": user_options,
+            "start_id": self.start_id,
         }
+
+        if self.internal_ssl:
+            popen_kwargs["certs"] = await self.get_certs()
 
         req_prop = self._get_req_prop(auth_state)
         service_url = req_prop.get("urls", {}).get("services", "None")
@@ -186,6 +230,15 @@ class BackendSpawner(Spawner):
                 raise_exception=True,
             )
         except BackendException as e:
+            self.log.warning(
+                "Spawn submit ... failed.",
+                extra={
+                    "uuidcode": self.name,
+                    "svc_name": self.svc_name,
+                    "action": "submit_fail",
+                    "user_msg": e.jupyterhub_html_message,
+                },
+            )
             failed_event = {
                 "progress": 100,
                 "failed": True,
@@ -198,10 +251,8 @@ class BackendSpawner(Spawner):
                 pass
             raise e
 
-        self.svc_name = self.get_svc_name(resp_json)
-        svc_name_suffix = self.get_svc_name_suffix()
         self.log.debug(
-            f"Expect JupyterLab at {self.svc_name}{svc_name_suffix}:{self.port}",
+            f"Expect JupyterLab at {self.svc_name}:{self.port}",
             extra={"uuidcode": self.name},
         )
         now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
@@ -211,7 +262,16 @@ class BackendSpawner(Spawner):
             "html_message": f"<details><summary>{now}: Request submitted to Jupyter-JSC backend</summary></details>",
         }
         self.current_events.append(submitted_event)
-        return (f"{self.svc_name}{svc_name_suffix}", self.port)
+        self.log.info(
+            "Spawn submit ... done.",
+            extra={
+                "uuidcode": self.name,
+                "svc_name": self.svc_name,
+                "action": "submitted",
+                "response": resp_json,
+            },
+        )
+        return (self.svc_name, self.port)
 
     async def poll(self):
         if self._cancel_pending:

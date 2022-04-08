@@ -9,7 +9,7 @@ while getopts ":a:" opt; do
 done
 
 
-HOSTNAME_=$(hostname | cut -d'.' -f1)
+HOSTNAME_="demo-site-login-01-<ID>"
 LOCAL_PORT=56789
 
 PRIVATE_KEY="~ljupyter/.ssh/id_ed25519"

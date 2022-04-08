@@ -68,10 +68,26 @@ spec:
               name: <secret_name>
           - configMapRef:
               name: userhome-quota-<quotavo>
+          env:
+          - name: JUPYTERHUB_SSL_KEYFILE
+            value: "/tmp/service_cert.key"
+          - name: JUPYTERHUB_SSL_CERTFILE
+            value: "/tmp/service_cert.crt"
+          - name: JUPYTERHUB_SSL_CLIENT_CA
+            value: "/tmp/service_ca.crt"
           volumeMounts:
             - name: files
               mountPath: "/tmp/input.tar.gz"
               subPath: input.tar.gz
+            - name: secret-certs
+              mountPath: "/tmp/service_cert.key"
+              subPath: JUPYTERHUB_SSL_KEYFILE_DATA
+            - name: secret-certs
+              mountPath: "/tmp/service_cert.crt"
+              subPath: JUPYTERHUB_SSL_CERTFILE_DATA
+            - name: secret-certs
+              mountPath: "/tmp/service_ca.crt"
+              subPath: JUPYTERHUB_SSL_CLIENT_CA_DATA
       securityContext:
         fsGroup: 100
       volumes:
@@ -79,3 +95,7 @@ spec:
           configMap:
             defaultMode: 400
             name: cm-<id>
+        - name: secret-certs
+          secret:
+            defaultMode: 400
+            secretName: <secret_certs_name>

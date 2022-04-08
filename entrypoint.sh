@@ -1,25 +1,34 @@
 #!/bin/bash
 export PYTHONPATH=${PYTHONPATH}:/src/jupyterhub:/src/jupyterhub-custom
 
+if [[ -d /tmp/${USERNAME}_certs ]]; then
+    mkdir -p /home/${USERNAME}/certs
+    cp -rp /tmp/${USERNAME}_certs/* /home/${USERNAME}/certs/.
+    chmod -R 400 /home/${USERNAME}/certs/*
+    chown -R ${USERNAME}:users /home/${USERNAME}/certs
+fi
+
 if [[ ${DEVEL,,} == "true" ]]; then
-    mkdir -p /home/jupyterhub/.ssh
-    for f in /tmp/ssh/* ; do
-        if [[ -f $f ]]; then
-            cp -rp $f /home/jupyterhub/.ssh/.
-        fi
-    done
-    chmod -R 400 /home/jupyterhub/.ssh/*
+    if [[ -d /tmp/${USERNAME}_ssh ]]; then
+        mkdir -p /home/${USERNAME}/.ssh
+        cp -rp /tmp/${USERNAME}_ssh/* /home/${USERNAME}/.ssh/.
+        chmod -R 400 /home/${USERNAME}/.ssh/*
+        chown -R ${USERNAME}:users /home/${USERNAME}/.ssh
+    fi
 
     apt update && apt install -y vim rsync openssh-server libc6 libstdc++6 ca-certificates tar bash curl wget
     sed -i -r -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g" -e "s/^AllowTcpForwarding no/AllowTcpForwarding yes/g" -e "s/^#Port 22/Port 2222/g" /etc/ssh/sshd_config
     mkdir -p /run/sshd
     /usr/sbin/sshd -f /etc/ssh/sshd_config -E /home/jupyterhub/sshd.log
 
-    if [[ -d /tmp/.vscode ]]; then
-        cp -r /tmp/.vscode /home/jupyterhub/.
+    if [[ -d /tmp/${USERNAME}_vscode ]]; then
+        mkdir -p /home/${USERNAME}/.vscode
+        cp -rp /tmp/${USERNAME}_vscode/* /home/${USERNAME}/.vscode/.
+        chmod -R 400 /home/${USERNAME}/.vscode/*
+        chown -R ${USERNAME}:users /home/${USERNAME}/.vscode
     fi
-    if [[ -d /tmp/home ]]; then
-        cp -r /tmp/home/* /home/jupyterhub/.
+    if [[ -d /tmp/${USERNAME}_home ]]; then
+        cp -rp /tmp/${USERNAME}_home/* /home/${USERNAME}/.
     fi
     cp -rp /src/jupyterhub /src/jupyterhub-patched
     pip install -e /src/jupyterhub-patched/

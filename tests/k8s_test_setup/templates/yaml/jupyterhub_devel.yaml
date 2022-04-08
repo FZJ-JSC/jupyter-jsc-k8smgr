@@ -80,34 +80,28 @@ spec:
         - name: shared-data
           mountPath: /tmp/shared-data
         - name: files
-          mountPath: /tmp/ssh/authorized_keys
+          mountPath: /tmp/jupyterhub_ssh/authorized_keys
           subPath: authorized_keys
         - name: files
-          mountPath: /tmp/home/create_patch.sh
+          mountPath: /tmp/jupyterhub_home/create_patch.sh
           subPath: create_patch.sh
         - name: files
-          mountPath: /tmp/home/jupyterhub_custom_config.json
+          mountPath: /tmp/jupyterhub_home/jupyterhub_custom_config.json
           subPath: jupyterhub_custom_config.json
         - name: files
-          mountPath: /tmp/home/jupyterhub_config.py
+          mountPath: /tmp/jupyterhub_home/jupyterhub_config.py
           subPath: jupyterhub_config.py
         - name: files
-          mountPath: /tmp/home/reservations.json
-          subPath: reservations.json
-        - name: files
-          mountPath: /tmp/home/maintenance.json
-          subPath: maintenance.json
-        - name: files
-          mountPath: /tmp/.vscode/settings.json
+          mountPath: /tmp/jupyterhub_vscode/settings.json
           subPath: settings.json
         - name: files
-          mountPath: /tmp/.vscode/tasks.json
+          mountPath: /tmp/jupyterhub_vscode/tasks.json
           subPath: tasks.json
         - name: files
-          mountPath: /tmp/.vscode/launch.json
+          mountPath: /tmp/jupyterhub_vscode/launch.json
           subPath: launch.json
         - name: certs
-          mountPath: /tmp/home/ca-root.pem
+          mountPath: /tmp/jupyterhub_certs/ca-root.pem
           subPath: ca-root.pem
       - image: python:3.9-alpine3.14
         name: cleanup-sql

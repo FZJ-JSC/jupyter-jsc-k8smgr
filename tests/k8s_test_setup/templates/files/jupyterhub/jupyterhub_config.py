@@ -31,6 +31,13 @@ c.ConfigurableHTTPProxy.pid_file = "/home/jupyterhub/jupyterhub-proxy.pid"
 c.JupyterHub.cleanup_proxy = True
 c.JupyterHub.default_url = "/hub/home"
 c.JupyterHub.allow_named_servers = True
+c.JupyterHub.internal_ssl = True
+# c.JupyterHub.internal_certs_location = 'something-persistent/internal-ssl'
+c.JupyterHub.trusted_alt_names = [
+    "DNS:jupyterhub-<ID>.devel.svc",
+    "DNS:hdfcloud-jupyterhub-forward-<ID>",
+    "DNS:demo-site-login-01-<ID>",
+]
 
 c.JupyterHub.spawner_class = BackendSpawner
 c.BackendSpawner.http_timeout = 900

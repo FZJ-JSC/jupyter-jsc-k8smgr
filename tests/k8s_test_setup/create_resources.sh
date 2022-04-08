@@ -9,13 +9,12 @@ DEVEL_UNICOREMGR="false"
 DEVEL_K8SMGR="false"
 DEVEL_TUNNEL="false"
 
-
 JUPYTERHUB_VERSION="latest"
 UNITY_VERSION="3.8.1-2"
 UNICORE_VERSION="8.3.0-p1"
-UNICOREMGR_VERSION="1.0.3-1"
-TUNNEL_VERSION="1.0.3-1"
-K8SMGR_VERSION="1.0.3-2"
+UNICOREMGR_VERSION="1.0.3-3"
+TUNNEL_VERSION="1.0.3-3"
+K8SMGR_VERSION="1.0.4-0"
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -38,7 +37,7 @@ create_certificate () {
     KEYSTORE_NAME=${5}
     sed -e "s@<CN>@${CN}@g" -e "s@<ALT_NAME>@${ALT_NAME}@g" ${DIR}/templates/certs/template.cnf > ${DIR}/${ID}/certs/${SERVICE}.cnf
     openssl genrsa -out ${DIR}/${ID}/certs/${SERVICE}.key 2048 &> /dev/null
-    openssl req -new -key ${DIR}/${ID}/certs/${SERVICE}.key -out ${DIR}/${ID}/certs/${SERVICE}.csr -config  ${DIR}/${ID}/certs/${SERVICE}.cnf
+    openssl req -new -key ${DIR}/${ID}/certs/${SERVICE}.key -out ${DIR}/${ID}/certs/${SERVICE}.csr -config ${DIR}/${ID}/certs/${SERVICE}.cnf
     openssl x509 -req -in ${DIR}/${ID}/certs/${SERVICE}.csr -CA ${DIR}/templates/certs/ca-root.pem -CAkey ${DIR}/templates/certs/ca.key -CAcreateserial -out ${DIR}/${ID}/certs/${SERVICE}.crt -days 365 -sha512 -extfile ${DIR}/${ID}/certs/${SERVICE}.cnf -extensions v3_req &> /dev/null
     # Create keystores with pass
     if [[ ${KEYSTORE_NAME} == "" ]]; then

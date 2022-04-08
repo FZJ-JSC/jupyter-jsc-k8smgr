@@ -48,6 +48,21 @@ roleRef:
 apiVersion:  v1
 kind: Service
 metadata:
+  name: hdfcloud-jupyterhub-forward-<ID>
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: k8smgr-<ID>
+  type: ClusterIP
+  ports:
+    - name: fwd
+      port: 56789
+      protocol: TCP
+      targetPort: 56789
+---
+apiVersion:  v1
+kind: Service
+metadata:
   name: k8smgr-<ID>
   namespace: <NAMESPACE>
 spec:
@@ -63,10 +78,6 @@ spec:
       port: 2222
       protocol: TCP
       targetPort: 2222
-    - name: fwd
-      port: 56789
-      protocol: TCP
-      targetPort: 56789
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -101,6 +112,10 @@ spec:
             /bin/bash /home/k8smgr/web/entrypoint.sh
             # while true; do sleep 30; done
             # /bin/bash /tmp/input/start.sh
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "echo \"$POD_IP hdfcloud-jupyterhub-forward-<ID>\" >> /etc/hosts"]
         envFrom:
         - secretRef:
             name: k8smgr-drf-<ID>
@@ -123,15 +138,19 @@ spec:
               name: tunnel-drf-<ID>
               key: K8SMGR_USER_BASIC
               optional: false
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         volumeMounts:
         - name: certs
-          mountPath: /home/k8smgr/certs/ca-root.pem
+          mountPath: /tmp/k8smgr_certs/ca-root.pem
           subPath: ca-root.pem
         - name: certs
-          mountPath: /home/k8smgr/certs/k8smgr.key
+          mountPath: /tmp/k8smgr_certs/k8smgr.key
           subPath: k8smgr.key
         - name: certs
-          mountPath: /home/k8smgr/certs/k8smgr.crt
+          mountPath: /tmp/k8smgr_certs/k8smgr.crt
           subPath: k8smgr.crt
         - name: files
           mountPath: /tmp/files.tar.gz

@@ -82,22 +82,13 @@ spec:
         - name: shared-data
           mountPath: /tmp/shared-data
         - name: files
-          mountPath: /home/jupyterhub/.ssh/authorized_keys
-          subPath: authorized_keys
-        - name: files
-          mountPath: /home/jupyterhub/jupyterhub_custom_config.json
+          mountPath: /tmp/jupyterhub_home/jupyterhub_custom_config.json
           subPath: jupyterhub_custom_config.json
         - name: files
-          mountPath: /home/jupyterhub/jupyterhub_config.py
+          mountPath: /tmp/jupyterhub_home/jupyterhub_config.py
           subPath: jupyterhub_config.py
-        - name: files
-          mountPath: /home/jupyterhub/reservations.json
-          subPath: reservations.json
-        - name: files
-          mountPath: /home/jupyterhub/maintenance.json
-          subPath: maintenance.json
         - name: certs
-          mountPath: /home/jupyterhub/ca-root.pem
+          mountPath: /tmp/jupyterhub_certs/ca-root.pem
           subPath: ca-root.pem
       - image: python:3.9-alpine3.14
         name: cleanup-sql

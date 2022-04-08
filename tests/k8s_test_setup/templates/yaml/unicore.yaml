@@ -1,6 +1,21 @@
 apiVersion:  v1
 kind: Service
 metadata:
+  name: demo-site-login-01-<ID>
+  namespace: <NAMESPACE>
+spec:
+  selector:
+    app: unicore-<ID>
+  type: ClusterIP
+  ports:
+    - name: fwd
+      port: 56789
+      protocol: TCP
+      targetPort: 56789
+---
+apiVersion:  v1
+kind: Service
+metadata:
   name: unicore-<ID>
   namespace: <NAMESPACE>
 spec:
@@ -50,6 +65,10 @@ spec:
         image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unicore-test-server/unicore-server:<UNICORE_VERSION>
         imagePullPolicy: Always
         name: unicore-<ID>
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "echo \"$POD_IP demo-site-login-01-<ID>\" >> /etc/hosts"]
         volumeMounts:
         - name: files
           subPath: manage_tunnel.sh
