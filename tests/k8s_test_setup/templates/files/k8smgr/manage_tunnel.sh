@@ -9,7 +9,7 @@ while getopts ":a:" opt; do
 done
 
 
-HOSTNAME_="jupyterhub-hdfcloud-forward-<ID>"
+HOSTNAME_="hdfcloud-jupyterhub-forward-<ID>"
 LOCAL_PORT=56789
 
 PRIVATE_KEY="~k8smgr/.ssh/k8smgr"

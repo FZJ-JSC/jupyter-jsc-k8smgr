@@ -3,7 +3,7 @@ import os
 
 
 class VoException(Exception):
-     def __init__(self, message):
+    def __init__(self, message):
         self.message = message
         super().__init__(message)
 
@@ -23,7 +23,7 @@ def get_vos(auth_state, custom_config, username, admin):
         ):
             vos_with_weight.append((vo_name, vo_infos.get("weight", 99)))
     vos_with_weight.sort(key=lambda x: x[1])
-    
+
     vo_available = []
     for x in vos_with_weight:
         vo_available.append(x[0])
@@ -40,14 +40,20 @@ def get_vos(auth_state, custom_config, username, admin):
 
 
 def get_reservations():
-    reservations_path = os.environ.get("RESERVATIONS_PATH")
-    with open(reservations_path, "r") as f:
-        reservations = json.load(f)
+    try:
+        reservations_path = os.environ.get("RESERVATIONS_PATH")
+        with open(reservations_path, "r") as f:
+            reservations = json.load(f)
+    except:
+        reservations = {}
     return reservations
 
 
 def get_maintenance_list():
-    maintenance_path = os.environ.get("MAINTENANCE_PATH")
-    with open(maintenance_path, "r") as f:
-        maintenance_list = json.load(f)
+    try:
+        maintenance_path = os.environ.get("MAINTENANCE_PATH")
+        with open(maintenance_path, "r") as f:
+            maintenance_list = json.load(f)
+    except:
+        maintenance_list = []
     return maintenance_list

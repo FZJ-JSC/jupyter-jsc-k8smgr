@@ -98,9 +98,12 @@ class BackendSpawner(Spawner):
         #      21     +  1  +    32     +  1  + 8 = 63
         drf_service_short = drf_service[:21]
 
-        k8s_tunnel_deployment_namespace = os.environ.get("TUNNEL_DEPLOYMENT_NAMESPACE")
-        svc_name = f"{drf_service_short}-{self.name}-{self.start_id}.{k8s_tunnel_deployment_namespace}.svc"
+        svc_name = f"{drf_service_short}-{self.name}-{self.start_id}"
         return f"{svc_name}"
+
+    def get_svc_name_suffix(self):
+        k8s_tunnel_deployment_namespace = os.environ.get("TUNNEL_DEPLOYMENT_NAMESPACE")
+        return f".{k8s_tunnel_deployment_namespace}.svc"
 
     def _get_req_prop(self, auth_state):
         custom_config = self.user.authenticator.custom_config
@@ -145,7 +148,8 @@ class BackendSpawner(Spawner):
 
     async def create_certs(self):
         self.start_id = uuid.uuid4().hex[:8]
-        self.ssl_alt_names = [f"DNS:{self.get_svc_name()}"]
+        self.ssl_alt_names = [f"DNS:{self.get_svc_name()}{self.get_svc_name_suffix()}"]
+        self.ssl_alt_names += self.user.settings.get("trusted_alt_names", [])
         return await super().create_certs()
 
     async def get_certs(self):
@@ -251,8 +255,9 @@ class BackendSpawner(Spawner):
                 pass
             raise e
 
+        svc_name_suffix = self.get_svc_name_suffix()
         self.log.debug(
-            f"Expect JupyterLab at {self.svc_name}:{self.port}",
+            f"Expect JupyterLab at {self.svc_name}{svc_name_suffix}:{self.port}",
             extra={"uuidcode": self.name},
         )
         now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
@@ -271,7 +276,7 @@ class BackendSpawner(Spawner):
                 "response": resp_json,
             },
         )
-        return (self.svc_name, self.port)
+        return (f"{self.svc_name}{svc_name_suffix}", self.port)
 
     async def poll(self):
         if self._cancel_pending:

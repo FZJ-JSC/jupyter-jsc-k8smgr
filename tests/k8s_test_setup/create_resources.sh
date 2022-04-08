@@ -139,7 +139,7 @@ set_drf_service_address () {
         find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<${2}_CERT_PATH>@false@g" -e "s@<${2}_PROTOCOL>@http@g" -e "s@<${2}_PORT>@:8080@g" {} \; 2> /dev/null
         sed -e "s@<SVC_NAME>@${3}@g" ${DIR}/${ID}/yaml/ingress-http.host.template >> ${DIR}/${ID}/yaml/ingress-http.yaml
     else
-        find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<${2}_CERT_PATH>@\"/home/jupyterhub/ca-root.pem\"@g" -e "s@<${2}_PROTOCOL>@https@g" -e "s@<${2}_PORT>@@g" {} \; 2> /dev/null
+        find ${DIR}/${ID}/files -type f -exec sed -i '' -e "s@<${2}_CERT_PATH>@\"/home/jupyterhub/certs/ca-root.pem\"@g" -e "s@<${2}_PROTOCOL>@https@g" -e "s@<${2}_PORT>@@g" {} \; 2> /dev/null
         sed -i -e "/<APPLY_HOST>/r ${DIR}/${ID}/yaml/ingress-https.host.template" ${DIR}/${ID}/yaml/ingress-https.yaml
         sed -i -e "s@<SVC_NAME>@${3}@g" ${DIR}/${ID}/yaml/ingress-https.yaml
         sed -e "s@<SVC_NAME>@${3}@g" ${DIR}/${ID}/yaml/ingress-tls.host.template >> ${DIR}/${ID}/yaml/ingress-https.yaml
