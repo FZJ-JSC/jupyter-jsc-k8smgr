@@ -5,11 +5,13 @@ import random
 import re
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 from async_generator import aclosing
 from custom_utils.backend_services import BackendException
 from custom_utils.backend_services import drf_request
 from custom_utils.backend_services import drf_request_properties
+from custom_utils.options_form import check_formdata_keys
 from custom_utils.options_form import get_options_form
 from custom_utils.options_form import get_options_from_form
 from jupyterhub.spawner import Spawner
@@ -182,9 +184,34 @@ class BackendSpawner(Spawner):
         return await self._start()
 
     async def create_certs(self):
+        from certipy import Certipy
+
         self.start_id = uuid.uuid4().hex[:8]
         self.ssl_alt_names += [f"DNS:{self.get_svc_name()}{self.get_svc_name_suffix()}"]
-        return await super().create_certs()
+
+        default_names = ["DNS:localhost", "IP:127.0.0.1"]
+        alt_names = []
+        alt_names.extend(self.ssl_alt_names)
+
+        if self.ssl_alt_names_include_local:
+            alt_names = default_names + alt_names
+
+        self.log.info("Creating certs for %s: %s", self._log_name, ";".join(alt_names))
+
+        certipy = Certipy(store_dir=self.internal_certs_location)
+        notebook_component = "notebooks-ca"
+        notebook_key_pair = certipy.create_signed_pair(
+            f"{self.name}_{self.start_id}",
+            notebook_component,
+            alt_names=alt_names,
+            overwrite=True,
+        )
+        paths = {
+            "keyfile": notebook_key_pair["files"]["key"],
+            "certfile": notebook_key_pair["files"]["cert"],
+            "cafile": self.internal_trust_bundles[notebook_component],
+        }
+        return paths
 
     async def get_certs(self):
         ret = {}
@@ -209,6 +236,21 @@ class BackendSpawner(Spawner):
 
         now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
         user_options = map_user_options()
+        try:
+            check_formdata_keys(user_options, self.user.authenticator.custom_config)
+        except KeyError as e:
+            error = "Invalid input"
+            detailed_error = str(e)
+            jupyterhub_html_message = (
+                f"<details><summary>{now}: {error}</summary>{detailed_error}</details>"
+            )
+            failed_event = {
+                "progress": 100,
+                "failed": True,
+                "html_message": jupyterhub_html_message,
+            }
+            self.current_events.append(failed_event)
+            raise BackendException(error, detailed_error, jupyterhub_html_message)
 
         self.log.info(
             "Spawn submit ... ",
@@ -424,6 +466,14 @@ class BackendSpawner(Spawner):
             parse_json=True,
             raise_exception=False,
         )
+
+        if self.cert_paths:
+            Path(self.cert_paths["keyfile"]).unlink(missing_ok=True)
+            Path(self.cert_paths["certfile"]).unlink(missing_ok=True)
+            try:
+                Path(self.cert_paths["certfile"]).parent.rmdir()
+            except:
+                pass
 
     async def _generate_progress(self):
         """Private wrapper of progress generator
