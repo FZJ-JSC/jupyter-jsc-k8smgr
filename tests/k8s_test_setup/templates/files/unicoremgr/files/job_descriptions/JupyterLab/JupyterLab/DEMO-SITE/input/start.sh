@@ -27,6 +27,11 @@ sed -i -e "s|_port_|${PORT}|g" -e "s|_home_|${JUPYTER_JSC_HOME}|g" -e "s|_server
 
 sleep 1
 curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 35, "failed": false, "html_message": "Setup Tunnel", "setup_tunnel": {"hostname": "demo_site", "target_node": "localhost", "target_port": "'${PORT}'"}}' -X "POST" ${JUPYTERHUB_API_URL}/${JUPYTERHUB_STATUS_URL}
+EC=$?                                                                                                                                                                                                                                         
+if [[ ! EC -eq 0 ]]; then                                                                                                                                                                                                                     
+    echo "Could not reach ${JUPYTERHUB_API_URL} ; Exit"                                                                                                                                                                                       
+    exit 1                                                                                                                                                                                                                                    
+fi 
 sleep 1
 curl -H "Authorization: token ${JUPYTERHUB_API_TOKEN}" -H "Content-Type: application/json" -d '{"progress": 50, "failed": false, "html_message": "Msg 50"}' -X "POST" ${JUPYTERHUB_API_URL}/${JUPYTERHUB_STATUS_URL}
 sleep 1

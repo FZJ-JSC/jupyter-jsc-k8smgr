@@ -62,6 +62,10 @@ spec:
           value: https://unicore-<ID>.<NAMESPACE>.svc/DEMO-SITE/
         - name: DEBUG
           value: "true"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/unicore-test-server/unicore-server:<UNICORE_VERSION>
         imagePullPolicy: Always
         name: unicore-<ID>
