@@ -51,7 +51,7 @@
       "Services": {
         "JupyterLab": {
           "JupyterLab": {
-            "max_per_user": 5
+            "max_per_user": 10
           }
         }
       },

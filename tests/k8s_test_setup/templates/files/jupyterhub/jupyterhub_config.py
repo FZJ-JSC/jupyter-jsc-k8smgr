@@ -16,6 +16,7 @@ from apihandler import SpawnProgressUpdateAPIHandler
 from apihandler import SpawnStopNotificationAPIHandler
 from apihandler import SpawnUpdateOptionsAPIHandler
 from apihandler import twoFA
+from apihandler import UserRandomServerAPIHandler
 from apihandler import user_cancel_message
 from apihandler import vo
 from customauthenticator import CustomGenericOAuthenticator
@@ -42,6 +43,7 @@ c.JupyterHub.trusted_alt_names = [
     "DNS:hdfcloud-jupyterhub-forward-<ID>",
     "DNS:demo-site-login-01-<ID>",
 ]
+c.JupyterHub.concurrent_spawn_limit = 7
 
 c.JupyterHub.spawner_class = BackendSpawner
 c.BackendSpawner.http_timeout = 900
@@ -109,6 +111,7 @@ c.JupyterHub.extra_handlers = [
     (r"/logging", page_handlers.LoggingHandler),
     (r"/logging", page_handlers.LoggingHandler),
     # APIHandlers
+    (r"/api/users/([^/]+)/random/server", UserRandomServerAPIHandler),
     (r"/api/users/([^/]+)/server/update", SpawnUpdateOptionsAPIHandler),
     (r"/api/users/([^/]+)/servers/([^/]*)/update", SpawnUpdateOptionsAPIHandler),
     (r"/api/users/progress/update/([^/]+)", SpawnProgressUpdateAPIHandler),
