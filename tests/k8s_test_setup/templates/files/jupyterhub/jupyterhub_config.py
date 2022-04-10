@@ -8,12 +8,19 @@ import sys
 custom_path = "/src/jupyterhub-custom"
 sys.path.insert(1, custom_path)
 
-from handler import page_handlers
-from apihandler import *
+from apihandler import ForwardTunnelRestartAPIHandler
+from apihandler import JHubLogLevelAPIHandler
+from apihandler import SpawnNotificationAPIHandler
+from apihandler import SpawnProgressStatusAPIHandler
+from apihandler import SpawnProgressUpdateAPIHandler
+from apihandler import SpawnStopNotificationAPIHandler
+from apihandler import SpawnUpdateOptionsAPIHandler
 from apihandler import twoFA
+from apihandler import user_cancel_message
 from apihandler import vo
-from spawner import BackendSpawner
 from customauthenticator import CustomGenericOAuthenticator
+from handler import page_handlers
+from spawner import BackendSpawner
 from logs import create_extra_handlers
 
 c.JupyterHub.log_level = 10
@@ -39,6 +46,7 @@ c.JupyterHub.trusted_alt_names = [
 c.JupyterHub.spawner_class = BackendSpawner
 c.BackendSpawner.http_timeout = 900
 c.BackendSpawner.poll_interval = 10
+c.BackendSpawner.ssl_alt_names = ["DNS:jupyterhub-<ID>.devel.svc"]
 # See https://github.com/jupyterhub/jupyterhub/issues/1222#issuecomment-415264385
 c.JupyterHub.tornado_settings = {"slow_spawn_timeout": 0}
 

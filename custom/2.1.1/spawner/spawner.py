@@ -148,8 +148,7 @@ class BackendSpawner(Spawner):
 
     async def create_certs(self):
         self.start_id = uuid.uuid4().hex[:8]
-        self.ssl_alt_names = [f"DNS:{self.get_svc_name()}{self.get_svc_name_suffix()}"]
-        self.ssl_alt_names += self.user.settings.get("trusted_alt_names", [])
+        self.ssl_alt_names += [f"DNS:{self.get_svc_name()}{self.get_svc_name_suffix()}"]
         return await super().create_certs()
 
     async def get_certs(self):
