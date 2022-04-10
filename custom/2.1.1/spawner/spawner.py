@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import random
 import re
 import uuid
 from datetime import datetime
@@ -16,6 +17,8 @@ from jupyterhub.utils import maybe_future
 from jupyterhub.utils import url_path_join
 from tornado.httpclient import HTTPClientError
 from tornado.httpclient import HTTPRequest
+from tornado.ioloop import PeriodicCallback
+from traitlets import Integer
 
 
 class BackendSpawner(Spawner):
@@ -29,6 +32,14 @@ class BackendSpawner(Spawner):
     start_id = ""
     clear_events = True
     yield_wait_seconds = 1
+
+    poll_interval_randomizer = Integer(
+        20,
+        help="""
+        random.randint(0, 1e3 * self.poll_interval_randomizer) will be added to
+	self.poll_interval. Each Spawner object will have it's own interval.
+        """,
+    ).tag(config=True)
 
     def get_state(self):
         """get the current state"""
@@ -68,6 +79,30 @@ class BackendSpawner(Spawner):
             self.events = {}
             self.clear_events = False
         super().clear_state()
+
+    def start_polling(self):
+        """Start polling periodically for single-user server's running state.
+
+        Callbacks registered via `add_poll_callback` will fire if/when the server stops.
+        Explicit termination via the stop method will not trigger the callbacks.
+
+        We've added a randomized timer self.poll_interval_randomizer.
+        If you restart JupyterHub, all polls start at the same time. With the randomizing
+        factor, only the first poll for each server happens at the same time.
+        """
+        if self.poll_interval <= 0:
+            self.log.debug("Not polling subprocess")
+            return
+        else:
+            poll_interval = 1e3 * self.poll_interval + random.randint(
+                0, 1e3 * self.poll_interval_randomizer
+            )
+            self.log.debug("Polling subprocess every %ims", poll_interval)
+
+        self.stop_polling()
+
+        self._poll_callback = PeriodicCallback(self.poll_and_notify, poll_interval)
+        self._poll_callback.start()
 
     def status_update_url(self, server_name=""):
         """API path for status update endpoint for a server with a given name"""

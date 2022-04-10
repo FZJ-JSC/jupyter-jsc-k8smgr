@@ -46,6 +46,7 @@ c.JupyterHub.trusted_alt_names = [
 c.JupyterHub.spawner_class = BackendSpawner
 c.BackendSpawner.http_timeout = 900
 c.BackendSpawner.poll_interval = 10
+c.BackendSpawner.poll_interval_randomizer = 20
 c.BackendSpawner.ssl_alt_names = ["DNS:jupyterhub-<ID>.devel.svc"]
 # See https://github.com/jupyterhub/jupyterhub/issues/1222#issuecomment-415264385
 c.JupyterHub.tornado_settings = {"slow_spawn_timeout": 0}
