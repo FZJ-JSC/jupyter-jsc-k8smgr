@@ -191,6 +191,7 @@ function updateSelectValue(id, old_value, values, select, tab_id="options") {
   // No changes if option is not available (value.lenth == 0)
   if (old_value == null && values.length == 0) {
     select.prop("selectedIndex", 0);
+    select[0].dispatchEvent(new Event("change"));
     return;
   }
 

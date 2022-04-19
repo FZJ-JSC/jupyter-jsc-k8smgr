@@ -525,6 +525,13 @@ $(document).ready(function () {
   $("#{{new}}-name-warning").show();
   // Trigger warning badge in service tab of new lab configuration
   $("#{{new}}-service-tab-warning")[0].dispatchEvent(new Event("change"));
+
+  // Disable start if there are no systems available
+  var first_option = $("#{{new}}-system-select").children().first();
+  if (first_option.prop("disabled")) {
+    $("#{{new}}-start-btn").addClass("disabled");
+    $("#{{new}}-options-tab").addClass("disabled");
+  }
 })
 
 // Reset all dropdowns after closing the new jupyterlab dialog

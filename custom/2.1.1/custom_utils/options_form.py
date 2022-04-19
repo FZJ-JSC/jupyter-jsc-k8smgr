@@ -286,7 +286,7 @@ async def get_options_form(spawner, service, service_info):
         for system in systems_used:
             if option not in options.keys():
                 options[option] = {}
-            if system not in options[option].keys():
+            if system not in options[option].keys() and system not in maintenance_list:
                 options[option][system] = {}
 
     if not options:
