@@ -2,7 +2,7 @@ import json
 import os
 
 from jupyterhub.apihandlers import APIHandler
-from jupyterhub.utils import admin_only
+from jupyterhub.scopes import needs_scope
 from tornado.httpclient import HTTPRequest
 
 from custom_utils.backend_services import drf_request
@@ -34,7 +34,7 @@ class JHubLogLevelAPIHandler(APIHandler):
     def validate_data(self, data):
         pass
 
-    @admin_only
+    @needs_scope("access:services")
     async def get(self, handler=''):
         current_config = get_config()
         try:
@@ -56,7 +56,7 @@ class JHubLogLevelAPIHandler(APIHandler):
         except:
             self.set_status(400)
 
-    @admin_only
+    @needs_scope("access:services")
     async def post(self):
         current_config = get_config()
         data = self.get_json_body()
@@ -74,7 +74,7 @@ class JHubLogLevelAPIHandler(APIHandler):
         self.log.info(f"Created {handler} log handler", extra={"data": data})
         self.set_status(200)
 
-    @admin_only
+    @needs_scope("access:services")
     async def patch(self, handler):
         current_config = get_config()
         if handler not in current_config:
@@ -94,7 +94,7 @@ class JHubLogLevelAPIHandler(APIHandler):
         self.log.info(f"Updated {handler} log handler", extra={"data": data})
         self.set_status(200)
 
-    @admin_only
+    @needs_scope("access:services")
     async def delete(self, handler):
         current_config = get_config()
         if handler not in current_config:
@@ -133,18 +133,18 @@ class DRFServiceLogLevelAPIHandler(APIHandler):
         )
         return resp
 
-    @admin_only
+    @needs_scope("access:services")
     async def get(self, service, handler=''):
         resp = await self._drf_request(service, handler)
         self.write(json.dumps(resp))
         self.set_status(200)
 
-    @admin_only
+    @needs_scope("access:services")
     async def post(self, service):
         await self._drf_request(service, method="POST", body=self.get_json_body())
         self.set_status(200)
 
-    @admin_only
+    @needs_scope("access:services")
     async def patch(self, service, handler):
         if not handler:
             self.set_status(400)
@@ -152,7 +152,7 @@ class DRFServiceLogLevelAPIHandler(APIHandler):
         await self._drf_request(service, handler, method="PUT", body=self.get_json_body())
         self.set_status(200)
 
-    @admin_only
+    @needs_scope("access:services")
     async def delete(self, service, handler):
         if not handler:
             self.set_status(400)

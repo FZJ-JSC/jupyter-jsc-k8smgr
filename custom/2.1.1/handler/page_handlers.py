@@ -1,10 +1,8 @@
-import json
-import os
 
 from tornado import web
 from custom_utils import get_vos
 from jupyterhub.handlers.base import BaseHandler
-from jupyterhub.utils import admin_only
+from jupyterhub.scopes import needs_scope
 
 
 async def get_user_auth_state_with_vos(user):
@@ -66,10 +64,14 @@ class ToSHandler(BaseHandler):
 
 
 class LoggingHandler(BaseHandler):
-    @admin_only
+    @web.authenticated
+    @needs_scope("access:services")
     async def get(self):
         user = self.current_user
+        drf_services_config = user.authenticator.custom_config.get("drf-services", {})
         ns = await _create_ns(user)
+        for service in drf_services_config:
+            ns.update({f"{service}_log_url": drf_services_config.get(service).get("urls", {}).get("logs", "")})
         html = await self.render_template("logging.html", **ns)
         self.finish(html)
 
