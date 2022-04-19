@@ -77,6 +77,13 @@ require(["jquery", "jhapi"], function (
 
   function create_handler(system, handler) {
     var output_area = $(`#${system}-${handler}-alert`);
+    // Validate form
+    var form = $(`#${system}-${handler}-form`);
+    if ( !form[0].checkValidity() ) {
+      form.addClass("was-validated");
+      output_area.text("Incorrect input values.");
+      return;
+    }
     var data = {
       "handler": handler,
       "configuration": getConfig(system, handler)
@@ -100,6 +107,13 @@ require(["jquery", "jhapi"], function (
 
   function patch_handler(system, handler) {
     var output_area = $(`#${system}-${handler}-alert`);
+    // Validate form
+    var form = $(`#${system}-${handler}-form`);
+    if ( !form[0].checkValidity() ) {
+      form.addClass("was-validated");
+      output_area.text("Incorrect input values.");
+      return;
+    }
     var data = {
       "handler": handler,
       "configuration": getConfig(system, handler)

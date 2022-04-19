@@ -22,11 +22,12 @@
 </div>
 {%- endmacro -%}
 
-{%- macro create_annotated_form_input(label, annotation, setting, log, system, type="text") -%}
+{%- macro create_annotated_form_input(label, annotation, setting, log, system, type="text", pattern=None) -%}
 <div class="mb-3 row">
   <label for="{{system}}-{{log}}-{{setting}}" class="col-sm-2 col-form-label">{{ label }}</label>
   <div class="col-sm-10">
-    <input type="{{type}}" class="form-control" id="{{system}}-{{log}}-{{setting}}">
+    <input type="{{type}}" class="form-control" id="{{system}}-{{log}}-{{setting}}"
+      {% if pattern -%}pattern="{{pattern}}"{%- endif %}>
     <div class="form-text">{{ annotation }}</div>
   </div>
 </div>
@@ -64,67 +65,75 @@
 {%- macro file_log(system) -%}
 {%- set log = "file" -%}
 <h5>File</h5>
-{{ request_buttons(log, system) }}
-{{ loglevel(log, system) }}
-{{ formatter(log, system) }}
-{{ create_form_input("File Name", "filename", log, system) }}
-  {# "s": "seconds",
-  "m": "minutes",
-  "h": "hours",
-  "d": "days", #}
-{{ create_select("Rotate at", {
-    "w0": "Monday",
-    "w1": "Tueday",
-    "w2": "Wednesday",
-    "w3": "Thursday",
-    "w4": "Friday", 
-    "w5": "Saturday",
-    "w6": "Sunday",
-    "midnight": "Midnight"
-  }, "when", log, system) }}
-{{ create_form_input("Backup Count", "backupCount", log, system, type="number") }}
+<form id="{{system}}-{{log}}-form" class="needs-validation">
+  {{ request_buttons(log, system) }}
+  {{ loglevel(log, system) }}
+  {{ formatter(log, system) }}
+  {{ create_form_input("File Name", "filename", log, system) }}
+    {# "s": "seconds",
+    "m": "minutes",
+    "h": "hours",
+    "d": "days", #}
+  {{ create_select("Rotate at", {
+      "w0": "Monday",
+      "w1": "Tueday",
+      "w2": "Wednesday",
+      "w3": "Thursday",
+      "w4": "Friday", 
+      "w5": "Saturday",
+      "w6": "Sunday",
+      "midnight": "Midnight"
+    }, "when", log, system) }}
+  {{ create_form_input("Backup Count", "backupCount", log, system, type="number") }}
+</form>
 {%- endmacro -%}
 
 {%- macro stream_log(system) -%}
 {%- set log = "stream" -%}
 <h5>Stream</h5>
-{{ request_buttons(log, system) }}
-{{ loglevel(log, system) }}
-{{ formatter(log, system) }}
-{{ create_select("Stream", {
-    "ext://sys.stdout": "stdout",
-    "ext://sys.stderr": "stderr"
-  }, "stream", log, system) }}
+<form id="{{system}}-{{log}}-form" class="needs-validation">
+  {{ request_buttons(log, system) }}
+  {{ loglevel(log, system) }}
+  {{ formatter(log, system) }}
+  {{ create_select("Stream", {
+      "ext://sys.stdout": "stdout",
+      "ext://sys.stderr": "stderr"
+    }, "stream", log, system) }}
+</form>
 {%- endmacro -%}
 
 {%- macro smtp_log(system) -%}
 {%- set log = "smtp" -%}
 <h5>Mail</h5>
-{{ request_buttons(log, system) }}
-{{ loglevel(log, system) }}
-{{ formatter(log, system) }}
-{{ create_form_input("Mail Host ", "mailhost", log, system) }}
-{{ create_form_input("From Address ", "fromaddr", log, system) }}
-{{ create_annotated_form_input("To Address", 
-  "Use ; to separate multiple addresses.", 
-  "toaddr", log, system) }}
-{# {{ to_addr_input(log, system) }} #}
-{{ create_form_input("Subject ", "subject", log, system) }}
+<form id="{{system}}-{{log}}-form" class="needs-validation">
+  {{ request_buttons(log, system) }}
+  {{ loglevel(log, system) }}
+  {{ formatter(log, system) }}
+  {{ create_form_input("Mail Host ", "mailhost", log, system) }}
+  {{ create_form_input("From Address ", "fromaddr", log, system) }}
+  {{ create_annotated_form_input("To Address", 
+    "Use ; to separate multiple addresses.", 
+    "toaddr", log, system) }}
+  {# {{ to_addr_input(log, system) }} #}
+  {{ create_form_input("Subject ", "subject", log, system) }}
+</form>
 {%- endmacro -%}
 
 {%- macro syslog_log(system) -%}
 {%- set log = "syslog" -%}
 <h5>Syslog</h5>
-{{ request_buttons(log, system) }}
-{{ loglevel(log, system) }}
-{{ formatter(log, system) }}
-{{ create_annotated_form_input("Address", 
-  "Enter host and port in this field as `host:port`.", 
-  "address", log, system) }}
-{{ create_select("Socket Type", {
-    "ext://socket.SOCK_DGRAM": "SOCK_DGRAM",
-    "ext://socket.SOCK_STREAM": "SOCK_STREAM"
-  }, "socktype", log, system) }}
+<form id="{{system}}-{{log}}-form" class="needs-validation">
+  {{ request_buttons(log, system) }}
+  {{ loglevel(log, system) }}
+  {{ formatter(log, system) }}
+  {{ create_annotated_form_input("Address", 
+    "Enter host and port in this field as `host;port`.", 
+    "address", log, system, pattern=".+;[0-9].*$") }}
+  {{ create_select("Socket Type", {
+      "ext://socket.SOCK_DGRAM": "SOCK_DGRAM",
+      "ext://socket.SOCK_STREAM": "SOCK_STREAM"
+    }, "socktype", log, system) }}
+</form>
 {%- endmacro -%}
 
 {%- macro create_accordion_item(heading, system, parent_id) -%}
