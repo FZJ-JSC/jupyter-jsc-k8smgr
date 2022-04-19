@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 
@@ -14,11 +15,6 @@ from logs.utils import supported_handler_classes
 from logs.utils import supported_formatter_classes
 
 
-valid_handlers = [h for h in supported_handler_classes]
-valid_formatters = [f for f in supported_formatter_classes]
-valid_levels = [0, 5, 10, 20, 30, 40, 50, 99,
-                "NOTSET", "TRACE", "DEBUG", "INFO", "WARN","WARNING", 
-                "ERROR",  "FATAL","CRITICAL","DEACTIVATE"]
 
 
 def get_config():
@@ -31,8 +27,73 @@ def get_config():
 
 
 class JHubLogLevelAPIHandler(APIHandler):
+    def is_valid_config(self, data, name, valid_values, handler=None, case_sensitive=True):
+        value = data.get("configuration", {}).get(name, None)
+        if value and not case_sensitive:
+            value = value.lower()
+        if handler is None or handler == data["handler"]:
+            if value is not None and value not in valid_values:
+                error =f"Unsupported {name}: {value}. Supported {name}s: {valid_values}"
+                raise ValueError(error)
+
+    def is_valid_config_type(self, data, name, valid_value_types, handler=None):
+        if type(valid_value_types) != list:
+            valid_value_types = [valid_value_types]
+        value = data.get("configuration", {}).get(name, None)
+        if handler is None or handler == data["handler"]:
+            if value is not None and type(value) not in valid_value_types:
+                error = f"{name} in configuration must be of type {valid_value_types} not {type(value)}"
+                raise TypeError(error)
+
     def validate_data(self, data):
-        pass
+        if "handler" not in data.keys():
+            raise Exception(["Missing key in input data: handler"])
+        handler = data.get("handler")
+        allowed_handlers = [h for h in supported_handler_classes]
+        if handler not in allowed_handlers:
+            self._errors = [
+                f"Unsupported handler: {handler}. Supported handlers: {allowed_handlers}"
+            ]
+            raise Exception(self._errors)
+        if "configuration" in data.keys():
+            configuration_type = type(data["configuration"])
+            if configuration_type != dict:
+                self._errors = [
+                    f"Configuration must be of type dict not {configuration_type}"
+                ]
+                raise Exception(self._errors)
+        self.is_valid_config(data, "formatter", [f for f in supported_formatter_classes])
+        valid_levels = [
+            0, 5, 10, 20, 30, 40, 50, 99,
+            "0", "5", "10", "20", "30", "40", "50", "99",
+            "NOTSET", "TRACE", "DEBUG", "INFO",
+            "WARN", "WARNING", "ERROR", "FATAL", "CRITICAL", "DEACTIVATE",
+        ]
+        self.is_valid_config(data, "level", valid_levels)
+        self.is_valid_config(data, 
+            "stream", ["ext://sys.stdout", "ext://sys.stderr"], "stream"
+        )
+        self.is_valid_config_type(data, "filename", [str], "file")
+        self.is_valid_config(data, 
+            "when",
+            [
+                "s", "m", "h", "d", "midnight",
+                "w0", "w1", "w2", "w3", "w4", "w5", "w6",
+            ],
+            "file",
+            False,
+        )
+        self.is_valid_config_type(data, "backupCount", [int], "file")
+        self.is_valid_config_type(data, "mailhost", [str], "smtp")
+        self.is_valid_config_type(data, "fromaddr", [str], "smtp")
+        self.is_valid_config_type(data, "toaddrs", [list], "smtp")
+        self.is_valid_config_type(data, "subject", [str], "smtp")
+        self.is_valid_config_type(data, "address", [list], "syslog")
+        self.is_valid_config(data, 
+            "socktype",
+            ["ext://socket.SOCK_STREAM", "ext://socket.SOCK_DGRAM"],
+            "syslog",
+        )
 
     @needs_scope("access:services")
     async def get(self, handler=''):
@@ -51,6 +112,8 @@ class JHubLogLevelAPIHandler(APIHandler):
                         "handler": handler,
                         "configuration": current_config.get(handler)
                     })
+            # return data dictionary with handler and configuration
+            # key to keep consistent with return dict from drf services
             self.write(json.dumps(data))
             self.set_status(200)
         except:
@@ -60,16 +123,20 @@ class JHubLogLevelAPIHandler(APIHandler):
     async def post(self):
         current_config = get_config()
         data = self.get_json_body()
-        handler = data.get("handler")
-        handler_config = data.get("configuration")
-        if handler in current_config:
-            self.set_status(400)
-            return
         try:
-            self.validate_data(handler_config)
+            self.validate_data(data)
         except:
+            self.set_status(400, self._errors)
+            return
+        handler = data.get("handler")
+        if handler in current_config:
+            # handler already exists
             self.set_status(400)
             return
+        # get default config and overwrite as needed
+        handler_config = copy.deepcopy(default_configurations[handler])
+        for key, value in data.get("configuration"):
+            handler_config[key] = value
         create_logging_handler(current_config, handler, **handler_config)
         self.log.info(f"Created {handler} log handler", extra={"data": data})
         self.set_status(200)
@@ -77,18 +144,20 @@ class JHubLogLevelAPIHandler(APIHandler):
     @needs_scope("access:services")
     async def patch(self, handler):
         current_config = get_config()
+        data = self.get_json_body()
+        try:
+            self.validate_data(data)
+        except:
+            self.set_status(400, self._errors)
+            return
+        handler = data.get("handler")
         if handler not in current_config:
             self.set_status(400)
             return
-        data = self.get_json_body()
-        handler = data.get("handler")
-        handler_config = data.get("configuration")
-        try:
-            self.validate_data(handler_config)
-        except:
-            self.set_status(400)
-            return
-
+        # get current config and overwrite as needed
+        handler_config = copy.deepcopy(current_config[handler])
+        for key, value in data.get("configuration"):
+            handler_config[key] = value
         remove_logging_handler(current_config, handler)
         create_logging_handler(current_config, handler, **handler_config)
         self.log.info(f"Updated {handler} log handler", extra={"data": data})

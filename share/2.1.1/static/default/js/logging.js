@@ -14,13 +14,16 @@ require(["jquery", "jhapi"], function (
       var handlers = { "file": null, "stream": null, "smtp": null, "syslog": null }
       api.api_request(`logs/${system}/handler`, {
         success: function (data) {
-          // console.log(data);
           data.forEach(function (item) {
             var handler = item.handler;
             var config = item.configuration;
             for (const c in config) {
               var element = $(`#${system}-${handler}-${c}`);
-              element.val(config[c]);
+              var value = config[c];
+              if (typeof(value) == "object") {
+                value = value.join(';');
+              }
+              element.val(value);
             }
             handlers[handler] = config;
           })
@@ -42,24 +45,52 @@ require(["jquery", "jhapi"], function (
     }) // systems.forEach
   });
 
-  function create_handler(system, handler) {
-    var output_area = $(`#${system}-${handler}-alert`);
+  function updateHandler(system, handler) {
+    api.api_request(`logs/${system}/handler/${handler}`, {
+      success: function (data) {
+        var config = data.configuration;
+        for (const c in config) {
+          var element = $(`#${system}-${handler}-${c}`);
+          element.val(config[c]);
+        }
+      }
+    })
+  }
+
+  function getConfig(system, handler) {
     var config = {};
     $(`#${system}-${handler}-settings`).find("select, input").each(function () {
       var value = $(this).val();
       var setting = $(this).attr("id").split('-')[2];
-      if (value) config[setting] = value;
+      if (value) {
+        if ( $(this).attr("type") == "number" ) value = parseInt(value);
+        if ( $(this).attr("id").includes("smtp-toaddr") ) value = value.split(';');
+        if ( $(this).attr("id").includes("syslog-address") ) {
+          value = value.split(';');
+          value[1] = parseInt(value[1]);
+        }
+        config[setting] = value;
+      }
     })
+    return config;
+  }
+
+  function create_handler(system, handler) {
+    var output_area = $(`#${system}-${handler}-alert`);
     var data = {
       "handler": handler,
-      "configuration": config
+      "configuration": getConfig(system, handler)
     }
-
     api.api_request(`logs/${system}/handler`, {
       type: "POST",
       data: JSON.stringify(data),
+      dataType: "text",
       success: function () {
         output_area.text(`Successfully created ${handler} handler.`);
+        updateHandler(system, handler);
+        $(`button[id^=${system}][id$=create]`).addClass("disabled");
+        $(`button[id^=${system}][id$=patch]`).removeClass("disabled");
+        $(`button[id^=${system}][id$=delete]`).removeClass("disabled");
       },
       error: function (xhr, textStatus, errorThrown) {
         output_area.text(`${xhr.status} ${errorThrown}`);
@@ -69,22 +100,17 @@ require(["jquery", "jhapi"], function (
 
   function patch_handler(system, handler) {
     var output_area = $(`#${system}-${handler}-alert`);
-    var config = {};
-    $(`#${system}-${handler}-settings`).find("select, input").each(function () {
-      var value = $(this).val();
-      var setting = $(this).attr("id").split('-')[2];
-      if (value) config[setting] = value;
-    })
     var data = {
       "handler": handler,
-      "configuration": config
+      "configuration": getConfig(system, handler)
     }
-
     api.api_request(`logs/${system}/handler/` + handler, {
       type: "PATCH",
       data: JSON.stringify(data),
+      dataType: "text",
       success: function () {
         output_area.text(`Successfully updated ${handler} handler.`);
+        updateHandler(system, handler);
       },
       error: function (xhr, textStatus, errorThrown) {
         output_area.text(`${xhr.status} ${errorThrown}`);
@@ -96,8 +122,15 @@ require(["jquery", "jhapi"], function (
     var output_area = $(`#${system}-${handler}-alert`);
     api.api_request(`logs/${system}/handler/` + handler, {
       type: "DELETE",
+      dataType: "text",
       success: function () {
         output_area.text(`Successfully deleted ${handler} handler.`);
+        $(`#${system}-${handler}-settings`).find("select, input").each(function () {
+          $(this).val('');
+        })
+        $(`button[id^=${system}][id$=create]`).removeClass("disabled");
+        $(`button[id^=${system}][id$=patch]`).addClass("disabled");
+        $(`button[id^=${system}][id$=delete]`).addClass("disabled");
       },
       error: function (xhr, textStatus, errorThrown) {
         output_area.text(`${xhr.status} ${errorThrown}`);
