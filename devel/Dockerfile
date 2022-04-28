@@ -8,11 +8,14 @@ ENV JUPYTERHUB_VERSION=$JUPYTERHUB_VERSION
 
 USER root
 
-COPY requirements_apt.txt /tmp/requirements_apt.txt
+COPY devel/requirements_apt.txt /tmp/requirements_apt.txt
 RUN apt-get update && \
     cat /tmp/requirements_apt.txt | xargs apt install -yq && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
+
+COPY devel/requirements_build.txt /tmp/requirements_build.txt
+RUN pip3 install -r /tmp/requirements_build.txt
 
 # Add custom files
 COPY --chown=jovyan:users ./custom/${JUPYTERHUB_VERSION} /src/jupyterhub-custom
@@ -36,6 +39,6 @@ COPY --chown=jovyan:users ./patches/install_patches.sh /src/patches/install_patc
 RUN /src/patches/install_patches.sh
 
 # Add entrypoint
-COPY --chown=jovyan:users ./entrypoint.sh /src/.
+COPY --chown=jovyan:users devel/entrypoint.sh /src/.
 USER jovyan
 ENTRYPOINT ["/src/entrypoint.sh"]
