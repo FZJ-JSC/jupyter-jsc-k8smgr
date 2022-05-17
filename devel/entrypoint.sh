@@ -10,12 +10,12 @@ if [[ -d /tmp/${USERNAME}_certs ]]; then
     chown -R ${USERNAME}:users /home/${USERNAME}/certs
 fi
 
+mkdir -p /home/${USERNAME}/.ssh
 if [[ -d /tmp/${USERNAME}_ssh ]]; then
-    mkdir -p /home/${USERNAME}/.ssh
     cp -rp /tmp/${USERNAME}_ssh/* /home/${USERNAME}/.ssh/.
-    chmod -R 400 /home/${USERNAME}/.ssh/*
-    chown -R ${USERNAME}:users /home/${USERNAME}/.ssh
 fi
+chmod -R 400 /home/${USERNAME}/.ssh/*
+chown -R ${USERNAME}:users /home/${USERNAME}/.ssh
 
 sed -i -r -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g" -e "s/^AllowTcpForwarding no/AllowTcpForwarding yes/g" -e "s/^#Port 22/Port 2222/g" /etc/ssh/sshd_config
 mkdir -p /run/sshd
@@ -35,9 +35,9 @@ pip install -e /src/jupyterhub-patched/
 # dev-requirements comes from vanilla JHub
 pip install -r /src/jupyterhub/dev-requirements.txt
 
-ln -s /src/jupyterhub-patched /home/jupyterhub/jupyterhub-patched
-ln -s /src/jupyterhub-custom /home/jupyterhub/jupyterhub-custom
-ln -s /src/jupyterhub-static /home/jupyterhub/jupyterhub-static
+ln -s /src/jupyterhub-patched /home/${USERNAME}/jupyterhub-patched
+ln -s /src/jupyterhub-custom /home/${USERNAME}/jupyterhub-custom
+ln -s /src/jupyterhub-static /home/${USERNAME}/jupyterhub-static
 
 if [[ -n ${STATIC_FILES_SRC} && -n ${STATIC_FILES_DEST} ]]; then
     STATIC_FILES_DEST_DIR=$(dirname ${STATIC_FILES_DEST})
