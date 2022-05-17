@@ -21,12 +21,13 @@ sed -i -r -e "s/^#PasswordAuthentication yes/PasswordAuthentication no/g" -e "s/
 mkdir -p /run/sshd
 /usr/sbin/sshd -f /etc/ssh/sshd_config -E /home/${USERNAME}/sshd.log
 
+mkdir -p /home/${USERNAME}/.vscode
 if [[ -d /tmp/${USERNAME}_vscode ]]; then
-    mkdir -p /home/${USERNAME}/.vscode
     cp -rp /tmp/${USERNAME}_vscode/* /home/${USERNAME}/.vscode/.
-    chmod -R 400 /home/${USERNAME}/.vscode/*
-    chown -R ${USERNAME}:users /home/${USERNAME}/.vscode
 fi
+chmod -R 400 /home/${USERNAME}/.vscode/*
+chown -R ${USERNAME}:users /home/${USERNAME}/.vscode
+
 if [[ -d /tmp/${USERNAME}_home ]]; then
     cp -rp /tmp/${USERNAME}_home/* /home/${USERNAME}/.
 fi
