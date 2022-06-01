@@ -238,6 +238,8 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
 
     async def refresh_user(self, user, handler=None):
         auth_state = await user.get_auth_state()
+        if not auth_state:
+            return False
         threshold = 2 * self.auth_refresh_age
         now = time.time()
         rest_time = int(auth_state.get("exp", now)) - now
