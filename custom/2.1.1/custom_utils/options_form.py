@@ -35,7 +35,7 @@ def get_system_infos(
     # Sort UNICORE systems first
     systems_all = list(
         sorted(
-            {group[1] for group in user_hpc_list},
+            {group[1] for group in user_hpc_list if group[1] is not None},
             key=lambda system: systems_config.get(system, {}).get("weight", 99),
         )
     )
