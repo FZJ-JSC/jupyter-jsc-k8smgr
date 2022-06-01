@@ -19,4 +19,4 @@ if [[ -d /mnt/shared-data/tmp-internal-ssl ]]; then
   rm -rf /mnt/shared-data/tmp-internal-ssl/*
 fi
 
-su ${USERNAME} -c "/usr/bin/jupyterhub ${@}"
+/usr/bin/jupyterhub ${@}
