@@ -5,18 +5,18 @@ $(window).on('load', function () {
 })
 
 $(document).ready(function () {
-    /* Set active nav entry in sidebar */
-    var pathname = window.location.pathname;
-    $("#sidebar .nav-link").removeClass("active");
-    if (pathname.includes("/hub/home") || pathname.includes("/hub/spawn-pending")) {
-      setActive("JupyterLab");
-    }
-    else if (pathname.includes("/hub/admin")) {
-      setActive("Admin");
-    }
-    else if (pathname.includes("/hub/logging")) {
-        setActive("Logging");
-    }
+  /* Set active nav entry in sidebar */
+  var pathname = window.location.pathname;
+  $("#sidebar .nav-link").removeClass("active");
+  if (pathname.includes("/hub/home") || pathname.includes("/hub/spawn-pending")) {
+    setActive(/^JupyterLabs$/);
+  }
+  else if (pathname.includes("/hub/admin")) {
+    setActive(/^Admin$/);
+  }
+  else if (pathname.includes("/hub/logging")) {
+    setActive(/^Logging$/);
+  }
 })
 
 // $(".navbar-toggler").on("click", function () {
@@ -41,8 +41,10 @@ function spaceHeader() {
   $(".sidebar").css("padding-top", first_nav.height() + second_nav.height());
 }
 
-function setActive(listItem) {
-  var navLink = $(`#sidebar .nav-link:contains(${listItem})`);
+function setActive(regEx) {
+  var navLink = $('#sidebar .nav-link').filter(function () {
+    return regEx.test($(this).text());;
+  });
   var navLinkDiv = navLink.parent();
   navLink.addClass("active");
   navLinkDiv.addClass("active");
