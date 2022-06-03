@@ -21,6 +21,11 @@ require(["jquery", "jhapi", "utils"], function (
   startEvtSource.onmessage = function (e) {
     var data = JSON.parse(e.data)
     for (const name in data) {
+      if (!(name in spawn_events)) {
+        location.reload();
+        return;
+      }
+
       if (!(name in evtSources)) {
         var progress_url = utils.url_path_join(jhdata.base_url, "api/users", user, "servers", name, "progress");
         var progress_bar = $("#" + name + "-progress-bar");
