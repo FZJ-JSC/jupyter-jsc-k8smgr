@@ -26,7 +26,7 @@
   <div class="accordion-item bg-transparent">
     <h2 class="accordion-header" id="{{title}}-accordion-heading">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#{{title}}-collapse" aria-expanded="false" aria-controls="flush-collapseOne">
-       {{ title }}
+{{ title }}  {# No indentation to prevent leading white spaces #}
       </button>
     </h2>
     <div id="{{title}}-collapse" class="accordion-collapse collapse" aria-labelledby="{{title}}-accordion-heading" data-bs-parent="#{{title}}-accordion">
@@ -65,12 +65,14 @@
     }, heading="Logging") }}
     {%- endif -%}
 
+    {% set base_url = "jupyter-jsc-staging" %}
+
     {{ accordion("Jupyter-JSC", {
-        "Presentation": "https://docs.jupyter-jsc-devel.fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/Jupyter-JSC_supercomputing-in-the-browser.pdf",
-        "Extensions at Jupyter-JSC": "https://docs.jupyter-jsc-devel.fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/List_JupyterExtensions.ipynb",
-        "Markdown Tips and Tricks": "https://docs.jupyter-jsc-devel.fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/Markdown_Tipps-and-Tricks.ipynb",
-        "Setup your own kernel": "https://docs.jupyter-jsc-devel.fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/Create_JupyterKernel_general.ipynb",
-        "Setup your own kernel with conda": "https://docs.jupyter-jsc-devel.fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/Create_JupyterKernel_conda.ipynb",
+        "Presentation": "https://docs." + base_url + ".fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/Jupyter-JSC_supercomputing-in-the-browser.pdf",
+        "Extensions at Jupyter-JSC": "https://docs." + base_url + ".fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/List_JupyterExtensions.ipynb",
+        "Markdown Tips and Tricks": "https://docs." + base_url + ".fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/Markdown_Tipps-and-Tricks.ipynb",
+        "Setup your own kernel": "https://docs." + base_url + ".fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/Create_JupyterKernel_general.ipynb",
+        "Setup your own kernel with conda": "https://docs." + base_url + ".fz-juelich.de/github/FZJ-JSC/jupyter-jsc-notebooks/blob/master/001-Jupyter/Create_JupyterKernel_conda.ipynb",
         "Jupyter-JSC at unicore.eu": "https://www.unicore.eu/about-unicore/case-studies/jupyter-at-jsc/"
         }, 
       heading="Links") 
