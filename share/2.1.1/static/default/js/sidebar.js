@@ -43,7 +43,8 @@ function spaceHeader() {
 
 function setActive(regEx) {
   var navLink = $('#sidebar .nav-link').filter(function () {
-    return regEx.test($(this).text());
+    var text = $(this).text().trim();
+    return regEx.test(text);
   });
   var navLinkDiv = navLink.parent();
   navLink.addClass("active");
