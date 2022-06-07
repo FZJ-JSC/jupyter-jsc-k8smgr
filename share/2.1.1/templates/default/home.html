@@ -510,7 +510,7 @@ var spawn_events = {}
   {%- if spawner.state and spawner.state.get("events") %}
   spawn_events["{{spawner.name}}"] = {{ spawner.state.get("events") | tojson }};
   {%- else %}
-  spawn_events["{{spawner.name}}"] = {"current": []};
+  spawn_events["{{spawner.name}}"] = {"latest": []};
   {%- endif -%}
 {%- endfor %}
 </script>
@@ -984,7 +984,7 @@ evtSources = {}
 
 function updateSpawners() {
   {%- for s in named_spawners %}
-    var latest_events = spawn_events["{{s.name}}"]["current"];
+    var latest_events = spawn_events["{{s.name}}"]["latest"];
     if (latest_events.length > 0) {
       var last_event = latest_events.slice(-1)[0];
       var current_progress = last_event.progress;
@@ -1009,10 +1009,10 @@ function updateSpawners() {
     // Add options to log select
     var log_select = $("#" + name + "-log-select");
     for (const log in spawn_events["{{s.name}}"]) {
-      if (log == "current") log_select.prepend(`<option value="${log}">${log}</option>`);
+      if (log == "latest") log_select.prepend(`<option value="${log}">${log}</option>`);
       else log_select.append(`<option value="${log}">${log}</option>`);
     }
-    log_select.val("current");
+    log_select.val("latest");
 
     // Make progress td visible and set the progress bar to the correct width
     // if the spawner if currenty spawning
@@ -1064,7 +1064,7 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
 
   var evt = JSON.parse(event.data);
   // console.log(evt);
-  spawn_events[server_name]["current"].push(evt);
+  spawn_events[server_name]["latest"].push(evt);
 
   if (evt.progress !== undefined && evt.progress != 0) {
     // update progress
@@ -1087,8 +1087,8 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     html_message = html_message.replace(/&nbsp;/g, ' ');
   }
   if (html_message) {
-    // only append if current log is selected
-    if (log_select.val() == "current")
+    // only append if latest log is selected
+    if (log_select.val() == "latest")
       no_duplicate_log(html_message, progress_log);
   }
 
