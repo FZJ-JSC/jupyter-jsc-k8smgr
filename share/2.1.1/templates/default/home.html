@@ -984,9 +984,9 @@ evtSources = {}
 
 function updateSpawners() {
   {%- for s in named_spawners %}
-    var current_events = spawn_events["{{s.name}}"]["current"];
-    if (current_events.length > 0) {
-      var last_event = current_events.slice(-1)[0];
+    var latest_events = spawn_events["{{s.name}}"]["current"];
+    if (latest_events.length > 0) {
+      var last_event = latest_events.slice(-1)[0];
       var current_progress = last_event.progress;
     }
     else var current_progress = 0;
@@ -1000,8 +1000,8 @@ function updateSpawners() {
     var stop_btn = tr.find(".stop, .cancel");
     
     // Append log messages
-    for (const event in current_events) {
-      var html_message = current_events[event]["html_message"];
+    for (const event in latest_events) {
+      var html_message = latest_events[event]["html_message"];
       no_duplicate_log(html_message, progress_log);
       // tab_log.append($("<div>").html(html_message));
     }

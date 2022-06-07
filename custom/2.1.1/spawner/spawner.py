@@ -29,7 +29,7 @@ class BackendSpawner(Spawner):
     _yielded_events = []
     svc_name = ""
 
-    current_events = []
+    latest_events = []
     events = {}
     start_id = ""
     clear_events = True
@@ -51,8 +51,8 @@ class BackendSpawner(Spawner):
         if self.start_id:
             state["start_id"] = self.start_id
         if self.events:
-            self.events["current"] = self.current_events
-            # Clear logs older than 24h
+            self.events["latest"] = self.latest_events
+            # Clear logs older than 24h or empty logs
             for key, value in self.events.items():
                 if value and len(value) > 0 and value[0]:
                     stime = self._get_event_time(value[0])
@@ -61,6 +61,8 @@ class BackendSpawner(Spawner):
                     delta = now - dtime
                     if delta.days:
                         del self.events[key]
+                else:  # empty logs
+                    del self.events[key]
             state["events"] = self.events
         return state
 
@@ -171,14 +173,14 @@ class BackendSpawner(Spawner):
         return match.group()
 
     async def start(self):
-        # Save current events with start event time
-        if self.current_events != []:
-            start_event = self.current_events[0]
+        # Save latest events with start event time
+        if self.latest_events != []:
+            start_event = self.latest_events[0]
             start_event_time = self._get_event_time(start_event)
-            self.events[start_event_time] = self.current_events
-        # Reset current events only
-        self.current_events = []
-        self.events["current"] = self.current_events
+            self.events[start_event_time] = self.latest_events
+        # Reset latest events only
+        self.latest_events = []
+        self.events["latest"] = self.latest_events
 
         self._cancel_pending = False
         self._cancel_event_yielded = False
@@ -250,7 +252,7 @@ class BackendSpawner(Spawner):
                 "failed": True,
                 "html_message": jupyterhub_html_message,
             }
-            self.current_events.append(failed_event)
+            self.latest_events.append(failed_event)
             raise BackendException(error, detailed_error, jupyterhub_html_message)
 
         self.log.info(
@@ -271,7 +273,7 @@ class BackendSpawner(Spawner):
         self.ready_event[
             "html_message"
         ] = f"<details><summary><now>: Service {user_options['name']} started on {user_options['system']}.</summary>You will be redirected to <a href=\"<url>\"><url></a></details>"
-        self.current_events = [start_event]
+        self.latest_events = [start_event]
 
         self.port = 8080
 
@@ -325,7 +327,7 @@ class BackendSpawner(Spawner):
                 "failed": True,
                 "html_message": e.jupyterhub_html_message,
             }
-            self.current_events.append(failed_event)
+            self.latest_events.append(failed_event)
             try:
                 self.stop()
             except:
@@ -343,7 +345,7 @@ class BackendSpawner(Spawner):
             "progress": 30,
             "html_message": f"<details><summary>{now}: Request submitted to Jupyter-JSC backend</summary></details>",
         }
-        self.current_events.append(submitted_event)
+        self.latest_events.append(submitted_event)
         self.log.info(
             "Spawn submit ... done.",
             extra={
@@ -502,11 +504,11 @@ class BackendSpawner(Spawner):
             if spawn_future.done():
                 break_while_loop = True
 
-            len_events = len(self.current_events)
+            len_events = len(self.latest_events)
             if next_event < len_events:
                 for i in range(next_event, len_events):
-                    yield self.current_events[i]
-                    if self.current_events[i].get("failed", False) == True:
+                    yield self.latest_events[i]
+                    if self.latest_events[i].get("failed", False) == True:
                         self._cancel_event_yielded = True
                         break_while_loop = True
                 next_event = len_events
@@ -529,7 +531,7 @@ class BackendSpawner(Spawner):
     async def cancel(self, event):
         self.log.info("Cancel Start")
         self._cancel_pending = True
-        self.current_events.append(event)
+        self.latest_events.append(event)
 
         # Let generate_progress catch this event.
         # This will show the new event at the control panel site
