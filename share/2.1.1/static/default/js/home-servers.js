@@ -32,7 +32,7 @@ require(["jquery", "jhapi", "utils"], function (
         var progress_log = $("#" + name + "-progress-log");
         var log_select = $("#" + name + "-log-select");
 
-        // Save current logs and update log select
+        // Save latest logs and update log select
         update_spawn_events_dict(name, log_select);
 
         evtSources[name] = new EventSource(progress_url);
@@ -217,7 +217,7 @@ require(["jquery", "jhapi", "utils"], function (
       api.start_named_server(user, name, {
         data: JSON.stringify(options),
         success: function () {
-          // Save current log to time stamp and empty it
+          // Save latest log to time stamp and empty it
           update_spawn_events_dict(name, log_select);
 
           newTab.location.href = url;
@@ -253,14 +253,14 @@ require(["jquery", "jhapi", "utils"], function (
 
   function startNewServer() {
     function uuidv4() {
-      return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+      return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
         (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
       );
     }
 
     function uuidv4hex() {
-      return ([1e7,1e3,4e3,8e3,1e11].join('')).replace(/[018]/g, c => 
-      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+      return ([1e7, 1e3, 4e3, 8e3, 1e11].join('')).replace(/[018]/g, c =>
+        (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
     }
 
     function uuid_with_letter_start() {
@@ -274,9 +274,9 @@ require(["jquery", "jhapi", "utils"], function (
     // Automatically set name if none was specified
     if (display_name == "") {
       var c = 1;
-      $("th[scope=row]").each(function() {
+      $("th[scope=row]").each(function () {
         var name = $(this).html();
-        if ( RegExp(/^jupyterlab_[0-9]*[0-9]$/).test(name) ) c+=1;
+        if (RegExp(/^jupyterlab_[0-9]*[0-9]$/).test(name)) c += 1;
       })
       display_name = "jupyterlab_" + c;
       $("#new_jupyterlab-name-input").val(display_name); // Set name for user
@@ -596,13 +596,13 @@ require(["jquery", "jhapi", "utils"], function (
   }
 
   function update_spawn_events_dict(name, log_select) {
-    // Save current log to time stamp and empty it
-    const start_event = spawn_events[name]["current"][0];
+    // Save latest log to time stamp and empty it
+    const start_event = spawn_events[name]["latest"][0];
     const start_message = start_event.html_message;
     var re = /([0-9]+(_[0-9]+)+).*[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?/;
     var start_time = re.exec(start_message)[0];
-    spawn_events[name][start_time] = spawn_events[name]["current"];
-    spawn_events[name]["current"] = [];
+    spawn_events[name][start_time] = spawn_events[name]["latest"];
+    spawn_events[name]["latest"] = [];
     log_select.append(`<option value="${start_time}">${start_time}</option>`);
   }
 
