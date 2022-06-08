@@ -1,4 +1,5 @@
 import asyncio
+import copy
 import json
 import os
 import random
@@ -53,7 +54,9 @@ class BackendSpawner(Spawner):
         if self.events:
             self.events["latest"] = self.latest_events
             # Clear logs older than 24h or empty logs
-            for key, value in self.events.items():
+            events_keys = copy.deepcopy(list(self.events.keys()))
+            for key in events_keys:
+                value = self.events.get(key, None)
                 if value and len(value) > 0 and value[0]:
                     stime = self._get_event_time(value[0])
                     dtime = datetime.strptime(stime, "%Y_%m_%d %H:%M:%S")
