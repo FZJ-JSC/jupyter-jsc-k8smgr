@@ -45,9 +45,9 @@ spec:
           value: "true"
         - name: SQL_DATABASE
           value: "/tmp/shared-data/jupyterhub.sqlite"
-        - name: RESERVATIONS_PATH
+        - name: RESERVATIONS_FILE
           value: "/home/jupyterhub/reservations.json"
-        - name: MAINTENANCE_PATH
+        - name: MAINTENANCE_FILE
           value: "/tmp/shared-data/maintenance-check/maintenance.json"
         - name: STATIC_FILES_SRC
           value: "/home/jupyterhub/jupyterhub-static/static/default"

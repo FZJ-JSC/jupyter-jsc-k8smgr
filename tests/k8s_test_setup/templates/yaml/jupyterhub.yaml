@@ -44,9 +44,9 @@ spec:
           value: "06e35ed347ec42859d52198b1773af86"
         - name: PYTHONPATH
           value: "/src/jupyterhub-patched:/src/jupyterhub-custom"
-        - name: RESERVATIONS_PATH
+        - name: RESERVATIONS_FILE
           value: "/home/jupyterhub/reservations.json"
-        - name: MAINTENANCE_PATH
+        - name: MAINTENANCE_FILE
           value: "/tmp/shared-data/maintenance-check/maintenance.json"
         - name: STATIC_FILES_SRC
           value: "/home/jupyterhub/jupyterhub-static/static/default"

@@ -41,8 +41,8 @@ def get_vos(auth_state, custom_config, username, admin):
 
 def get_reservations():
     try:
-        reservations_path = os.environ.get("RESERVATIONS_PATH")
-        with open(reservations_path, "r") as f:
+        reservations_file = os.environ.get("RESERVATIONS_FILE")
+        with open(reservations_file, "r") as f:
             reservations = json.load(f)
     except:
         reservations = {}
@@ -51,8 +51,8 @@ def get_reservations():
 
 def get_maintenance_list():
     try:
-        maintenance_path = os.environ.get("MAINTENANCE_PATH")
-        with open(maintenance_path, "r") as f:
+        maintenance_file = os.environ.get("MAINTENANCE_FILE")
+        with open(maintenance_file, "r") as f:
             maintenance_list = json.load(f)
     except:
         maintenance_list = []
