@@ -26,6 +26,7 @@ class SpawnUpdateOptionsAPIHandler(APIHandler):
         except KeyError as err:
             self.set_header("Content-Type", "text/plain")
             self.write(f"Bad Request - {str(err)}")
+            self.log.debug(err)
             self.set_status(400)
             return
         spawner.user_options = formdata
