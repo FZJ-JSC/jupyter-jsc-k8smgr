@@ -6,30 +6,44 @@ from custom_utils import check_formdata_keys
 
 class SpawnUpdateOptionsAPIHandler(APIHandler):
     # @needs_scope("access:servers")
-    async def post(self, name, server_name=''):
-        user = self.find_user(name)
+    async def post(self, username, server_name=''):
+        user = self.find_user(username)
         if user is None:
             # no such user
-            self.log.debug("Returning 404 user not found")
-            raise web.HTTPError(404)
-
-        self.log.debug(user.orm_user.orm_spawners)
-        
-        if server_name not in user.spawners:
-            # user has no such server
-            self.log.debug("Returning 404 no such server")
+            self.log.error(f"APICall: SpawnOptionsUpdate - No user {username} found",
+                extra={
+                    "user": user,
+                    "log_name": f"{username}:{server_name}"
+                }
+            )
             raise web.HTTPError(404)
         orm_user = user.orm_user
+
+        if server_name not in user.spawners or server_name not in orm_user.orm_spawners:
+            # user has no such server
+            self.log.error(f"APICall: SpawnOptionsUpdate - No spawner {server_name} for user {username} found",
+                extra={
+                    "user": user,
+                    "spawner": server_name,
+                    "log_name": f"{username}:{server_name}"
+                }
+            )
+            raise web.HTTPError(404)
         spawner = orm_user.orm_spawners[server_name]
         # Save new options
         formdata = self.get_json_body()
-        self.log.debug(f"Update options user: {formdata}")
         try:
             check_formdata_keys(formdata, user.authenticator.custom_config)
         except KeyError as err:
             self.set_header("Content-Type", "text/plain")
             self.write(f"Bad Request - {str(err)}")
-            self.log.debug(err)
+            self.log.error("APICall: SpawnOptionsUpdate - KeyError", 
+                extra={
+                    "user": user,
+                    "error": err,
+                    "log_name": f"{username}:{server_name}"
+                }
+            )
             self.set_status(400)
             return
         spawner.user_options = formdata
