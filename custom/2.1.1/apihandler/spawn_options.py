@@ -5,9 +5,15 @@ from tornado import web
 from custom_utils import check_formdata_keys
 
 class SpawnUpdateOptionsAPIHandler(APIHandler):
-    # @needs_scope("access:servers")
+    @needs_scope("access:servers")
     async def post(self, name, server_name=''):
         user = self.find_user(name)
+
+        self.log.debug(f"Update options user: {user}")
+        self.log.debug(f"Update options spawners: {user.spawners}")
+        self.log.debug(f"Update options server_name in spawners: {server_name}")
+        self.log.debug(server_name not in user.spawners)
+
         if user is None:
             # no such user
             raise web.HTTPError(404)
