@@ -385,7 +385,7 @@ require(["jquery", "jhapi", "utils"], function (
 
     var server_name = get_id($(this));
     var display_name = collapse.find("input[id*=name]").val();
-    var options = createDataDict(collapse);
+    var options = createDataDict(collapse, display_name);
 
     api.update_named_server(user, server_name, {
       data: JSON.stringify(options),
