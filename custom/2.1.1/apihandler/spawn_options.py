@@ -5,7 +5,7 @@ from tornado import web
 from custom_utils import check_formdata_keys
 
 class SpawnUpdateOptionsAPIHandler(APIHandler):
-    @needs_scope("access:servers")
+    # @needs_scope("access:servers")
     async def post(self, name, server_name=''):
         user = self.find_user(name)
         if user is None:
