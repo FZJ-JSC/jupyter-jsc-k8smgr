@@ -8,11 +8,6 @@ class SpawnUpdateOptionsAPIHandler(APIHandler):
     # @needs_scope("access:servers")
     async def post(self, name, server_name=''):
         user = self.find_user(name)
-
-        self.log.debug(f"Update options user: {user}")
-        self.log.debug(f"Update options server_name in spawners: {server_name}")
-        self.log.debug(server_name not in user.spawners)
-
         if user is None:
             # no such user
             self.log.debug("Returning 404 user not found")
@@ -25,7 +20,7 @@ class SpawnUpdateOptionsAPIHandler(APIHandler):
         spawner = orm_user.orm_spawners[server_name]
         # Save new options
         formdata = self.get_json_body()
-        self.log.dedub(f"Update options user: {formdata}")
+        self.log.debug(f"Update options user: {formdata}")
         try:
             check_formdata_keys(formdata, user.authenticator.custom_config)
         except KeyError as err:
