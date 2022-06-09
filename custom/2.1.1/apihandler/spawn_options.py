@@ -19,7 +19,7 @@ class SpawnUpdateOptionsAPIHandler(APIHandler):
             raise web.HTTPError(404)
         orm_user = user.orm_user
 
-        if not (server_name in user.spawners or server_name in orm_user.orm_spawners):
+        if server_name not in orm_user.orm_spawners:
             # user has no such server
             self.log.error(f"APICall: SpawnOptionsUpdate - No spawner {server_name} for user {username} found",
                 extra={
