@@ -127,6 +127,7 @@ class BackendSpawner(Spawner):
         env = super().get_env()
         env["JUPYTERHUB_STATUS_URL"] = self._status_update_url
         env["JUPYTERHUB_USER_ID"] = self.user.orm_user.id
+        env["JUPYTERHUB_STAGE"] = os.environ.get("JUPYTERHUB_STAGE", "")
         return env
 
     def get_svc_name(self):
