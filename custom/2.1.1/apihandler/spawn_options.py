@@ -12,6 +12,9 @@ class SpawnUpdateOptionsAPIHandler(APIHandler):
             # no such user
             self.log.debug("Returning 404 user not found")
             raise web.HTTPError(404)
+
+        self.log.debug(user.orm_user.orm_spawners)
+        
         if server_name not in user.spawners:
             # user has no such server
             self.log.debug("Returning 404 no such server")
