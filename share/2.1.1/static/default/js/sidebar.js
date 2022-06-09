@@ -1,7 +1,7 @@
 $(window).on('load', function () {
   /* Set correct paddings and margins */
-  spaceHeader();
-  $(window).on('resize orientationchange', spaceHeader)
+  spaceContent();
+  $(window).on('resize orientationchange', spaceContent)
 })
 
 $(document).ready(function () {
@@ -19,23 +19,19 @@ $(document).ready(function () {
   }
 })
 
-// $(".navbar-toggler").on("click", function () {
-//   if ($(this).hasClass("collapsed")) {
-//     $("header").addClass("shadow");
-//   } else {
-//     $("header").removeClass("shadow");
-//   }
-// })
-
-function spaceHeader() {
+function spaceContent() {
   var header = $("header");
   var first_nav = header.children().first();
   var second_nav = header.children().last();
   if (second_nav.css("display") != "none") {
+    // Space header
     second_nav.css("margin-top", first_nav.height());
+    // Space main
+    $("main").removeClass("ms-sm-auto");
     // $("main").css("margin-top", header.height());
   }
   else {
+    $("main").addClass("ms-sm-auto");
     // $("main").css("margin-top", first_nav.height());
   }
   $(".sidebar").css("padding-top", first_nav.height() + second_nav.height());
