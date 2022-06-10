@@ -1,0 +1,40 @@
+diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/handlers/base.py ../jupyterhub-patched/jupyterhub/handlers/base.py
+--- ../jupyterhub/jupyterhub/handlers/base.py	2022-02-11 16:06:28.000000000 +0100
++++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-06-10 12:05:43.000000000 +0200
+@@ -5,6 +5,7 @@
+ import functools
+ import json
+ import math
++import os
+ import random
+ import re
+ import time
+@@ -1255,10 +1256,28 @@
+             parsed_scopes=self.parsed_scopes,
+             expanded_scopes=self.expanded_scopes,
+         )
++        ns.update(self.maintenance_messages)
+         if self.settings['template_vars']:
+             ns.update(self.settings['template_vars'])
+         return ns
+ 
++    @property
++    def maintenance_messages(self):
++        path = os.environ.get("MAINTENANCE_PATH", None)
++        systems = os.environ.get("MAINTENANCE_SYSTEMS", None)
++        if not (path and systems):
++            return {}
++        systems_list = systems.split()
++        ret = {"maintenance_messages": {}}
++        for system in systems_list:
++            file = os.path.join(path, f"{system}.txt")
++            try:
++                with open(file, 'r') as f:
++                    ret["maintenance_messages"][system] = f.read().strip()
++            except:
++                self.log.exception(f"Could not read message for {system}")
++        return ret
++
+     def get_accessible_services(self, user):
+         accessible_services = []
+         if user is None:

@@ -6,8 +6,7 @@
 <div id="ampel-{{system}}" class="mx-3">
   <img class="ampel-img" src='{{static_url("images/footer/systems/" + system.lower() + ".svg")}}' />
   <a href="{{href}}" target="_blank" class="align-middle" data-toggle="ample-tooltip"
-    {# title='{{maintenance_list.get(system, "")}}'> #}
-    title=''>
+    title='{{maintenance_messages.get(system, "")}}'>
     {%- if system == "JUPYTER" -%}
     Jupyter-JSC
     {%- elif system == "HDFCLOUD" -%}
