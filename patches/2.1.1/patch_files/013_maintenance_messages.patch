@@ -1,15 +1,7 @@
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/handlers/base.py ../jupyterhub-patched/jupyterhub/handlers/base.py
---- ../jupyterhub/jupyterhub/handlers/base.py	2022-02-11 16:06:28.000000000 +0100
-+++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-06-10 12:05:43.000000000 +0200
-@@ -5,6 +5,7 @@
- import functools
- import json
- import math
-+import os
- import random
- import re
- import time
-@@ -1255,10 +1256,28 @@
+--- ../jupyterhub/jupyterhub/handlers/base.py	2022-06-10 12:32:13.000000000 +0200
++++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-06-10 12:33:04.000000000 +0200
+@@ -1274,10 +1274,28 @@
              parsed_scopes=self.parsed_scopes,
              expanded_scopes=self.expanded_scopes,
          )
