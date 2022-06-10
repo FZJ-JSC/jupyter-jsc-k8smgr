@@ -1,7 +1,7 @@
 diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/handlers/base.py ../jupyterhub-patched/jupyterhub/handlers/base.py
---- ../jupyterhub/jupyterhub/handlers/base.py	2022-06-10 12:32:13.000000000 +0200
-+++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-06-10 12:33:04.000000000 +0200
-@@ -1274,10 +1274,28 @@
+--- ../jupyterhub/jupyterhub/handlers/base.py	2022-06-10 12:51:41.000000000 +0200
++++ ../jupyterhub-patched/jupyterhub/handlers/base.py	2022-06-10 12:51:51.000000000 +0200
+@@ -1274,10 +1274,29 @@
              parsed_scopes=self.parsed_scopes,
              expanded_scopes=self.expanded_scopes,
          )
@@ -13,12 +13,13 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
 +    @property
 +    def maintenance_messages(self):
 +        path = os.environ.get("MAINTENANCE_PATH", None)
-+        systems = os.environ.get("MAINTENANCE_SYSTEMS", None)
++        custom_config = self.authenticator.custom_config
++        maintenance_config = custom_config.get('maintenance-check', {})
++        systems = maintenance_config.get('services', {}).keys()
 +        if not (path and systems):
 +            return {}
-+        systems_list = systems.split()
 +        ret = {"maintenance_messages": {}}
-+        for system in systems_list:
++        for system in systems:
 +            file = os.path.join(path, f"{system}.txt")
 +            try:
 +                with open(file, 'r') as f:
