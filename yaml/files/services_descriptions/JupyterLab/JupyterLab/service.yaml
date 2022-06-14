@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-<servername>
+  namespace: <namespace>
+binaryData:
+  # Oneliner to get binary data from input directory:
+  # tar -czf input.tar.gz input && base64 -w 0 input.tar.gz && echo && rm input.tar.gz
+  input.tar.gz: H4sIAIXbKWIAA+3VS2rDMBQFUI+9itdk3FqKPt5Cd9Bh8Udgt4plZInSrr5WQiEJhBCoU0LvmQhjgSXfp6d+GGMoskWxWVmqNPJSscPxR8blhm+EUorN8/iGa56RWnZZe3EKlSfK3r2JX8afnXfp/Z3qd/mnfxCepm6Zb6SAtZZn8+dcnuQvtNQZsWWWc+yf579+KOp+KOpq6vJ8TU30loIjb7YuGBpca9JjHXvbUhwpxGEwNk9TdzWTv8XxMxj/aKs6/+u9wPX257+ZT4HbLnUNXNH/hWIynX9ZMvT/WzjKvzPWutcP5237m5fBpf7PRHmSvxYC/f8mDvu/aTpHq+dUBPSSimCFlg4AAAAAAAAAAAAAAAAAcC++ASp37M0AKAAA
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-<servername>
+  namespace: <namespace>
+spec:
+  selector:
+    app: deployment-<servername>
+  ports:
+    - name: https
+      protocol: TCP
+      # port must be used in start.sh file when ordering a tunnel
+      port: 8443
+      targetPort: 8443
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: <namespace>
+  name: deployment-<servername>
+  labels:
+    app: deployment-<servername>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-<servername>
+  template:
+    metadata:
+      labels:
+        app: deployment-<servername>
+        user-jupyterlab: "true"
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+#      nodeSelector:
+#        userlabs: "true"
+#      tolerations:
+#        - key: "jupyter-jsc/userlabs"
+#          value: "true"
+#          effect: "NoSchedule"
+      containers:
+        - name: deployment-<servername>-main
+          image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/user-jupyterlab:venv-latest
+#          image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/k8s-service-images/jupyterlab-lmod:0.1
+          imagePullPolicy: Always
+          command: ["/bin/bash"]
+          args:
+            - -c
+            - >-
+                tar -xzf /tmp/input.tar.gz -C /tmp &&
+                /bin/bash /tmp/input/start.sh
+          # command: ["/bin/sh", "-c", "--"]
+          # args: ["while true; do sleep 30; done;"]
+          envFrom:
+          # secret <secret_name> will be created by k8s mgr.
+          - secretRef:
+              name: <secret_name>
+          - configMapRef:
+              name: userhome-quota-<quotavo>
+          volumeMounts:
+            - name: files
+              mountPath: "/tmp/input.tar.gz"
+              subPath: input.tar.gz
+      securityContext:
+        fsGroup: 100
+      volumes:
+        - name: files
+          configMap:
+            defaultMode: 400
+            name: cm-<servername>

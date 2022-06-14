@@ -1,0 +1,8 @@
+Host k8smgr-devel    
+    HostName localhost
+    User k8smgr
+    IdentityFile <DIR>/generated/devel_keypair
+    Port 2235
+    LogLevel ERROR
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no

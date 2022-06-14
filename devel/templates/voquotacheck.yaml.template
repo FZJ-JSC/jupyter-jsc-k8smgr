@@ -1,0 +1,2 @@
+# CronJob which runs every hour and checks all quotas of the user directories
+# envFrom LogConfig for UserLab? Send Mail to admin if a user reached maximum
