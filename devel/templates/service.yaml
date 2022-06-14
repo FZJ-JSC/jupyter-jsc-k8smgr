@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-k8smgr-files-devel
+binaryData:
+  # Oneliner to get binary data from input directory:
+  # tar -czf files.tar.gz files && base64 -w 0 files.tar.gz && echo && rm files.tar.gz
+  files.tar.gz: <FILES_TAR_GZ_B64>
+  settings.json: ewogICAgInB5dGhvbi5weXRob25QYXRoIjogIi91c3IvYmluL3B5dGhvbjMiLAogICAgInB5dGhvbi5mb3JtYXR0aW5nLnByb3ZpZGVyIjogImJsYWNrIiwKICAgICJmaWxlcy53YXRjaGVyRXhjbHVkZSI6IHsKICAgICAgICAiKiovLmdpdC9vYmplY3RzLyoqIjogdHJ1ZSwKICAgICAgICAiKiovLmdpdC9zdWJ0cmVlLWNhY2hlLyoqIjogdHJ1ZSwKICAgICAgICAiKiovdmVudi8qKiI6IHRydWUKICAgIH0sCiAgICAicHl0aG9uLnRlc3RpbmcucHl0ZXN0QXJncyI6IFsKICAgICAgICAiLiIsCiAgICAgICAgIi1zIiwKICAgICAgICAiLXZ2IiwKICAgICAgICAiLWMiLAogICAgICAgICIke3dvcmtzcGFjZUZvbGRlcn0vd2ViL3Rlc3RzL3NlcnZpY2VzL3B5dGVzdC5pbmkiCiAgICBdLAogICAgInB5dGhvbi50ZXN0aW5nLnB5dGVzdEVuYWJsZWQiOiB0cnVlLAogICAgInB5dGhvbi50ZXN0aW5nLm5vc2V0ZXN0c0VuYWJsZWQiOiBmYWxzZSwKICAgICJweXRob24udGVzdGluZy51bml0dGVzdEVuYWJsZWQiOiBmYWxzZQp9Cg==
+  launch.json: <LAUNCH_JSON_B64>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-k8smgr-devel
+spec:
+  selector:
+    app: deployment-k8smgr-devel
+  ports:
+    - name: https
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+    - name: ssh
+      protocol: TCP
+      port: 2222
+      targetPort: 2222
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-k8smgr-devel
+  labels:
+    app: deployment-k8smgr-devel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deployment-k8smgr-devel
+  template:
+    metadata:
+      labels:
+        app: deployment-k8smgr-devel
+    spec:
+      imagePullSecrets:
+        - name: gitlab-registry
+      serviceAccountName: "svc-acc-k8smgr-devel"
+      containers:
+        - name: deployment-k8smgr-devel
+          image: registry.jsc.fz-juelich.de/jupyterjsc/k8s/images/k8s-service-manager:devel
+          imagePullPolicy: Always
+          command: ["/bin/bash"]
+          args:
+            - -c
+            - >-
+                tar -xzf /tmp/files.tar.gz -C /tmp &&
+                /bin/bash /home/k8smgr/web/entrypoint.sh
+                # while true; do sleep 30; done
+                # /bin/bash /tmp/input/start.sh 
+          # command: ["/bin/sh", "-c", "--"]
+          # args: ["while true; do sleep 30; done;"]
+          env:
+            - name: CONFIG_PATH
+              value: "/tmp/files/config.json"
+            - name: DEPLOYMENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['app']
+            - name: DEPLOYMENT_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          volumeMounts:
+            - name: files
+              mountPath: "/tmp/files.tar.gz"
+              subPath: files.tar.gz
+            - name: files
+              mountPath: "/tmp/k8smgr_vscode/launch.json"
+              subPath: launch.json
+            - name: files
+              mountPath: "/tmp/k8smgr_vscode/settings.json"
+              subPath: settings.json
+            - name: keypairs
+              mountPath: "/tmp/k8smgr_ssh/authorized_keys"
+              subPath: devel_keypair.pub
+      securityContext:
+        fsGroup: 100
+      volumes:
+        - name: files
+          configMap:
+            defaultMode: 400
+            name: cm-k8smgr-files-devel
+        - name: keypairs
+          secret:
+            defaultMode: 400
+            secretName: secret-k8smgr-keypairs-devel

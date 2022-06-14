@@ -1,0 +1,33 @@
+{
+    "backend-7b6d6997f8-wzwhk": {
+        "backend": {
+            "container_id": "docker://43d2165da4d212b0832d11e6b96606b013579bc9202770f9fad2ba21c54b108b",
+            "image": "jupyterjsc/backend:1.4.0.2",
+            "image_id": "docker-pullable://jupyterjsc/backend@sha256:d47a856dafc02239acba79262abd60a351e2ba1e3ac57d0ddb7ac3427a1afed4",
+            "last_state": {
+                "running": null,
+                "terminated": {
+                    "container_id": "docker://b24319797aa875f0ce6ad519262038627a99761829c1bd15ad6b469adfa448e6",
+                    "exit_code": 137,
+                    "finished_at": "2022-03-09 16:24:00+00:00",
+                    "message": null,
+                    "reason": "Error",
+                    "signal": null,
+                    "started_at": "2022-03-09 16:23:02+00:00"
+                },
+                "waiting": null
+            },
+            "name": "backend",
+            "ready": true,
+            "restart_count": 25,
+            "started": true,
+            "state": {
+                "running": {
+                    "started_at": "2022-03-09 16:25:29+00:00"
+                },
+                "terminated": null,
+                "waiting": null
+            }
+        }
+    }
+}
