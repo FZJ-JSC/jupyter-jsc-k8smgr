@@ -917,14 +917,14 @@ function updateResources(id, option, system, account, project, partition, reserv
             // if we changed from an existing value to not having a value
             if ( old_resource_values["runtime"] != "" ) {
               $("#" + id + "-runtime-warning").show();
-            }
+            };
             {%- endif %}
 
             {%- if reservations_allowed | length > 0 and reservations_allowed != ["None"] %}
-              {#- cannot use | unique for list containing dictionary so use variable to keep track -#}
-              {%- set reservations_list = [] -%}  
+              {#- cannot use | unique for list containing dictionary so use variable to keep track #}
+              {%- set reservations_list = [] %}  
               {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) %}
-                {%- if reservation in reservations_allowed and reservation not in reservations_list -%}
+                {%- if reservation in reservations_allowed and reservation not in reservations_list %}
                   {{ reservations_list.append(reservation) }}
                   {%- if reservation == "None" %}
                   $("#" + id + "-reservation-select").append('<option>{{reservation}}</option>');
