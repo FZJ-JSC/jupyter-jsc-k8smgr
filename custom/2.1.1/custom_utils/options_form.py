@@ -252,6 +252,7 @@ async def get_options_form(spawner, service, service_info):
                                 "reservations",
                                 reservations[system][account][project][partition],
                             )
+                        spawner.log.debug(f"{reservations[system][account][project][partition]}, {allowed_lists_reservations}")
                         reservations_used = in_both_lists(
                             reservations[system][account][project][partition],
                             allowed_lists_reservations,
@@ -260,7 +261,7 @@ async def get_options_form(spawner, service, service_info):
                             "reservations" in replace_allowed_lists
                             and len(reservations_used) == 0
                         ):
-                            # Dashboards expects specific reservations which we don"t have
+                            # Dashboards expects specific reservations which we don't have
                             continue
 
                         if option not in options.keys():
