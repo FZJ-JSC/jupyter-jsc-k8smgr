@@ -146,6 +146,15 @@ async def get_options_form(spawner, service, service_info):
     def in_both_lists(list1, list2):
         return list(set(list1).intersection(set(list2)))
 
+    # Need this to manually create set of list if the list contains a dict 
+    # since all elements of a set must be hashable and a dict is not
+    def create_set(list):
+        unique_list = []
+        for entry in list:
+            if entry not in unique_list:
+                unique_list.append(entry)
+        return unique_list
+
     required_partitions = {}
     options = {}
 
@@ -252,11 +261,10 @@ async def get_options_form(spawner, service, service_info):
                                 "reservations",
                                 reservations[system][account][project][partition],
                             )
-                        spawner.log.debug(f"{reservations[system][account][project][partition]}, {allowed_lists_reservations}")
-                        reservations_used = in_both_lists(
-                            reservations[system][account][project][partition],
-                            allowed_lists_reservations,
-                        )
+                        reservations_used = [
+                            value for value in 
+                            create_set(reservations[system][account][project][partition]) 
+                            if value in create_set(allowed_lists_reservations)]
                         if (
                             "reservations" in replace_allowed_lists
                             and len(reservations_used) == 0
