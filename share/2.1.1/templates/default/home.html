@@ -921,8 +921,11 @@ function updateResources(id, option, system, account, project, partition, reserv
             {%- endif %}
 
             {%- if reservations_allowed | length > 0 and reservations_allowed != ["None"] %}
-              {# {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) | unique %}
-                {%- if reservation in reservations_allowed %}
+              {#- cannot use | unique for list containing dictionary so use variable to keep track -#}
+              {%- set reservations_list = [] -%}  
+              {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) %}
+                {%- if reservation in reservations_allowed and reservation not in reservations_list -%}
+                  {%- reservations_list.append(reservation) -%}
                   {%- if reservation == "None" %}
                   $("#" + id + "-reservation-select").append('<option>{{reservation}}</option>');
                   reservation_values.push("{{reservation}}");
@@ -941,7 +944,7 @@ function updateResources(id, option, system, account, project, partition, reserv
                     {%- endfor %}
                   {%- endif %}
                 {%- endif %} {# reservation in reservations_allowed #}
-              {%- endfor %}     #}
+              {%- endfor %}    
                     
               if (user_options[id] && user_options[id]["reservation_input"]) {
                 $("#" + id + "-reservation-select").val(user_options[id]["reservation_input"]);
