@@ -398,7 +398,7 @@ async def get_options_form(spawner, service, service_info):
 
     return {
         "dropdown_lists": dropdown_lists,
-        "reservations": reservations_list,
+        "reservations": reservations_dict,
         "resources": resources_replaced,
         "maintenance": maintenance_list,
     }
