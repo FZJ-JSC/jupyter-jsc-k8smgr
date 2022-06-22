@@ -922,12 +922,12 @@ function updateResources(id, option, system, account, project, partition, reserv
 
             {%- if reservations_allowed | length > 0 and reservations_allowed != ["None"] %}
 
-            console.log("Reservations allowed: {{reservations_allowed}}");
+            console.log("Reservations allowed: {{reservations_allowed | safe}}");
 
 
               {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) %}
                 
-                console.log("Reservation in dropdown_lists: {{reservation}}");
+                console.log("Reservation in dropdown_lists: {{reservation | safe}}");
                 
                 {%- if reservation in reservations_allowed %}
                   {%- if reservation == "None" %}
@@ -935,9 +935,12 @@ function updateResources(id, option, system, account, project, partition, reserv
                   reservation_values.push("{{reservation}}");
                   {%- else %}
                     {# Check Reservation Info Dict for more information #}
+
+                    console.log("Reservation lines in spawn_options_form: {{spawner_options_form.get('reservations', {}).get(system, []) | safe}}")
+
                     {%- for reservation_line in spawner_options_form.get('reservations', {}).get(system, []) %}
 
-                      console.log("Reservation line: {{reservaton_line}}")
+                      console.log("Reservation line: {{reservaton_line | safe}}")
 
                       {%- if reservation == reservation_line[0] %}
                         {%- if reservation_line[14] == "INACTIVE" %}
