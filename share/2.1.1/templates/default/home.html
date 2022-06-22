@@ -921,36 +921,24 @@ function updateResources(id, option, system, account, project, partition, reserv
             {%- endif %}
 
             {%- if reservations_allowed | length > 0 and reservations_allowed != ["None"] %}
-
-            console.log("Reservations allowed: {{reservations_allowed | safe}}");
-
-
-              {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) %}
-                
-                console.log("Reservation in dropdown_lists: {{reservation | safe}}");
-                
-                {%- if reservation in reservations_allowed %}
+              {#- cannot use | unique for list containing dictionary so use variable to keep track -#}
+              {%- set reservations_list = [] -%}
+              {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) %}                
+                {%- if reservation in reservations_allowed and reservation not in reservations_list %}
+                  {%- reservations_list.append(reservation) %}
                   {%- if reservation == "None" %}
-                  $("#" + id + "-reservation-select").append('<option>{{reservation}}</option>');
+                  $("#" + id + "-reservation-select").append('<option value="{{reservation}}">{{reservation}}</option>');
                   reservation_values.push("{{reservation}}");
                   {%- else %}
                     {# Check Reservation Info Dict for more information #}
                     {%- for reservation_line in spawner_options_form.get('reservations', {}).get(system, []) %}
-
-                      console.log("Reservation line: {{reservation_line | safe}}")
-
                       {%- if reservation == reservation_line %}
-
-                        console.log("reservation == reservation_line")
-
-                        let reservation = "{{reservation.get('ReservationName') | safe}}"
-
+                        let reservation = "{{reservation.get('ReservationName') | safe}}";
                         {%- if reservation_line.get('State', "INACTIVE") == "INACTIVE" %}
-                          $("#" + id + "-reservation-select").append(`<option disabled style="color: #6c757d;">${reservation} [INACTIVE]</option>`);
+                          $("#" + id + "-reservation-select").append(`<option value="${reservation}" disabled style="color: #6c757d;">${reservation} [INACTIVE]</option>`);
                           reservation_values.push(reservation);
                         {%- else %}
-                          
-                          $("#" + id + "-reservation-select").append(`<option>${reservation}</option>`);
+                          $("#" + id + "-reservation-select").append(`<option value="${reservation}">${reservation}</option>`);
                           reservation_values.push(reservation);
                         {%- endif %}
                       {%- endif %}
