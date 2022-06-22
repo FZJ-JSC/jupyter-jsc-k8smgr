@@ -943,7 +943,7 @@ function updateResources(id, option, system, account, project, partition, reserv
 
                         console.log("reservation == reservation_line")
 
-                        let reservation = "{{reservation.get("ReservationName") | safe}}""
+                        let reservation = "{{reservation.get('ReservationName') | safe}}""
 
                         {%- if reservation_line.get('State', "INACTIVE") == "INACTIVE" %}
                           $("#" + id + "-reservation-select").append(`<option disabled style="color: #6c757d;">${reservation} [INACTIVE]</option>`);
