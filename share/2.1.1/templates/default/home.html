@@ -921,7 +921,14 @@ function updateResources(id, option, system, account, project, partition, reserv
             {%- endif %}
 
             {%- if reservations_allowed | length > 0 and reservations_allowed != ["None"] %}
+
+            console.log("Reservations allowed: {{reservations_allowed}}");
+
+
               {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) %}
+                
+                console.log("Reservation in dropdown_lists: {{reservation}}");
+                
                 {%- if reservation in reservations_allowed %}
                   {%- if reservation == "None" %}
                   $("#" + id + "-reservation-select").append('<option>{{reservation}}</option>');
@@ -929,6 +936,9 @@ function updateResources(id, option, system, account, project, partition, reserv
                   {%- else %}
                     {# Check Reservation Info Dict for more information #}
                     {%- for reservation_line in spawner_options_form.get('reservations', {}).get(system, []) %}
+
+                      console.log("Reservation line: {{reservaton_line}}")
+
                       {%- if reservation == reservation_line[0] %}
                         {%- if reservation_line[14] == "INACTIVE" %}
                           $("#" + id + "-reservation-select").append('<option disabled style="color: #6c757d;">{{reservation}} [INACTIVE]</option>');
