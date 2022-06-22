@@ -922,7 +922,7 @@ function updateResources(id, option, system, account, project, partition, reserv
 
             {%- if reservations_allowed | length > 0 and reservations_allowed != ["None"] %}
               {%- for reservation in spawner_options_form.get('dropdown_lists', {}).get('reservations', {}).get(system, {}).get(account, {}).get(project, {}).get(partition, []) %}
-                {%- if reservation in reservations_allowed and reservation not in reservations_list %}
+                {%- if reservation in reservations_allowed %}
                   {%- if reservation == "None" %}
                   $("#" + id + "-reservation-select").append('<option>{{reservation}}</option>');
                   reservation_values.push("{{reservation}}");
