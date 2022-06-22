@@ -935,20 +935,21 @@ function updateResources(id, option, system, account, project, partition, reserv
                   reservation_values.push("{{reservation}}");
                   {%- else %}
                     {# Check Reservation Info Dict for more information #}
-
-                    console.log("Reservation lines in spawn_options_form: {{spawner_options_form.get('reservations', {}).get(system, []) | safe}}")
-
                     {%- for reservation_line in spawner_options_form.get('reservations', {}).get(system, []) %}
 
-                      console.log("Reservation line: {{reservaton_line | safe}}")
+                      console.log("Reservation line: {{reservation_line | safe}}")
 
-                      {%- if reservation == reservation_line[0] %}
-                        {%- if reservation_line[14] == "INACTIVE" %}
-                          $("#" + id + "-reservation-select").append('<option disabled style="color: #6c757d;">{{reservation}} [INACTIVE]</option>');
-                          reservation_values.push("{{reservation}}");
+                      {%- if reservation == reservation_line %}
+
+                        console.log("reservation == reservation_line")
+
+                        {%- if reservation_line.get('State', "INACTIVE") == "INACTIVE" %}
+                          let reservation = "{{reservation.get("ReservationName") | safe}}""
+                          $("#" + id + "-reservation-select").append(`<option disabled style="color: #6c757d;">${reservation} [INACTIVE]</option>`);
+                          reservation_values.push(reservation);
                         {%- else %}
-                          $("#" + id + "-reservation-select").append('<option>{{reservation}}</option>');
-                          reservation_values.push("{{reservation}}");
+                          $("#" + id + "-reservation-select").append(`<option>${reservation}</option>`);
+                          reservation_values.push(reservation);
                         {%- endif %}
                       {%- endif %}
                     {%- endfor %}
