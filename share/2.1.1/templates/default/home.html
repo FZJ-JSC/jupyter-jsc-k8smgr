@@ -953,15 +953,8 @@ function updateResources(id, option, system, account, project, partition, reserv
               $("#" + id + "-reservation-select-div").show();
               reservation_tab.removeClass("disabled");
 
-              console.log("reservation_value is", reservation_value);
-
               if ( reservation != "None" ) {
-
-                  console.log("updateSelect with", reservation_select, id, reservation_value, old_reservation_value, reservation_values);
                   updateSelect(reservation_select, id, reservation_value, old_reservation_value, reservation_values, tab_id="reservation");
-
-                  // console.log("updateSelectValue with", id, old_reservation_value, reservation_values, reservation_select);
-                  // updateSelectValue(id, old_reservation_value, reservation_values, reservation_select, tab_id="reservation");
               } else {
                 reservation_select.val(reservation);
               }
