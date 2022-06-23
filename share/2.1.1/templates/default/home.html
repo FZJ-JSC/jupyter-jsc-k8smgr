@@ -925,6 +925,7 @@ function updateResources(id, option, system, account, project, partition) {
                 {%- if reservation in reservations_allowed and reservation not in reservation_list %}
                   {{ reservation_list.append(reservation) | default("", True) }}
                   {%- if reservation == "None" %}
+                  reservation = "None";
                   $("#" + id + "-reservation-select").append('<option value="{{reservation}}">{{reservation}}</option>');
                   reservation_values.push("{{reservation}}");
                   {%- else %}
@@ -951,6 +952,9 @@ function updateResources(id, option, system, account, project, partition) {
               reservation_select.attr("required", true);
               $("#" + id + "-reservation-select-div").show();
               reservation_tab.removeClass("disabled");
+
+              console.log("Reservation is", reservation);
+
               if ( reservation != "None" ) {
                   updateSelectValue(id, old_reservation_value, reservation_values, reservation_select, tab_id="reservation");
               } else {
