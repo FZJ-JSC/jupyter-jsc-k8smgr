@@ -334,7 +334,7 @@ require(["jquery", "jhapi", "utils"], function (
               progress_bar.attr('aria-valuenow', perc);
               progress_bar.html('<b>' + perc + '%</b>');
               if (html_message) {
-                progress_log.append($('<div>').html(html_message));
+                progress_log.append($('<div class="log-div">').html(html_message));
               }
               // Clear interval on 100%
               if (perc == 100) {
