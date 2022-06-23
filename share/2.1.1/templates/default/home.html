@@ -807,7 +807,7 @@ function updatePartitions(id, option, system, account, project, value=null) {
   updateSelect(select, id, value, old_value, values);
 }
 
-function updateResources(id, option, system, account, project, partition, reservation=null) {
+function updateResources(id, option, system, account, project, partition, reservation_value=null) {
   var nodes_input = $("input#" + id + "-nodes-input");
   var gpus_input = $("input#" + id + "-gpus-input");
   var runtime_input = $("input#" + id + "-runtime-input");
@@ -953,12 +953,12 @@ function updateResources(id, option, system, account, project, partition, reserv
               $("#" + id + "-reservation-select-div").show();
               reservation_tab.removeClass("disabled");
 
-              console.log("Reservation is", reservation);
+              console.log("reservation_value is", reservation_value);
 
               if ( reservation != "None" ) {
 
-                  console.log("updateSelect with", reservation_select, id, reservation, old_reservation_value, reservation_values);
-                  updateSelect(reservation_select, id, reservation, old_reservation_value, reservation_values, tab_id="reservation");
+                  console.log("updateSelect with", reservation_select, id, reservation_value, old_reservation_value, reservation_values);
+                  updateSelect(reservation_select, id, reservation_value, old_reservation_value, reservation_values, tab_id="reservation");
 
                   // console.log("updateSelectValue with", id, old_reservation_value, reservation_values, reservation_select);
                   // updateSelectValue(id, old_reservation_value, reservation_values, reservation_select, tab_id="reservation");
