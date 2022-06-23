@@ -587,6 +587,8 @@ require(["jquery", "jhapi", "utils"], function (
   }
 
   function updateTr(collapse, tr) {
+    var name_td = tr.find("th");
+    name_td.text(collapse.find("input[id*=name]").val());
     var system_td = tr.find(".system-td");
     system_td.text(collapse.find("select[id*=system]").val());
     var partition_td = tr.find(".partition-td");
