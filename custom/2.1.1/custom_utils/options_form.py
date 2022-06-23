@@ -108,7 +108,8 @@ def get_system_infos(
                                 )
                                 and ((not x.get("PartitionName", "")) or partition in x.get("PartitionName", "").split(","))
                             )
-                        ]
+                        ],
+                        key=lambda x: x['ReservationName']
                     )
                     for partition in partitions[system][account][project]
                 }
