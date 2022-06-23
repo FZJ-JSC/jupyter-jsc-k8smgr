@@ -24,7 +24,7 @@
 
 {# Logic to determine if a lab can be opened/started #}
 {# If not a Lab from the current VO -- Not sure about this #}
-{# {%- if auth_state.get("vo_active", "") != user_options.get("vo_active_input") -%} {%- set na = 1 -%} #}
+{# {%- if auth_state.get("vo_active", "") != user_options.get("name").get("vo") -%} {%- set na = 1 -%} #}
 {# System is in maintenance #}
 {%- if system in maintenance_list -%} {%- set na = 1 -%}
 {# System is not in replace_allowed_lists of the VO config #}
@@ -264,7 +264,7 @@
               <div class="row mb-3">
                 <label for="{{name}}-name-input" class="col-sm-2 col-form-label">Name</label>
                 <div class="col-sm-10">
-                  <input type="name" class="form-control" id="{{name}}-name-input" value="{{display_name}}" disabled>
+                  <input type="name" class="form-control" id="{{name}}-name-input" value="{{display_name}}">
                 </div>
               </div>
               {{ form_div("Type", name) }}
@@ -807,7 +807,7 @@ function updatePartitions(id, option, system, account, project, value=null) {
   updateSelect(select, id, value, old_value, values);
 }
 
-function updateResources(id, option, system, account, project, partition, reservation=null) {
+function updateResources(id, option, system, account, project, partition) {
   var nodes_input = $("input#" + id + "-nodes-input");
   var gpus_input = $("input#" + id + "-gpus-input");
   var runtime_input = $("input#" + id + "-runtime-input");
@@ -820,6 +820,7 @@ function updateResources(id, option, system, account, project, partition, reserv
   }
   var old_reservation_value = reservation_select.val();
   var reservation_values = [];
+  var reservation = null;
   // Reset all values
   var resources = [nodes_input, gpus_input, runtime_input, reservation_select];
   resources.forEach(function(resource) {
@@ -930,7 +931,7 @@ function updateResources(id, option, system, account, project, partition, reserv
                     {# Check Reservation Info Dict for more information #}
                     {%- for reservation_line in spawner_options_form.get('reservations', {}).get(system, []) %}
                       {%- if reservation == reservation_line %}
-                        let reservation = "{{reservation.get('ReservationName') | safe}}";
+                        reservation = "{{reservation.get('ReservationName') | safe}}";
                         {%- if reservation_line.get('State', "INACTIVE") == "INACTIVE" %}
                           $("#" + id + "-reservation-select").append(`<option value="${reservation}" disabled style="color: #6c757d;">${reservation} [INACTIVE]</option>`);
                           reservation_values.push(reservation);
@@ -944,8 +945,8 @@ function updateResources(id, option, system, account, project, partition, reserv
                 {%- endif %} {# reservation in reservations_allowed #}
               {%- endfor %}    
                     
-              if (user_options[id] && user_options[id]["reservation_input"]) {
-                $("#" + id + "-reservation-select").val(user_options[id]["reservation_input"]);
+              if (user_options[id] && user_options[id]["reservation"]) {
+                $("#" + id + "-reservation-select").val(user_options[id]["reservation"]);
               }
               reservation_select.attr("required", true);
               $("#" + id + "-reservation-select-div").show();
