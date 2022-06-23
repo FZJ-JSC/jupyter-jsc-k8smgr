@@ -1144,7 +1144,7 @@ function no_duplicate_log(html_message, progress_log) {
 
     // and only append if message has not been logged yet
     if ( !current_messages.includes(html_text) ) {
-      progress_log.append($("<div>").html(html_message));
+      progress_log.append($('<div class="log-div">').html(html_message));
     } 
 }
 </script>
