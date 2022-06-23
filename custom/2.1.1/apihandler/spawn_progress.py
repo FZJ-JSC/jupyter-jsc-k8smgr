@@ -9,7 +9,7 @@ from jupyterhub.scopes import needs_scope
 from tornado import web
 from tornado.httpclient import HTTPRequest
 
-user_cancel_message = "Start cancelled by user."
+user_cancel_message = "<details><summary>Start cancelled by user.</summary>You clicked the cancel button.</details>"
 
 
 class SpawnProgressUpdateAPIHandler(APIHandler):
