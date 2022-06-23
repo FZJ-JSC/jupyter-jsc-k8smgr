@@ -807,7 +807,7 @@ function updatePartitions(id, option, system, account, project, value=null) {
   updateSelect(select, id, value, old_value, values);
 }
 
-function updateResources(id, option, system, account, project, partition) {
+function updateResources(id, option, system, account, project, partition, reservation=null) {
   var nodes_input = $("input#" + id + "-nodes-input");
   var gpus_input = $("input#" + id + "-gpus-input");
   var runtime_input = $("input#" + id + "-runtime-input");
@@ -957,9 +957,11 @@ function updateResources(id, option, system, account, project, partition) {
 
               if ( reservation != "None" ) {
 
-                  console.log("updateSelectValue with", id, old_reservation_value, reservation_values, reservation_select);
+                  console.log("updateSelect with", reservation_select, id, reservation, old_reservation_value, reservation_values);
+                  updateSelect(reservation_select, id, reservation, old_reservation_value, reservation_values, tab_id="reservation");
 
-                  updateSelectValue(id, old_reservation_value, reservation_values, reservation_select, tab_id="reservation");
+                  // console.log("updateSelectValue with", id, old_reservation_value, reservation_values, reservation_select);
+                  // updateSelectValue(id, old_reservation_value, reservation_values, reservation_select, tab_id="reservation");
               } else {
                 reservation_select.val(reservation);
               }
