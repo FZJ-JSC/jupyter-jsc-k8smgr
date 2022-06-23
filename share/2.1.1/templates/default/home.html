@@ -956,6 +956,9 @@ function updateResources(id, option, system, account, project, partition) {
               console.log("Reservation is", reservation);
 
               if ( reservation != "None" ) {
+
+                  console.log("updateSelectValue with", id, old_reservation_value, reservation_values, reservation_select);
+
                   updateSelectValue(id, old_reservation_value, reservation_values, reservation_select, tab_id="reservation");
               } else {
                 reservation_select.val(reservation);
