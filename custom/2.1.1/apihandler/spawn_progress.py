@@ -32,6 +32,11 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
         spawner = user.spawners[server_name]
         uuidcode = server_name
 
+        # Do not do anything if stop is already pending
+        if spawner.pending == 'stop':
+            self.set_status(204)
+            return
+
         if event.get("html_message", ""):
             # Add timestamp
             now = datetime.datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
