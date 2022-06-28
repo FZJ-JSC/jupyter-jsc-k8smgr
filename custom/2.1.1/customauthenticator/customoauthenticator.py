@@ -238,7 +238,7 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
 
     async def authenticate(self, handler, data=None):
         user_info = await super().authenticate(handler, data)
-        safe_user_name = user_info["name"].replace('@', '~')
+        safe_user_name = user_info["name"].replace('@', '.')
         user_info["name"] = safe_user_name
         return user_info
 
