@@ -236,12 +236,6 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
             ret = ret.replace("_host_", handler.request.host)
         return ret
 
-    async def authenticate(self, handler, data=None):
-        user_info = await super().authenticate(handler, data)
-        safe_user_name = user_info["name"].replace('@', '_')
-        user_info["name"] = safe_user_name
-        return user_info
-
     async def refresh_user(self, user, handler=None):
         auth_state = await user.get_auth_state()
         if not auth_state:
