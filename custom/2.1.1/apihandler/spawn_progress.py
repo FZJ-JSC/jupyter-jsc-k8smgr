@@ -32,8 +32,8 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
         spawner = user.spawners[server_name]
         uuidcode = server_name
 
-        # Do not do anything if stop is already pending
-        if spawner.pending == 'stop':
+        # Do not do anything if stop or cancel is already pending
+        if spawner.pending == 'stop' or spawner._cancel_pending:
             self.set_status(204)
             return
 
