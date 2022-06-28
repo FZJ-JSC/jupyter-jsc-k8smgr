@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 from urllib.error import HTTPError
 from urllib.parse import urlencode
+from urllib.parse import quote_plus
 
 from custom_utils import get_vos
 from custom_utils import VoException
@@ -235,6 +236,13 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         if self.oauth_callback_url and handler and "_host_" in ret:
             ret = ret.replace("_host_", handler.request.host)
         return ret
+
+    async def authenticate(self, handler, data=None):
+        user_info = await super().authenticate(handler, data)
+        # safe_user_name = user_info["name"].replace('@', '_')
+        safe_user_name = quote_plus(user_info["name"])
+        user_info["name"] = safe_user_name
+        return user_info
 
     async def refresh_user(self, user, handler=None):
         auth_state = await user.get_auth_state()

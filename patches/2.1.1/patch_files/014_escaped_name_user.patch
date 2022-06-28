@@ -1,0 +1,12 @@
+diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhub/user.py ../jupyterhub-patched/jupyterhub/user.py
+--- ../jupyterhub/jupyterhub/user.py	2022-06-10 12:51:41.000000000 +0200
++++ ../jupyterhub-patched/jupyterhub/user.py	2022-06-28 15:42:09.000000000 +0200
+@@ -460,7 +460,7 @@
+     @property
+     def escaped_name(self):
+         """My name, escaped for use in URLs, cookies, etc."""
+-        return quote(self.name, safe='@~')
++        return quote(self.name, safe='@~%')
+ 
+     @property
+     def json_escaped_name(self):
