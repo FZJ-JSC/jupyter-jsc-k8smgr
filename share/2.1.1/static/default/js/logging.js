@@ -14,19 +14,21 @@ require(["jquery", "jhapi"], function (
       var handlers = { "file": null, "stream": null, "smtp": null, "syslog": null }
       api.api_request(`logs/${system}/handler`, {
         success: function (data) {
-          data.forEach(function (item) {
-            var handler = item.handler;
-            var config = item.configuration;
-            for (const c in config) {
-              var element = $(`#${system}-${handler}-${c}`);
-              var value = config[c];
-              if (typeof(value) == "object") {
-                value = value.join(';');
-              }
-              element.val(value);
-            }
-            handlers[handler] = config;
-          })
+          console.log(data);
+
+          // data.forEach(function (item) {
+          //   var handler = item.handler;
+          //   var config = item.configuration;
+          //   for (const c in config) {
+          //     var element = $(`#${system}-${handler}-${c}`);
+          //     var value = config[c];
+          //     if (typeof(value) == "object") {
+          //       value = value.join(';');
+          //     }
+          //     element.val(value);
+          //   }
+          //   handlers[handler] = config;
+          // })
 
           // Can only create those handlers which do not exist
           for (const handler in handlers) {
@@ -63,9 +65,9 @@ require(["jquery", "jhapi"], function (
       var value = $(this).val();
       var setting = $(this).attr("id").split('-')[2];
       if (value) {
-        if ( $(this).attr("type") == "number" ) value = parseInt(value);
-        if ( $(this).attr("id").includes("smtp-toaddr") ) value = value.split(';');
-        if ( $(this).attr("id").includes("syslog-address") ) {
+        if ($(this).attr("type") == "number") value = parseInt(value);
+        if ($(this).attr("id").includes("smtp-toaddr")) value = value.split(';');
+        if ($(this).attr("id").includes("syslog-address")) {
           value = value.split(';');
           value[1] = parseInt(value[1]);
         }
@@ -79,7 +81,7 @@ require(["jquery", "jhapi"], function (
     var output_area = $(`#${system}-${handler}-alert`);
     // Validate form
     var form = $(`#${system}-${handler}-form`);
-    if ( !form[0].checkValidity() ) {
+    if (!form[0].checkValidity()) {
       form.addClass("was-validated");
       output_area.text("Incorrect input values.");
       return;
@@ -109,7 +111,7 @@ require(["jquery", "jhapi"], function (
     var output_area = $(`#${system}-${handler}-alert`);
     // Validate form
     var form = $(`#${system}-${handler}-form`);
-    if ( !form[0].checkValidity() ) {
+    if (!form[0].checkValidity()) {
       form.addClass("was-validated");
       output_area.text("Incorrect input values.");
       return;
