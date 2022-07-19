@@ -582,7 +582,11 @@ function setValues(name, options) {
   updateAccounts(id, option1, system, account);
   updateProjects(id, option1, system, account, project);
   updatePartitions(id, option1, system, account, project, partition);
-  updateResources(id, option1, system, account, project, partition, reservation);
+  // updateResources only sets reservation, so update resources manually
+  if reservation $("select#" + id + "-reservation-select").val(reservation);
+  if nodes $("input#" + id + "-nodes-input").val(nodes);
+  if runtime $("input#" + id + "-runtime-input").val(runtime);
+  if gpus $("input#" + id + "-gpus-input");.val(gpus);
 }
 
 $(document).ready(function () {
