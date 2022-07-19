@@ -68,10 +68,7 @@ class LoggingHandler(BaseHandler):
     @needs_scope("access:services")
     async def get(self):
         user = self.current_user
-        drf_services_config = user.authenticator.custom_config.get("drf-services", {})
         ns = await _create_ns(user)
-        for service in drf_services_config:
-            ns.update({f"{service}_log_url": drf_services_config.get(service).get("urls", {}).get("logs", "")})
         html = await self.render_template("logging.html", **ns)
         self.finish(html)
 
