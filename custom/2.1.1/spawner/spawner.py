@@ -272,7 +272,7 @@ class BackendSpawner(Spawner):
         start_event = {
             "failed": False,
             "progress": 10,
-            "html_message": f"<details><summary>{now}: Sending request to backend service to start your service {user_options['name']} on {user_options['system']}.</summary>\
+            "html_message": f"<details><summary>{now}: Sending request to backend service to start your service on {user_options['system']}.</summary>\
                 &nbsp;&nbsp;Start ID: {self.start_id}<br>&nbsp;&nbsp;Options:<br><pre>{json.dumps(user_options, indent=2)}</pre></details>",
         }
         self.ready_event[
