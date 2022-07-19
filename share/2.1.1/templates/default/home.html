@@ -585,7 +585,10 @@ function setValues(name, options) {
   updatePartitions(id, option1, system, account, project, partition, reservation);
   // updateResources only sets reservation value, so update other resources manually
   if (nodes) $("input#" + id + "-nodes-input").val(nodes);
-  if (runtime) $("input#" + id + "-runtime-input").val(runtime);
+  if (runtime) {
+    let runtime = runtime/60;
+    $("input#" + id + "-runtime-input").val(runtime);
+  }
   if (gpus) $("input#" + id + "-gpus-input").val(gpus);
 }
 
