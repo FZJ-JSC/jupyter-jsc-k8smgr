@@ -4,6 +4,7 @@ import os
 
 from jupyterhub.apihandlers import APIHandler
 from jupyterhub.scopes import needs_scope
+from uuid import uuid4
 from tornado.httpclient import HTTPRequest
 
 from custom_utils.backend_services import drf_request
@@ -176,7 +177,7 @@ class DRFServiceLogLevelAPIHandler(APIHandler):
     async def _drf_request(self, service, handler="", method="GET", body=None):
         custom_config = self.authenticator.custom_config
         req_prop = drf_request_properties(
-            service, custom_config, self.log, None
+            service, custom_config, self.log, uuid4().hex
         )
         log_url = req_prop.get("urls", {}).get("logs", "None")
         if handler:
