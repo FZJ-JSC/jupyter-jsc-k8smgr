@@ -345,7 +345,7 @@ class BackendSpawner(Spawner):
             extra={"uuidcode": self.name},
         )
         now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
-        if user_options.get("system", {}).get("drf-service", "") == "unicoremgr":
+        if user_options.get(user_options["system"], {}).get("drf-service", "") == "unicoremgr":
             submit_message = f"<details><summary>{now}: Waiting for UNICORE job to run...</summary></details>"
         else:
             submit_message = f"<details><summary>{now}: Waiting for Kubernetes Container to start...</summary></details>"
