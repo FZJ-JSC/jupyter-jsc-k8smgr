@@ -586,8 +586,8 @@ function setValues(name, options) {
   // updateResources only sets reservation value, so update other resources manually
   if (nodes) $("input#" + id + "-nodes-input").val(nodes);
   if (runtime) {
-    let runtime = runtime/60;
-    $("input#" + id + "-runtime-input").val(runtime);
+    let runtime_minutes = runtime/60;
+    $("input#" + id + "-runtime-input").val(runtime_minutes);
   }
   if (gpus) $("input#" + id + "-gpus-input").val(gpus);
 }
