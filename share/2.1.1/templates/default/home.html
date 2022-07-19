@@ -582,7 +582,7 @@ function setValues(name, options) {
   updateAccounts(id, option1, system, account);
   updateProjects(id, option1, system, account, project);
   updatePartitions(id, option1, system, account, project, partition);
-  updatePartitions(id, option1, system, account, project, partition, reservation);
+  updateResources(id, option1, system, account, project, partition, reservation);
   // updateResources only sets reservation value, so update other resources manually
   if (nodes) $("input#" + id + "-nodes-input").val(nodes);
   if (runtime) {
