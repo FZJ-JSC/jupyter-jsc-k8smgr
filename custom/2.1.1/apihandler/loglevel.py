@@ -15,8 +15,6 @@ from logs.utils import supported_handler_classes
 from logs.utils import supported_formatter_classes
 
 
-
-
 def get_config():
     try:
         with open(os.environ.get("LOGGING_CONFIG_FILE", "logging.json"), "r") as f:
