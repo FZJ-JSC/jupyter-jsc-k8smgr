@@ -272,7 +272,8 @@ class BackendSpawner(Spawner):
         start_event = {
             "failed": False,
             "progress": 10,
-            "html_message": f"<details><summary>{now}: Start service. Start ID: {self.start_id}</summary>&nbsp;&nbsp;Options:<br>{json.dumps(user_options, indent=2)}</details>",
+            "html_message": f"<details><summary>{now}: Sending request to backend service to start your service {user_options['name']} on {user_options['system']}.</summary>\
+                &nbsp;&nbsp;Start ID: {self.start_id}<br>&nbsp;&nbsp;Options:<br><pre>{json.dumps(user_options, indent=2)}</pre></details>",
         }
         self.ready_event[
             "html_message"
@@ -344,10 +345,14 @@ class BackendSpawner(Spawner):
             extra={"uuidcode": self.name},
         )
         now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
+        if user_options.get("system", {}).get("drf-service", "") == "unicoremgr":
+            submit_message = f"<details><summary>{now}: Waiting for UNICORE job to run...</summary></details>"
+        else:
+            submit_message = f"<details><summary>{now}: Waiting for Kubernetes Container to start...</summary></details>"
         submitted_event = {
             "failed": False,
             "progress": 30,
-            "html_message": f"<details><summary>{now}: Request submitted to Jupyter-JSC backend</summary></details>",
+            "html_message": submit_message,
         }
         self.latest_events.append(submitted_event)
         self.log.info(
