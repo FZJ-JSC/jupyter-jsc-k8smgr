@@ -12,7 +12,7 @@ require(["jquery", "jhapi"], function (
   $(document).ready(function () {
     systems.forEach(function (system) {
       var handlers = { "file": null, "stream": null, "smtp": null, "syslog": null }
-      api.api_request(`logs/${system}/handler`, {
+      api.api_request(`logs/${system}`, {
         success: function (data) {
           console.log(data);
 
