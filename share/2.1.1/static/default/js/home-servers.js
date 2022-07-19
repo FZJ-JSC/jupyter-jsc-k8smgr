@@ -600,6 +600,7 @@ require(["jquery", "jhapi", "utils"], function (
   function update_spawn_events_dict(name, log_select) {
     // Save latest log to time stamp and empty it
     const start_event = spawn_events[name]["latest"][0];
+    if (!start_event) return;
     const start_message = start_event.html_message;
     var re = /([0-9]+(_[0-9]+)+).*[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,3})?/;
     var start_time = re.exec(start_message)[0];
