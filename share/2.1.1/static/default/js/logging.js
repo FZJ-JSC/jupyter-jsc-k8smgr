@@ -14,8 +14,6 @@ require(["jquery", "jhapi"], function (
       var handlers = { "file": null, "stream": null, "smtp": null, "syslog": null }
       api.api_request(`logs/${system}/handler`, {
         success: function (data) {
-          console.log(data);
-
           data.forEach(function (item) {
             var handler = item.handler;
             var config = item.configuration;
