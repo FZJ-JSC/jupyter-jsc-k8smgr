@@ -16,19 +16,19 @@ require(["jquery", "jhapi"], function (
         success: function (data) {
           console.log(data);
 
-          // data.forEach(function (item) {
-          //   var handler = item.handler;
-          //   var config = item.configuration;
-          //   for (const c in config) {
-          //     var element = $(`#${system}-${handler}-${c}`);
-          //     var value = config[c];
-          //     if (typeof(value) == "object") {
-          //       value = value.join(';');
-          //     }
-          //     element.val(value);
-          //   }
-          //   handlers[handler] = config;
-          // })
+          data.forEach(function (item) {
+            var handler = item.handler;
+            var config = item.configuration;
+            for (const c in config) {
+              var element = $(`#${system}-${handler}-${c}`);
+              var value = config[c];
+              if (typeof (value) == "object") {
+                value = value.join(';');
+              }
+              element.val(value);
+            }
+            handlers[handler] = config;
+          })
 
           // Can only create those handlers which do not exist
           for (const handler in handlers) {
