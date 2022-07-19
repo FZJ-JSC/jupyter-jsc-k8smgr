@@ -181,9 +181,11 @@ class DRFServiceLogLevelAPIHandler(APIHandler):
         log_url = req_prop.get("urls", {}).get("logs", "None")
         if handler:
             log_url = log_url + handler + "/"
-        self.log.debug(f"log_url: {log_url}")
+        
+        self.log.info(f"log_url: {log_url}")
+
         req = HTTPRequest(
-            log_url ,
+            log_url,
             method=method,
             headers=req_prop["headers"],
             request_timeout=req_prop["request_timeout"],
