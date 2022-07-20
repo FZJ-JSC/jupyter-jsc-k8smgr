@@ -81,7 +81,7 @@ $("div[id*=reservation] select").focus(function () {
 });
 
 // Check on click if we can remove the warning badge in tab
-$("[id$=tab").on("click", function () {
+$("[id$=tab").click(function () {
   var tab = $(this);
   var tab_content = $(tab.data("bsTarget"));
   var badges = tab_content.find(".badge");
@@ -107,7 +107,7 @@ function removeWarnings(name) {
 }
 
 // Toggle the collapse on table row click
-$("tr[data-server-name]").not(".progress-tr").not(".collapse-tr").on("click", function () {
+$("tr[data-server-name]").not(".progress-tr").not(".collapse-tr").click(function () {
   var collapse = $(this).next().find(".collapse");
   var first_td = $(this).children().first();
   var icon = first_td.children().first();
@@ -122,32 +122,32 @@ $("tr[data-server-name]").not(".progress-tr").not(".collapse-tr").on("click", fu
   }
 });
 // But not on click of the action td
-$(".actions-td").on("click", function (event) {
+$(".actions-td").click(function (event) {
   event.preventDefault();
   event.stopPropagation();
 })
 
 // Change to log vertical tag on toggle logs
-// $(".btn[id*=progress-log-btn]").on("click", function(event) {
-$(".progress-log-btn, .progress-info-text").on("click", function (event) {
+$(".progress-log-btn, .progress-info-text").click(function (event) {
   var tr = $(this).parents("tr");
   var collapse = tr.next().find(".collapse");
   var hidden = collapse.css("display") == "none" ? true : false;
   var name = tr.data("server-name");
 
-  console.log(hidden, $("#" + name + "-logs-tab").hasClass("show"));
+  console.log(hidden, $("#" + name + "-logs-tab").hasClass("active"));
 
   // Do not hide collapse if already open, but not showing the logs tab
-  if (!hidden && !$("#" + name + "-logs-tab").hasClass("show")) {
+  if (!hidden && !$("#" + name + "-logs-tab").hasClass("active")) {
     event.preventDefault();
     event.stopPropagation();
   }
-  else if (hidden) {
-    // Change to log vertical tag
-    var trigger = $("#" + name + "-logs-tab");
-    var tab = new bootstrap.Tab(trigger);
-    tab.show();
+  else if (!hidden) {
+    return; // do not change to log tab if we should close the collapse 
   }
+  // Change to log vertical tab
+  var trigger = $("#" + name + "-logs-tab");
+  var tab = new bootstrap.Tab(trigger);
+  tab.show();
 });
 
 // Update styling of select components depending on available values
