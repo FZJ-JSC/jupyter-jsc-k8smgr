@@ -206,7 +206,7 @@ require(["jquery", "jhapi", "utils"], function (
     var name = tr.data("server-name");
     var display_name = tr.find("th").text();
     var url = utils.url_path_join(base_url, "spawn", user, name);
-    url = createUrlAndUpdateTr(url, collapse, tr);
+    // url = createUrlAndUpdateTr(url, collapse, display_name, tr);
     $(this).attr("href", url);
 
     var options = createDataDict(collapse, display_name);
@@ -304,7 +304,7 @@ require(["jquery", "jhapi", "utils"], function (
     spinner.removeClass("d-none");
 
     var url = utils.url_path_join(base_url, "spawn", user, server_name);
-    url = createUrlAndUpdateTr(url, $("#new_jupyterlab-configuration"), display_name);
+    // url = createUrlAndUpdateTr(url, $("#new_jupyterlab-configuration"), display_name);
     $(this).attr("href", url);
 
     var parent = $("#new_jupyterlab-dialog").find(".modal-content");
