@@ -29,6 +29,7 @@ require(["jquery", "jhapi", "utils"], function (
       if (!(name in evtSources)) {
         var progress_url = utils.url_path_join(jhdata.base_url, "api/users", user, "servers", name, "progress");
         var progress_bar = $("#" + name + "-progress-bar");
+        var progress_info = $("#" + name + "-progress-info-text");
         var progress_log = $("#" + name + "-progress-log");
         var log_select = $("#" + name + "-log-select");
 
@@ -38,13 +39,16 @@ require(["jquery", "jhapi", "utils"], function (
         evtSources[name] = new EventSource(progress_url);
         evtSources[name]["name"] = name;
         evtSources[name]["progress_bar"] = progress_bar;
+        evtSources[name]["progress_info"] = progress_info;
         evtSources[name]["progress_log"] = progress_log;
         evtSources[name].onmessage = function (e) {
-          onEvtMessage(e, evtSources[name], evtSources[name]["progress_bar"], evtSources[name]["progress_log"]);
+          onEvtMessage(e, evtSources[name], evtSources[name]["progress_bar"],
+            evtSources[name]["progress_info"], evtSources[name]["progress_log"]);
         }
 
         progress_bar.removeClass("bg-success bg-danger");
         progress_bar.css("width", "0%");
+        progress_info.html("");
         progress_log.html("");
 
         // Update buttons to reflect pending state
@@ -61,12 +65,14 @@ require(["jquery", "jhapi", "utils"], function (
     for (const name in data) {
       const html_message = data[name].html_message;
       var progress_bar = $("#" + name + "-progress-bar");
+      var progress_info = $("#" + name + "-progress-info-text");
       var progress_log = $("#" + name + "-progress-log");
       var row = $('tr[data-server-name="' + name + '"]').first();
       // Only log message if it hasn't been logged yet      
       no_duplicate_log(html_message, progress_log);
       progress_bar.removeClass("bg-success");
       progress_bar.width(0);
+      progress_info.html("");
       enableRow(row, false);
     }
   }
@@ -131,10 +137,12 @@ require(["jquery", "jhapi", "utils"], function (
         // Only reset progress bar if stopping a running server
         // If cancelling, we want to keep the progress indicator
         var progress_bar = tr.find(".progress-bar");
+        var progress_info = tr.find(".progress-info-text");
         if (progress_bar.hasClass("bg-success")) {
           progress_bar.removeClass("bg-sucess");
           progress_bar.width(0);
-          progress_bar.html('');
+          progress_bar.html("");
+          progress_info.html("");
         }
       },
     });
@@ -154,10 +162,12 @@ require(["jquery", "jhapi", "utils"], function (
         // Only reset progress bar if stopping a running server
         // If cancelling, we want to keep the progress indicator
         var progress_bar = tr.find(".progress-bar");
+        var progress_info = tr.find(".progress-info-text");
         if (progress_bar.hasClass("bg-success")) {
           progress_bar.removeClass("bg-sucess");
           progress_bar.width(0);
-          progress_bar.html('');
+          progress_bar.html("");
+          progress_info.html("");
         }
       },
     });
@@ -616,6 +626,6 @@ require(["jquery", "jhapi", "utils"], function (
 
   /* Moved to home.html */
   // Handle EventSource message
-  // function onEvtMessage(event, evtSource, progress_bar, progress_log) {
+  // function onEvtMessage(event, evtSource, progress_bar, progress_info, progress_log) {
   // }
 });
