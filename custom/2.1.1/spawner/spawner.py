@@ -347,9 +347,9 @@ class BackendSpawner(Spawner):
         now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
 
         if self.user.authenticator.custom_config.get("systems", {}).get(user_options["system"], {}).get("drf-service", "") == "unicoremgr":
-            submit_message = f"<details><summary>{now}: Request submitted to Jupyter-JSC backend service.</summary>Waiting for UNICORE job to run...</details>"
+            submit_message = f"<details><summary>{now}: Waiting for UNICORE job to run...</summary>You will receive further information about the service status from the UNICORE job.</details>"
         else:
-            submit_message = f"<details><summary>{now}: Request submitted to Jupyter-JSC backend service.</summary>Waiting for Kubernetes Container to start...</details>"
+            submit_message = f"<details><summary>{now}: Waiting for Kubernetes container to start...</summary>You will receive further information about the service status from the container.</details>"
         submitted_event = {
             "failed": False,
             "progress": 30,
