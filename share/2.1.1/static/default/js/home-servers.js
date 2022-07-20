@@ -206,7 +206,6 @@ require(["jquery", "jhapi", "utils"], function (
     var name = tr.data("server-name");
     var display_name = tr.find("th").text();
     var url = utils.url_path_join(base_url, "spawn", user, name);
-    // url = createUrlAndUpdateTr(url, collapse, display_name, tr);
     $(this).attr("href", url);
 
     var options = createDataDict(collapse, display_name);
@@ -288,13 +287,7 @@ require(["jquery", "jhapi", "utils"], function (
     var display_name = $("#new_jupyterlab-name-input").val();
     // Automatically set name if none was specified
     if (display_name == "") {
-      var c = 1;
-      $("th[scope=row]").each(function () {
-        var name = $(this).html();
-        if (RegExp(/^jupyterlab_[0-9]*[0-9]$/).test(name)) c += 1;
-      })
-      display_name = "jupyterlab_" + c;
-      $("#new_jupyterlab-name-input").val(display_name); // Set name for user
+      display_name = "Unnamed JupyterLab"
     }
 
     $(this).attr("disabled", true);
@@ -304,7 +297,6 @@ require(["jquery", "jhapi", "utils"], function (
     spinner.removeClass("d-none");
 
     var url = utils.url_path_join(base_url, "spawn", user, server_name);
-    // url = createUrlAndUpdateTr(url, $("#new_jupyterlab-configuration"), display_name);
     $(this).attr("href", url);
 
     var parent = $("#new_jupyterlab-dialog").find(".modal-content");
@@ -500,65 +492,6 @@ require(["jquery", "jhapi", "utils"], function (
   /*
   Util functions
   */
-  function createUrlAndUpdateTr(url, parent, display_name, tr) {
-    url += "?vo=" + $("#vo-form input[type='radio']:checked").val();
-    url += "&name=" + display_name;
-
-    function addParameter(param, input = false) {
-      if (input) { // <input>
-        var input = parent.find(`input[id*=${param}]`);
-        var parent_div = input.parents(".row").first();
-        if (parent_div.css("display") == "none") {
-          return;
-        }
-        var value = input.val();
-        if (param == "runtime") {
-          value = value * 60;
-        }
-      }
-      else { // <select>
-        var select = parent.find(`select[id*=${param}]`);
-        var value = select.val();
-
-        if (param == "type") {
-          param = "service";
-          value = "JupyterLab/" + value;
-        }
-
-        // For new jupterlabs, no tr exists that can be updated
-        if (tr) {
-          switch (param) {
-            case "system":
-              var td = tr.find(".system-td");
-              td.text(value);
-              break;
-            case "partition":
-              var td = tr.find(".partition-td");
-              td.text(value);
-              break;
-            case "project":
-              var td = tr.find(".project-td");
-              td.text(value);
-              break;
-          }
-        }
-      }
-
-      if (value != null && value != "") url += "&" + param + "=" + value;
-    }
-
-    addParameter("type");  // service
-    addParameter("system");
-    addParameter("account");
-    addParameter("project");
-    addParameter("partition");
-    addParameter("reservation");
-    addParameter("nodes", true);
-    addParameter("gpus", true);
-    addParameter("runtime", true);
-    return url;
-  }
-
   function createDataDict(parent, display_name) {
     var user_options = {}
     user_options["vo"] = $("#vo-form input[type='radio']:checked").val();
