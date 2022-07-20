@@ -345,7 +345,6 @@ class BackendSpawner(Spawner):
             extra={"uuidcode": self.name},
         )
         now = datetime.now().strftime("%Y_%m_%d %H:%M:%S.%f")[:-3]
-
         if self.user.authenticator.custom_config.get("systems", {}).get(user_options["system"], {}).get("drf-service", "") == "unicoremgr":
             submit_message = f"<details><summary>{now}: Waiting for UNICORE job to run...</summary>You will receive further information about the service status from the UNICORE job.</details>"
         else:

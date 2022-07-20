@@ -213,13 +213,15 @@
     {{ project }}
     {%- endif %}
   </td>
+  {%- set margin = "me-3"%}
   <td class="status-td">
     <div class="d-inline-flex flex-wrap align-items-center g-0">
       <div class="col-auto my-2">
-        <div class="progress flex-grow-1 me-3" style="height: 20px; min-width: 100px;">
+        <div class="progress flex-grow-1 {{margin}}" style="height: 20px; min-width: 100px;">
           <div id="{{name}}-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
           aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
+        <div class="progress-info-text text-muted text-center {{margin}}" style="font-size: smaller;"></div>
       </div>
       <div class="col-auto">
         <a class="progress-log-btn" role="button">
