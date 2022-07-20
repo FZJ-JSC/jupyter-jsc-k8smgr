@@ -206,11 +206,13 @@ require(["jquery", "jhapi", "utils"], function (
     try {
       $(`form[id*=${name}]`).submit();
       var progress_bar = $("#" + name + "-progress-bar");
+      var progress_info = $("#" + name + "-progress-info-text");
       // Get the card instead of the parent div for the log
       var progress_log = $("#" + name + "-progress-log");
       var log_select = $("#" + name + "-log-select");
       progress_bar.removeClass("bg-success bg-danger");
       progress_bar.css("width", "0%");
+      progress_info.html("");
       progress_log.html("");
       var newTab = window.open("about:blank");
 
@@ -227,9 +229,11 @@ require(["jquery", "jhapi", "utils"], function (
             evtSources[name] = new EventSource(progress_url);
             evtSources[name]["name"] = name;
             evtSources[name]["progress_bar"] = progress_bar;
+            evtSources[name]["progress_info"] = progress_info;
             evtSources[name]["progress_log"] = progress_log;
             evtSources[name].onmessage = function (e) {
-              onEvtMessage(e, evtSources[name], evtSources[name]["progress_bar"], evtSources[name]["progress_log"]);
+              onEvtMessage(e, evtSources[name], evtSources[name]["progress_bar"],
+                evtSources[name]["progress_info"], evtSources[name]["progress_log"]);
             }
           }
 
@@ -239,6 +243,7 @@ require(["jquery", "jhapi", "utils"], function (
           progress_bar.css("width", "100%");
           progress_bar.attr("aria-valuenow", 100);
           progress_bar.addClass("bg-danger");
+          progress_info.html("last spawn failed");
           progress_log.append($("<div>").html(
             `Could not request spawn. Error: ${xhr.status} ${errorThrown}`)
           )
