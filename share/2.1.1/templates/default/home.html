@@ -221,7 +221,7 @@
           <div id="{{name}}-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
           aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
-        <div class="progress-info-text text-muted text-center {{margin}}" style="font-size: smaller;"></div>
+        <div id="{{name}}-progress-info-text" class="progress-info-text text-muted text-center {{margin}}" style="font-size: smaller;"></div>
       </div>
       <div class="col-auto">
         <a class="progress-log-btn" role="button">
@@ -1009,6 +1009,7 @@ function updateSpawners() {
 
     var name = "{{s.name}}";
     var progress_bar = $("#" + name + "-progress-bar");
+    var progress_info = $("#" + name + "-progress-info-text");
     var progress_log = $("#" + name + "-progress-log");
 
     var tr = progress_bar.parents("tr");
@@ -1036,6 +1037,7 @@ function updateSpawners() {
     progress_bar.css("width", "100%");
     progress_bar.attr("aria-valuenow", current_progress);
     progress_bar.append( $("b").html(current_progress + "%") );
+    progress_info.html("spawning...");
     open_btn.addClass("disabled");
     if (current_progress < {{cancel_progress_activation}}) {
       stop_btn.addClass("disabled");
@@ -1051,24 +1053,27 @@ function updateSpawners() {
     // what is a better solution for this?
     evtSources[name]["name"] = name;
     evtSources[name]["progress_bar"] = progress_bar;
+    evtSources[name]["progress_info"] = progress_info;
     evtSources[name]["progress_log"] = progress_log;
 
     {%- elif s.active %}
     progress_bar.css("width", "100%");
     progress_bar.attr("aria-valuenow", current_progress);
-    progress_bar.addClass('bg-success');
+    progress_bar.addClass("bg-success");
+    progress_info.html("running");
     {%- endif %}
   {%- endfor %}
 
   for (const name in evtSources) {
     evtSources[name].onmessage = function (e) {
-      onEvtMessage(e, evtSources[name], evtSources[name]["progress_bar"], evtSources[name]["progress_log"]);
+      onEvtMessage(e, evtSources[name], evtSources[name]["progress_bar"], 
+        evtSources[name]["progress_info"], evtSources[name]["progress_log"]);
     }
   }
 }
 
 // Handle EventSource message
-function onEvtMessage(event, evtSource, progress_bar, progress_log) {
+function onEvtMessage(event, evtSource, progress_bar, progress_info, progress_log) {
   var tr = progress_bar.parents("tr");
   var server_name = tr.data("server-name");
   var collapse = tr.siblings(`.collapse-tr[data-server-name=${server_name}]`);
@@ -1088,6 +1093,7 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     progress_bar.css("width", "100%");
     progress_bar.html("<b>" + evt.progress + "%</b>");
     progress_bar.attr("aria-valuenow", evt.progress);
+    progress_info.html("spawning...");
     delete_btn.addClass("disabled")
 
     if (evt.progress >= {{cancel_progress_activation}}) {
@@ -1113,6 +1119,7 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     delete evtSources[evtSource.name];
     progress_bar.html('');
     progress_bar.addClass("bg-success");
+    progress_info.html("running");
     cancel_btn.addClass("d-none disabled");
     stop_btn.removeClass("d-none disabled");
     open_btn.removeClass("disabled");
@@ -1125,6 +1132,7 @@ function onEvtMessage(event, evtSource, progress_bar, progress_log) {
     progress_bar.html('');
     progress_bar.attr("aria-valuenow", 100);
     progress_bar.addClass("bg-danger");
+    progress_info.html("last spawn failed");
     // Change buttons to start or N/A
     var na = tr.find(".na-status").text();
     if (na == "1") {
