@@ -6,7 +6,7 @@ diff -Naurx .git -x node_modules -x share -x __pycache__ ../jupyterhub/jupyterhu
          )
  
 +    def static_url(self, path, include_host=None, **kwargs):
-+        host = os.environ.get('JUPYTERHUB_HOSTNAME', 'default')
++        host = self.request.host
 +        static_url = super().static_url(path, include_host, **kwargs)
 +        base_path, path = static_url.split('static')
 +        static_path = self.settings['static_path']
