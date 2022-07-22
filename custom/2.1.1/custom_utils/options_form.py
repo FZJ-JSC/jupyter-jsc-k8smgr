@@ -13,6 +13,9 @@ def get_system_infos(
     def regroup(x):
         groups_ = list(c.match(x).groups())
         sys = custom_config.get("map_systems").get(groups_[1])
+        if sys not in custom_config.get("systems", {}).keys:
+            # If system is not in systems, we don't need these accounts
+            return []
         if not sys:
             log.error(f"No system defined in custom config system map for {groups_[1]}")
         partition = custom_config.get("map_partitions").get(groups_[1])
@@ -29,7 +32,8 @@ def get_system_infos(
         ]
         return groups
 
-    user_hpc_list = [regroup(x) for x in user_hpc_accounts]
+    user_hpc_list_incl_empty = [regroup(x) for x in user_hpc_accounts]
+    user_hpc_list = [x for x in user_hpc_list_incl_empty if x]
 
     systems_config = custom_config.get("systems")
     # Sort UNICORE systems first
