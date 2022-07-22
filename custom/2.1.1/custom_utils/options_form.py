@@ -13,7 +13,7 @@ def get_system_infos(
     def regroup(x):
         groups_ = list(c.match(x).groups())
         sys = custom_config.get("map_systems").get(groups_[1])
-        if sys not in custom_config.get("systems", {}).keys:
+        if sys not in custom_config.get("systems", {}).keys():
             # If system is not in systems, we don't need these accounts
             return []
         if not sys:
