@@ -134,7 +134,7 @@ class JHubLogLevelAPIHandler(APIHandler):
             return
         # get default config and overwrite as needed
         handler_config = copy.deepcopy(default_configurations[handler])
-        for key, value in data.get("configuration"):
+        for key, value in data.get("configuration").items():
             handler_config[key] = value
         create_logging_handler(current_config, handler, **handler_config)
         self.log.info(f"Created {handler} log handler", extra={"data": data})
@@ -155,7 +155,7 @@ class JHubLogLevelAPIHandler(APIHandler):
             return
         # get current config and overwrite as needed
         handler_config = copy.deepcopy(current_config[handler])
-        for key, value in data.get("configuration"):
+        for key, value in data.get("configuration").items():
             handler_config[key] = value
         remove_logging_handler(current_config, handler)
         create_logging_handler(current_config, handler, **handler_config)
