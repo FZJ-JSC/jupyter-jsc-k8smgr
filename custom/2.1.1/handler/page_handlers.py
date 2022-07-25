@@ -1,4 +1,4 @@
-
+import os
 from tornado import web
 from custom_utils import get_vos
 from jupyterhub.handlers.base import BaseHandler
@@ -69,6 +69,7 @@ class LoggingHandler(BaseHandler):
     async def get(self):
         user = self.current_user
         ns = await _create_ns(user)
+        ns.update({'show_drf_logs': os.environ.get("SHOW_DRF_LOGS", "false").lower() in ["true", "1"]})
         html = await self.render_template("logging.html", **ns)
         self.finish(html)
 
