@@ -23,7 +23,7 @@ workflow:
       variables:
         BUILD_DEVEL: "False"
         RUN_UNIT_TESTS: "True"
-        BUILD_COMMIT_SHORT: "True"
+        BUILD_COMMIT_SHORT: "False"
         RUN_FUNCTIONAL_TESTS: "True"
         LATEST_TAG: "latest"
     - when: never
