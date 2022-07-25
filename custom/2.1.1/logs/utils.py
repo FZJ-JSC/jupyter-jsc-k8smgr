@@ -7,7 +7,7 @@ import sys
 
 from jsonformatter import JsonFormatter
 
-from log import logger_name
+from . import logger_name
 
 class SafeToCopyFileHandler(logging.FileHandler):
     def __init__(self, filename):
