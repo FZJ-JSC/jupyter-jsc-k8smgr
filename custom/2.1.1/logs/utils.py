@@ -7,7 +7,7 @@ import sys
 
 from jsonformatter import JsonFormatter
 
-from . import logger_name
+logger_name = os.environ.get("LOGGER_NAME", "JupyterHub")
 
 class SafeToCopyFileHandler(logging.FileHandler):
     def __init__(self, filename):
