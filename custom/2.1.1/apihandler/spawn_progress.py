@@ -70,13 +70,14 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                         ]
                     )
                     metrics_logger = logging.getLogger("Metrics")
-                    metrics_logger.info(
-                        "action=usercancel;userid={userid};servername={server_name};{options}".format(
-                            userid=user.id,
-                            server_name=spawner.name,
-                            options=options,
-                        )
-                    )
+                    metrics_extras = {
+                        "action": "usercancel",
+                        "userid": user.id,
+                        "servername": spawner.name,
+                        "options": spawner.user_options
+                    }
+                    metrics_logger.info(f"action={metrics_extras['action']};userid={metrics_extras['userid']};servername={metrics_extras['servername']};{options}")
+                    self.log.info("usercancel", extra=metrics_extras)
             else:
                 self.log.debug(
                     "APICall: SpawnUpdate",

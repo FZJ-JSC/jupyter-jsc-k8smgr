@@ -313,12 +313,15 @@ class BackendSpawner(Spawner):
             "1",
         ]:
             options = ';'.join(['%s=%s' % (k, v) for k, v in self.user_options.items()])
-            metrics_logger = logging.getLogger("Metrics")
-            metrics_logger.info(
-                "action=start;userid={userid};servername={server_name};{options}".format(
-                    userid=self.user.id, server_name=self.name, options=options
-                )
-            )
+            metrics_logger = logging.getLogger("Metrics")            
+            metrics_extras = {
+                "action": "start",
+                "userid": self.user.id,
+                "servername": self.name,
+                "options": self.user_options
+            }
+            metrics_logger.info(f"action={metrics_extras['action']};userid={metrics_extras['userid']};servername={metrics_extras['servername']};{options}")
+            self.log.info("start", extra=metrics_extras)
 
         try:
             resp_json = await drf_request(
