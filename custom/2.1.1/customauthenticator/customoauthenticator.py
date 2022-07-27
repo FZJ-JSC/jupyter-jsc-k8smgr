@@ -340,8 +340,6 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         hpc_infos_via_unity = str(len(hpc_list) > 0).lower()
         handler.statsd.incr(f"login.authenticator.{used_authenticator}")
         handler.statsd.incr(f"login.hpc_infos_via_unity.{hpc_infos_via_unity}")
-        metric_logger = logging.getLogger('Metrics')
-        metric_logger.info()
 
         username = authentication.get("name", "unknown")
         admin = authentication.get("admin", False)
