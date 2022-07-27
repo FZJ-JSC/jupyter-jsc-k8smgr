@@ -11,8 +11,7 @@ from jupyterhub.scopes import needs_scope
 from tornado import web
 from tornado.httpclient import HTTPRequest
 
-user_cancel_message = "<details><summary>Start cancelled by user.</summary>You clicked the cancel button.</details>"
-
+user_cancel_message = "Start cancelled by user.</summary>You clicked the cancel button.</details>"
 
 class SpawnProgressUpdateAPIHandler(APIHandler):
     @needs_scope("access:servers")
@@ -50,7 +49,7 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                 event["html_message"] = f"{now}: {event['html_message']}"
 
         if event and event.get("failed", False):
-            if event.get("html_message", "") == user_cancel_message:
+            if event.get("html_message", "").endswith(user_cancel_message):
                 self.log.debug(
                     "APICall: SpawnUpdate",
                     extra={
@@ -89,20 +88,6 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                         "event": event,
                     },
                 )
-                if os.environ.get(
-                    "LOGGING_METRICS_ENABLED", "false"
-                ).lower() in ["true", "1"]:
-                    options = ";".join(
-                        ["%s=%s" % (k, v) for k, v in spawner.user_options.items()]
-                    )
-                    metrics_logger = logging.getLogger("Metrics")
-                    metrics_logger.info(
-                        "action=failed;userid={userid};servername={server_name};{options}".format(
-                            userid=user.id,
-                            server_name=spawner.name,
-                            options=options,
-                        )
-                    )
             await spawner.cancel(event)
             self.set_header("Content-Type", "text/plain")
             self.set_status(204)

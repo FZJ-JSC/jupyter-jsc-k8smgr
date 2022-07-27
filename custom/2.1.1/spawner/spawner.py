@@ -457,18 +457,6 @@ class BackendSpawner(Spawner):
             validate_cert=req_prop["validate_cert"],
             ca_certs=req_prop["ca_certs"],
         )
-
-        if os.environ.get("LOGGING_METRICS_ENABLED", "false").lower() in [
-            "true",
-            "1",
-        ]:
-            options = ';'.join(['%s=%s' % (k, v) for k, v in self.user_options.items()])
-            metrics_logger = logging.getLogger("Metrics")
-            metrics_logger.info(
-                "action=stop;userid={userid};servername={server_name};{options}".format(
-                    userid=self.user.id, server_name=self.name, options=options
-                )
-            )
         
         await drf_request(
             req,
