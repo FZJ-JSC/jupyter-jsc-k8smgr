@@ -1,5 +1,7 @@
 import datetime
 import json
+import os
+import logging
 
 from custom_utils.backend_services import BackendException
 from custom_utils.backend_services import drf_request
@@ -59,6 +61,23 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                         "event": event,
                     },
                 )
+                if os.environ.get(
+                    "LOGGING_METRICS_ENABLED", "false"
+                ).lower() in ["true", "1"]:
+                    options = ";".join(
+                        [
+                            "%s=%s" % (k, v)
+                            for k, v in spawner.user_options.items()
+                        ]
+                    )
+                    metrics_logger = logging.getLogger("Metrics")
+                    metrics_logger.info(
+                        "action=usercancel;userid={userid};servername={server_name};{options}".format(
+                            userid=user.id,
+                            server_name=spawner.name,
+                            options=options,
+                        )
+                    )
             else:
                 self.log.debug(
                     "APICall: SpawnUpdate",
@@ -70,6 +89,20 @@ class SpawnProgressUpdateAPIHandler(APIHandler):
                         "event": event,
                     },
                 )
+                if os.environ.get(
+                    "LOGGING_METRICS_ENABLED", "false"
+                ).lower() in ["true", "1"]:
+                    options = ";".join(
+                        ["%s=%s" % (k, v) for k, v in spawner.user_options.items()]
+                    )
+                    metrics_logger = logging.getLogger("Metrics")
+                    metrics_logger.info(
+                        "action=failed;userid={userid};servername={server_name};{options}".format(
+                            userid=user.id,
+                            server_name=spawner.name,
+                            options=options,
+                        )
+                    )
             await spawner.cancel(event)
             self.set_header("Content-Type", "text/plain")
             self.set_status(204)

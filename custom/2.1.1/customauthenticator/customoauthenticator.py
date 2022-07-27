@@ -58,6 +58,11 @@ class CustomLogoutHandler(OAuthLogoutHandler):
             await self._shutdown_servers(user)
 
         if user.authenticator.enable_auth_state:
+            if os.environ.get("LOGGING_METRICS_ENABLED", "false").lower() in ["true", "1"]:
+                import logging
+                metrics_logger = logging.getLogger("Metrics")
+                metrics_logger.info("action=logout;userid={userid};authenticator={authenticator};stopall={stopall};all_devices={logout_all_devices}".format(userid=user.id, authenticator=auth_state.get('oauth_user', {}).get('used_authenticator_attr','unknown'), stopall=stop_all, logout_all_devices=all_devices))
+
             tokens = {}
             auth_state = await user.get_auth_state()
             access_token = auth_state.get("access_token", None)
@@ -334,6 +339,8 @@ class CustomGenericOAuthenticator(GenericOAuthenticator):
         hpc_infos_via_unity = str(len(hpc_list) > 0).lower()
         handler.statsd.incr(f"login.authenticator.{used_authenticator}")
         handler.statsd.incr(f"login.hpc_infos_via_unity.{hpc_infos_via_unity}")
+        metric_logger = logging.getLogger('Metrics')
+        metric_logger.info()
 
         username = authentication.get("name", "unknown")
         admin = authentication.get("admin", False)
