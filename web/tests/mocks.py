@@ -19,6 +19,18 @@ def config_mock():
             "max_start_attempts": 3,
             "max_stop_attempts": 3,
             "restart_count_max": 3,
+            "replace_stage_specific": {
+                "stage1": {"stage_specific": "stage1"},
+                "stage2": {"stage_specific": "stage2"},
+            },
+            "replace_credential_specific": {
+                "authorized": {"credential_stuff": "auth"},
+                "authorized2": {},
+            },
+            "replace_service_specific": {
+                "JupyterLab_JupyterLab": {"service_stuff_1": "JLab"},
+                "JupyterLab_AiidaLab": {},
+            },
             "replace_indicators": ["<", ">"],
             "replace_servername_keyword": "servername",
             "replace_uniqueuserid_keyword": "unique_user_id",
@@ -26,6 +38,65 @@ def config_mock():
             "replace_namespace_keyword": "namespace",
         },
         "userhomes": {
+            "base": userhomes_base,
+            "skel": userhomes_skel,
+            "skel_ignore_files": [".*.swp"],
+        },
+        "tunnel": {},
+        "error_messages": {"services.utils.common.start_service_2": "Custom error"},
+    }
+
+
+def config_mock_services_mapping():
+    return {
+        "services": {
+            "base": services_base,
+            "headers_key_servername": "SERVERNAME",
+            "headers_key_access_token": "access-token",
+            "descriptions": services_descriptions,
+            "descriptions_ignore_files": [".*.swp"],
+            "yaml_filename": "service.yaml",
+            "max_start_attempts": 3,
+            "max_stop_attempts": 3,
+            "restart_count_max": 3,
+            "replace_indicators": ["<", ">"],
+            "replace_servername_keyword": "servername",
+            "replace_uniqueuserid_keyword": "unique_user_id",
+            "replace_secretname_keyword": "secret_name",
+            "replace_namespace_keyword": "namespace",
+            "credential_mapping": {"authorized": "mapped"},
+        },
+        "userhomes": {
+            "base": userhomes_base,
+            "skel": userhomes_skel,
+            "skel_ignore_files": [".*.swp"],
+        },
+        "tunnel": {},
+        "error_messages": {"services.utils.common.start_service_2": "Custom error"},
+    }
+
+
+def config_mock_userhome_mapping():
+    return {
+        "services": {
+            "base": services_base,
+            "headers_key_servername": "SERVERNAME",
+            "headers_key_access_token": "access-token",
+            "descriptions": services_descriptions,
+            "descriptions_ignore_files": [".*.swp"],
+            "yaml_filename": "service.yaml",
+            "max_start_attempts": 3,
+            "max_stop_attempts": 3,
+            "restart_count_max": 3,
+            "replace_indicators": ["<", ">"],
+            "replace_servername_keyword": "servername",
+            "replace_uniqueuserid_keyword": "unique_user_id",
+            "replace_secretname_keyword": "secret_name",
+            "replace_namespace_keyword": "namespace",
+        },
+        "userhomes": {
+            "credential_mapping": {"authorized": "mapped"},
+            "service_suffix": {"JupyterLab/JupyterLab": "_suffix"},
             "base": userhomes_base,
             "skel": userhomes_skel,
             "skel_ignore_files": [".*.swp"],

@@ -1,8 +1,10 @@
+import base64
 import copy
 import json
 import logging
 import os
 import shutil
+import tarfile
 
 import lockfile
 from jupyterjsc_k8smgr.settings import LOGGER_NAME
@@ -387,15 +389,36 @@ def _create_user_home(config, validated_data, jhub_credential, logs_extra):
         .filter(jhub_user_id=jhub_user_id)
         .first()
     )
-    if user_model:
-        return
-    log.debug("Create UserModel", extra=logs_extra)
-    UserModel(jhub_credential=jhub_credential, jhub_user_id=jhub_user_id).save()
+
+    if not user_model:
+        # Create user in db
+        log.debug("Create UserModel", extra=logs_extra)
+        UserModel(jhub_credential=jhub_credential, jhub_user_id=jhub_user_id).save()
+
     userhome_base = (
         config.get("userhomes", {}).get("base", "/tmp/userhomes").rstrip("/")
     )
-    userhome_skel = config.get("userhomes", {}).get("skel", "/etc/skel").rstrip("/")
-    userhome_user_path = f"{userhome_base}/{jhub_credential}_{jhub_user_id}"
+
+    # Allow jhub_credential mapping. Multiple credentials may use the same home directories
+    jhub_credential_home = (
+        config.get("userhomes", {})
+        .get("credential_mapping", {})
+        .get(jhub_credential, jhub_credential)
+    )
+
+    # Allow service specific home directories. Different services may use different home directories
+    service = validated_data.get("user_options", {}).get("service", "")
+    service_suffix = (
+        config.get("userhomes", {}).get("service_suffix", {}).get(service, "")
+    )
+    user_home_dir = f"{jhub_credential_home}{service_suffix}"
+
+    userhome_skel_base = (
+        config.get("userhomes", {}).get("skel", "/etc/skel").rstrip("/")
+    )
+    userhome_skel = f"{userhome_skel_base}/{jhub_credential_home}{service_suffix}"
+
+    userhome_user_path = f"{userhome_base}/{user_home_dir}/{jhub_user_id}"
     if not os.path.exists(userhome_user_path):
         log.debug(f"Create home directory {userhome_user_path}", extra=logs_extra)
         os.makedirs(userhome_skel, exist_ok=True)
@@ -425,9 +448,15 @@ def _create_service_yaml(
     unique_user = f"{jhub_credential}_{jhub_user_id}"
     log.debug("Create Service yaml", extra=logs_extra)
 
+    input_dir = config.get("services", {}).get("input_dir", "input")
     service_yaml_file = _get_yaml_file_name(drf_id, config)
     service_yaml_s = _yaml_get_service_as_string(
-        config, validated_data, service_yaml_file, logs_extra
+        config,
+        jhub_credential,
+        validated_data,
+        service_yaml_file,
+        input_dir,
+        logs_extra,
     )
 
     vo = validated_data["user_options"]["vo"]
@@ -437,12 +466,17 @@ def _create_service_yaml(
         extra=logs_extra,
     )
 
+    input_string = _create_input_string(service_yaml_file, input_dir)
+
     service_yaml_s = _yaml_replace(
         drf_id,
         config,
         quota_vo,
         service_yaml_s,
+        validated_data["user_options"]["service"].rstrip("/"),
+        jhub_credential,
         unique_user,
+        input_string,
         logs_extra,
     )
     with lockfile.LockFile(service_yaml_file):
@@ -471,15 +505,23 @@ def _get_yaml_file_name(drf_id, config):
     return service_yaml_file
 
 
-def _yaml_get_service_as_string(config, validated_data, service_yaml_file, logs_extra):
+def _yaml_get_service_as_string(
+    config, jhub_credential, validated_data, service_yaml_file, input_dir, logs_extra
+):
     services_skel_base = (
         config.get("services", {})
         .get("descriptions", "/tmp/services/descriptions")
         .rstrip("/")
     )
-    services_skel = (
-        f"{services_skel_base}/{validated_data['user_options']['service'].rstrip('/')}"
+
+    # credential mapping: allow multiple accounts to use the same service descriptions
+    jhub_credential_to_use = (
+        config.get("services", {})
+        .get("credential_mapping", {})
+        .get(jhub_credential, jhub_credential)
     )
+
+    services_skel = f"{services_skel_base}/{jhub_credential_to_use}/{validated_data['user_options']['service'].rstrip('/')}"
     services_service_path = os.path.dirname(service_yaml_file)
 
     if not os.path.exists(services_service_path):
@@ -489,11 +531,56 @@ def _yaml_get_service_as_string(config, validated_data, service_yaml_file, logs_
         )
         os.makedirs(services_skel, exist_ok=True)
         ignore_files = config.get("services", {}).get("descriptions_ignore_files", [])
+        stage = os.environ.get("STAGE", "").lower()
+        if stage:
+            stages_to_skip = [
+                f"{x}_*"
+                for x in config.get("services", {})
+                .get("replace_stage_specific", {})
+                .keys()
+                if x != stage
+            ]
+            ignore_files.extend(stages_to_skip)
+
+        credential_to_skip = [
+            f"{x}_*"
+            for x in config.get("services", {})
+            .get("replace_credential_specific", {})
+            .keys()
+            if x != jhub_credential
+        ]
+        ignore_files.extend(credential_to_skip)
+
+        service_ = (
+            validated_data["user_options"]["service"].rstrip("/").replace("/", "_")
+        )
+        services_to_skip = [
+            f"{x}_*"
+            for x in config.get("services", {})
+            .get("replace_service_specific", {})
+            .keys()
+            if x != service_
+        ]
+        ignore_files.extend(services_to_skip)
+
         shutil.copytree(
             src=services_skel,
             dst=services_service_path,
             ignore=shutil.ignore_patterns(*ignore_files),
         )
+
+        # Rename specific files
+        for subdir, dirs, files in os.walk(f"{services_service_path}/{input_dir}"):
+            for file in files:
+                if file.startswith(f"{stage}_"):
+                    newname = file[len(stage) + 1 :]
+                    shutil.move(f"{subdir}/{file}", f"{subdir}/{newname}")
+                if file.startswith(f"{jhub_credential}_"):
+                    newname = file[len(jhub_credential) + 1 :]
+                    shutil.move(f"{subdir}/{file}", f"{subdir}/{newname}")
+                if file.startswith(f"{service_}_"):
+                    newname = file[len(service_) + 1 :]
+                    shutil.move(f"{subdir}/{file}", f"{subdir}/{newname}")
     else:
         log.critical(
             f"Service specific directory {services_service_path} already exists.",
@@ -512,7 +599,31 @@ def _yaml_get_service_as_string(config, validated_data, service_yaml_file, logs_
     return service_yaml_s
 
 
-def _yaml_replace(drf_id, config, quota_vo, yaml_s, unique_user, logs_extra):
+def _create_input_string(service_yaml_file, input_dir):
+    services_service_path = os.path.dirname(service_yaml_file)
+    if os.path.exists(f"{services_service_path}/{input_dir}"):
+        with tarfile.open(f"{services_service_path}/{input_dir}.tar.gz", "w:gz") as tar:
+            tar.add(f"{services_service_path}/{input_dir}", arcname="input")
+        with open(f"{services_service_path}/{input_dir}.tar.gz", "rb") as f:
+            encoded_input = base64.b64encode(f.read())
+        shutil.rmtree(f"{services_service_path}/{input_dir}")
+        os.remove(f"{services_service_path}/{input_dir}.tar.gz")
+        return encoded_input.decode()
+    else:
+        return ""
+
+
+def _yaml_replace(
+    drf_id,
+    config,
+    quota_vo,
+    yaml_s,
+    service,
+    jhub_credential,
+    unique_user,
+    input_string,
+    logs_extra,
+):
     replace_indicators = config.get("services", {}).get(
         "replace_indicators", ["<", ">"]
     )
@@ -531,6 +642,11 @@ def _yaml_replace(drf_id, config, quota_vo, yaml_s, unique_user, logs_extra):
     )
     quota_vo_keyword = config.get("services", {}).get(
         "replace_quotavo_keyword", "quotavo"
+    )
+    input_keyword = config.get("services", {}).get("replace_input_keyword", "input")
+    yaml_s = yaml_s.replace(
+        f"{replace_indicators[0]}{input_keyword}{replace_indicators[1]}",
+        input_string,
     )
     yaml_s = yaml_s.replace(
         f"{replace_indicators[0]}{drf_id_keyword}{replace_indicators[1]}",
@@ -556,6 +672,45 @@ def _yaml_replace(drf_id, config, quota_vo, yaml_s, unique_user, logs_extra):
         f"{replace_indicators[0]}{quota_vo_keyword}{replace_indicators[1]}",
         quota_vo,
     )
+
+    # Replace stage specific keywords, if stage is defined
+    stage = os.environ.get("STAGE", "").lower()
+    if stage:
+        for key, value in (
+            config.get("services", {})
+            .get("replace_stage_specific", {})
+            .get(stage, {})
+            .items()
+        ):
+            yaml_s = yaml_s.replace(
+                f"{replace_indicators[0]}{key}{replace_indicators[1]}",
+                value,
+            )
+
+    # Replace credential specific keywords
+    for key, value in (
+        config.get("services", {})
+        .get("replace_credential_specific", {})
+        .get(jhub_credential, {})
+        .items()
+    ):
+        yaml_s = yaml_s.replace(
+            f"{replace_indicators[0]}{key}{replace_indicators[1]}",
+            value,
+        )
+
+    # Replace service specific keywords
+    for key, value in (
+        config.get("services", {})
+        .get("replace_service_specific", {})
+        .get(service.replace("/", "_"), {})
+        .items()
+    ):
+        yaml_s = yaml_s.replace(
+            f"{replace_indicators[0]}{key}{replace_indicators[1]}",
+            value,
+        )
+
     return yaml_s
 
 

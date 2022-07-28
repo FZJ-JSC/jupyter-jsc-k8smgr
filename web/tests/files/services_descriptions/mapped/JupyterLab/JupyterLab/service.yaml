@@ -1,3 +1,4 @@
+# Mapped version
 apiVersion: v1
 kind: ConfigMap
 metadata:
