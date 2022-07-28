@@ -14,68 +14,50 @@ class K8SServicesConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "services"
 
-    def _get_tunnel_k8smgr_hostname(self, config, logs_extra={}):
-        log.trace("Retrieve tunnel k8smgr hostname", extra=logs_extra)
-        k8smgr_hostname = config.get("tunnel", {}).get("k8smgr_hostname", "")
-        return k8smgr_hostname
-
-    def _get_tunnel_url(self, config, logs_extra={}):
-        log.trace("Retrieve tunnel url", extra=logs_extra)
-        tunnel_url = config.get("tunnel", {}).get("restart_url", "")
-        return tunnel_url
-
-    def _get_tunnel_credentials(self, config, logs_extra={}):
-        log.trace("Retrieve tunnel credentials", extra=logs_extra)
-        env_name = config.get("tunnel", {}).get("credentials_env_name", "TUNNEL_BASIC")
-        log.trace(f"Looking for secret at {env_name}", extra=logs_extra)
-        cred = os.environ.get(env_name, "")
-        if not cred:
-            log.trace("Credentials not found. Look in config.", extra=logs_extra)
-            cred_config = config.get("tunnel", {}).get("credentials_basic64", "")
-            if cred_config:
-                log.critical(
-                    "Credentials found in config file. You should use secrets with env variables instead.",
-                    extra=logs_extra,
-                )
-                cred = cred_config
-        return cred
-
     def restart_tunnels(self):
         config = _config()
         logs_extra = {"uuidcode": "StartUp"}
-        tunnel_restart_url = self._get_tunnel_url(config, logs_extra=logs_extra)
-        tunnel_cred = self._get_tunnel_credentials(config, logs_extra=logs_extra)
-        tunnel_k8smgr_hostname = self._get_tunnel_k8smgr_hostname(
-            config, logs_extra=logs_extra
-        )
-        tunnel_timeout = config.get("tunnel", {}).get("timeout", 10)
-        tunnel_verify = config.get("tunnel", {}).get("certificate_path", False)
-        if not tunnel_restart_url or not tunnel_cred:
-            log.critical(
-                f"Tunnel url ({tunnel_restart_url}) or tunnel credential ({tunnel_cred}) is missing. Cannot restart tunnels.",
-                extra=logs_extra,
-            )
-            return
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": tunnel_cred,
-        }
-        data = {"hostname": tunnel_k8smgr_hostname}
-        log.debug(
-            f"Call Tunnel service with POST {tunnel_restart_url} ...", extra=logs_extra
-        )
-        r = requests.post(
-            url=tunnel_restart_url,
-            headers=headers,
-            json=data,
-            timeout=tunnel_timeout,
-            verify=tunnel_verify,
-        )
-        r.raise_for_status()
-        log.debug(
-            f"Call Tunnel service with POST {tunnel_restart_url} ... done",
-            extra=logs_extra,
-        )
+        for jhub in config.get("tunnel", []):
+            try:
+                restart_url = jhub.get("restart_url", "")
+                restart_hostname = jhub.get("hostname", "")
+                # defined in entrypoint.sh
+                restart_cred_env_name = jhub.get("cred_env_name", "TUNNEL_BASIC")
+                restart_cred = os.environ.get(restart_cred_env_name, "")
+                restart_timeout = jhub.get("timeout", 10)
+                restart_verify = jhub.get("certificate_path", False)
+                if not restart_url or not restart_cred:
+                    log.critical(
+                        f"Tunnel url ({restart_url}) or tunnel credential ({restart_cred}) is missing. Cannot restart tunnels.",
+                        extra=logs_extra,
+                    )
+                    return
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": restart_cred,
+                    "uuidcode": "StartUp",
+                }
+                data = {"hostname": restart_hostname}
+                log.debug(
+                    f"Call Tunnel service with POST {restart_url} ...", extra=logs_extra
+                )
+                r = requests.post(
+                    url=restart_url,
+                    headers=headers,
+                    json=data,
+                    timeout=restart_timeout,
+                    verify=restart_verify,
+                )
+                r.raise_for_status()
+                log.debug(
+                    f"Call Tunnel service with POST {restart_url} ... done",
+                    extra=logs_extra,
+                )
+            except:
+                logs_extra["jhub"] = jhub
+                log.exception("Tunnel restart for failed", extra=logs_extra)
+                del logs_extra["jhub"]
+                continue
 
     def create_user(self, username, passwd, groups=[], superuser=False, mail=""):
         from django.contrib.auth.models import Group
@@ -111,9 +93,8 @@ class K8SServicesConfig(AppConfig):
         HandlerModel(**data).save()
 
     def setup_db(self):
-        user_groups = {
-            "jupyterhub": ["access_to_webservice", "access_to_logging"],
-        }
+        config = _config()
+        user_groups = config.get("startup", {}).get("create_user", {})
 
         superuser_name = "admin"
         superuser_mail = os.environ.get("SUPERUSER_MAIL", "admin@example.com")
@@ -126,6 +107,11 @@ class K8SServicesConfig(AppConfig):
             userpass = os.environ.get(f"{username.upper()}_USER_PASS", None)
             if userpass:
                 self.create_user(username, userpass, groups=groups)
+            else:
+                log.info(
+                    f"Do not create user {username} - password is missing",
+                    extra={"uuidcode": "StartUp"},
+                )
 
     def ready(self):
         if os.environ.get("GUNICORN_START", "false").lower() == "true":
