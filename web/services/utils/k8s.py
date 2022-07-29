@@ -541,6 +541,16 @@ def _yaml_get_service_as_string(
             ]
             ignore_files.extend(stages_to_skip)
 
+            # Same stage but diffent credential: skip
+            stages_credential_to_skip = [
+                f"{stage}_{x}_*"
+                for x in config.get("services", {})
+                .get("replace_credential_specific", {})
+                .keys()
+                if x != jhub_credential
+            ]
+            ignore_files.extend(stages_credential_to_skip)
+
         credential_to_skip = [
             f"{x}_*"
             for x in config.get("services", {})
