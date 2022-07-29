@@ -550,10 +550,6 @@ def _yaml_get_service_as_string(
         ]
         ignore_files.extend(credential_to_skip)
 
-        service_ = (
-            validated_data["user_options"]["service"].rstrip("/").replace("/", "_")
-        )
-
         shutil.copytree(
             src=services_skel,
             dst=services_service_path,
@@ -563,14 +559,14 @@ def _yaml_get_service_as_string(
         # Rename specific files
         for subdir, dirs, files in os.walk(f"{services_service_path}/{input_dir}"):
             for file in files:
-                if file.startswith(f"{stage}_"):
+                if file.startswith(f"{stage}_{jhub_credential}_"):
+                    newname = file[len(stage) + 1 + len(jhub_credential) + 1 :]
+                    shutil.move(f"{subdir}/{file}", f"{subdir}/{newname}")
+                elif file.startswith(f"{stage}_"):
                     newname = file[len(stage) + 1 :]
                     shutil.move(f"{subdir}/{file}", f"{subdir}/{newname}")
-                if file.startswith(f"{jhub_credential}_"):
+                elif file.startswith(f"{jhub_credential}_"):
                     newname = file[len(jhub_credential) + 1 :]
-                    shutil.move(f"{subdir}/{file}", f"{subdir}/{newname}")
-                if file.startswith(f"{service_}_"):
-                    newname = file[len(service_) + 1 :]
                     shutil.move(f"{subdir}/{file}", f"{subdir}/{newname}")
     else:
         log.critical(
