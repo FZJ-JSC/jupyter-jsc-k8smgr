@@ -27,10 +27,6 @@ def config_mock():
                 "authorized": {"credential_stuff": "auth"},
                 "authorized2": {},
             },
-            "replace_service_specific": {
-                "JupyterLab_JupyterLab": {"service_stuff_1": "JLab"},
-                "JupyterLab_AiidaLab": {},
-            },
             "replace_indicators": ["<", ">"],
             "replace_servername_keyword": "servername",
             "replace_uniqueuserid_keyword": "unique_user_id",

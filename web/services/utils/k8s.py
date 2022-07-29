@@ -473,7 +473,6 @@ def _create_service_yaml(
         config,
         quota_vo,
         service_yaml_s,
-        validated_data["user_options"]["service"].rstrip("/"),
         jhub_credential,
         unique_user,
         input_string,
@@ -554,14 +553,6 @@ def _yaml_get_service_as_string(
         service_ = (
             validated_data["user_options"]["service"].rstrip("/").replace("/", "_")
         )
-        services_to_skip = [
-            f"{x}_*"
-            for x in config.get("services", {})
-            .get("replace_service_specific", {})
-            .keys()
-            if x != service_
-        ]
-        ignore_files.extend(services_to_skip)
 
         shutil.copytree(
             src=services_skel,
@@ -618,7 +609,6 @@ def _yaml_replace(
     config,
     quota_vo,
     yaml_s,
-    service,
     jhub_credential,
     unique_user,
     input_string,
@@ -692,18 +682,6 @@ def _yaml_replace(
         config.get("services", {})
         .get("replace_credential_specific", {})
         .get(jhub_credential, {})
-        .items()
-    ):
-        yaml_s = yaml_s.replace(
-            f"{replace_indicators[0]}{key}{replace_indicators[1]}",
-            value,
-        )
-
-    # Replace service specific keywords
-    for key, value in (
-        config.get("services", {})
-        .get("replace_service_specific", {})
-        .get(service.replace("/", "_"), {})
         .items()
     ):
         yaml_s = yaml_s.replace(
