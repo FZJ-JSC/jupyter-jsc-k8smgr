@@ -147,7 +147,9 @@ def instance_dict_and_custom_headers_to_logs_extra(instance_dict, custom_headers
     # Remove secrets for logging
     logs_extra = copy.deepcopy(instance_dict)
     logs_extra.update(copy.deepcopy(custom_headers))
-
+    if "start_date" in logs_extra.keys():
+        if logs_extra["start_date"].__class__.__name__ == "datetime":
+            logs_extra["start_date"] = logs_extra["start_date"].isoformat()
     if "_state" in logs_extra.keys():
         del logs_extra["_state"]
     if "access-token" in logs_extra.keys():
