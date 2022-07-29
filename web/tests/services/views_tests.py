@@ -890,69 +890,6 @@ class ServiceViewTests(UserCredentials):
         side_effect=k8s_config_load_incluster_config,
     )
     @mock.patch(target="services.utils.common._config", side_effect=config_mock)
-    @mock.patch.dict(os.environ, {"STAGE": "stage1"})
-    def test_skip_service_specific_files(
-        self,
-        config_mocked,
-        k8s_config,
-        k8s_client,
-        k8s_api_client,
-        k8s_secret,
-        k8s_create_from_yaml,
-    ):
-        url = reverse("services-list")
-        r = self.client.post(url, data=self.simple_request_data, format="json")
-        servername = r.data["servername"]
-        start_id = r.data["start_id"]
-        with open(
-            f"web/tests/files/services/{servername}-{start_id}/service.yaml", "r"
-        ) as f:
-            service_yaml = f.read()
-        b64_decoded = [
-            x.split(": ")[1] for x in service_yaml.split("\n") if "input.tar.gz:" in x
-        ][0]
-        import base64
-
-        with open(
-            f"web/tests/files/services/{servername}-{start_id}/input.tar.gz", "wb"
-        ) as f:
-            f.write(base64.b64decode(b64_decoded))
-        import tarfile
-
-        with tarfile.open(
-            f"web/tests/files/services/{servername}-{start_id}/input.tar.gz", "r:gz"
-        ) as tar:
-            tar.extractall(path=f"web/tests/files/services/{servername}-{start_id}")
-        list_dir = os.listdir(f"web/tests/files/services/{servername}-{start_id}/input")
-        self.assertTrue("JupyterLab_JupyterLab_service.txt" not in list_dir)
-        self.assertTrue("JupyterLab_AiidaLab_service.txt" not in list_dir)
-        self.assertTrue("service.txt" in list_dir)
-        with open(
-            f"web/tests/files/services/{servername}-{start_id}/input/service.txt", "r"
-        ) as f:
-            self.assertEqual("JupyterLab_JupyterLab", f.read().strip())
-
-    @mock.patch(
-        target="services.utils.k8s.k8s_utils.create_from_yaml",
-        side_effect=k8s_utils_create_from_yaml,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.V1Secret",
-        side_effect=k8s_V1Secret,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.ApiClient",
-        side_effect=k8s_ApiClient,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.CoreV1Api",
-        side_effect=k8s_client_CoreV1Api,
-    )
-    @mock.patch(
-        target="services.utils.k8s.config.load_incluster_config",
-        side_effect=k8s_config_load_incluster_config,
-    )
-    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
     @mock.patch.dict(os.environ, {"STAGE": "stage2"})
     def test_replace_stage_specific(
         self,
@@ -975,52 +912,6 @@ class ServiceViewTests(UserCredentials):
             x.split(": ")[1] for x in service_yaml.split("\n") if "stagespecific:" in x
         ][0]
         self.assertEqual(stage_specific_value, "stage2")
-
-    @mock.patch(
-        target="services.utils.k8s.k8s_utils.create_from_yaml",
-        side_effect=k8s_utils_create_from_yaml,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.V1Secret",
-        side_effect=k8s_V1Secret,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.ApiClient",
-        side_effect=k8s_ApiClient,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.CoreV1Api",
-        side_effect=k8s_client_CoreV1Api,
-    )
-    @mock.patch(
-        target="services.utils.k8s.config.load_incluster_config",
-        side_effect=k8s_config_load_incluster_config,
-    )
-    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
-    @mock.patch.dict(os.environ, {"STAGE": "stage2"})
-    def test_replace_service_specific(
-        self,
-        config_mocked,
-        k8s_config,
-        k8s_client,
-        k8s_api_client,
-        k8s_secret,
-        k8s_create_from_yaml,
-    ):
-        url = reverse("services-list")
-        r = self.client.post(url, data=self.simple_request_data, format="json")
-        servername = r.data["servername"]
-        start_id = r.data["start_id"]
-        with open(
-            f"web/tests/files/services/{servername}-{start_id}/service.yaml", "r"
-        ) as f:
-            service_yaml = f.read()
-        service_specific_value = [
-            x.split(": ")[1]
-            for x in service_yaml.split("\n")
-            if "service-stuff-1:" in x
-        ][0]
-        self.assertEqual(service_specific_value, "JLab")
 
     @mock.patch(
         target="services.utils.k8s.k8s_utils.create_from_yaml",
