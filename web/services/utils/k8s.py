@@ -335,7 +335,8 @@ def status_service(drf_id, config, logs_extra={}):
         )
         last_event_logs_extra = copy.deepcopy(logs_extra)
         last_event_logs_extra["last_event"] = last_n_events
-        if last_n_events[-1]["type"] in bad_event_types:
+        last_n_event_types = [x["type"] for x in last_n_events if "type" in x]
+        if set(bad_event_types) <= set(last_n_event_types):
             recent_logs = _get_detailed_error_logs(
                 k8s_client,
                 pod["metadata"]["name"],
