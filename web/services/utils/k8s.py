@@ -1,5 +1,6 @@
 import base64
 import copy
+import html
 import json
 import logging
 import os
@@ -197,7 +198,10 @@ def _get_detailed_error_logs(
         container_logs_list_short = all_logs.rstrip().split("\n")[
             -container_logs_lines:
         ]
-        container_logs_s = container_logs_join.join(container_logs_list_short)
+        container_logs_list_short_escaped = list(
+            map(lambda x: html.escape(x), container_logs_list_short)
+        )
+        container_logs_s = container_logs_join.join(container_logs_list_short_escaped)
         return detailed_error_html_logs.replace(
             container_logs_keyword, container_logs_s
         )
@@ -358,7 +362,12 @@ def status_service(drf_id, config, logs_extra={}):
             pod_events_messages_list = [
                 event.get("message", "") for event in last_n_events
             ]
-            pod_events_messages_s = pod_events_join.join(pod_events_messages_list)
+            pod_events_messages_list_escaped = list(
+                map(lambda x: html.escape(x), pod_events_messages_list)
+            )
+            pod_events_messages_s = pod_events_join.join(
+                pod_events_messages_list_escaped
+            )
             detailed_error = detailed_error_html_events.replace(
                 pod_events_keyword, pod_events_messages_s
             )
