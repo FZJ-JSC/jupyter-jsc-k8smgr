@@ -665,7 +665,7 @@ def _yaml_replace(
     )
     yaml_s = yaml_s.replace(
         f"{replace_indicators[0]}{userid_keyword}{replace_indicators[1]}",
-        jhub_user_id,
+        str(jhub_user_id),
     )
     yaml_s = yaml_s.replace(
         f"{replace_indicators[0]}{secretname_keyword}{replace_indicators[1]}",
