@@ -455,7 +455,6 @@ def _create_service_yaml(
     logs_extra,
 ):
     jhub_user_id = validated_data["jhub_user_id"]
-    unique_user = f"{jhub_credential}_{jhub_user_id}"
     log.debug("Create Service yaml", extra=logs_extra)
 
     input_dir = config.get("services", {}).get("input_dir", "input")
@@ -484,7 +483,7 @@ def _create_service_yaml(
         quota_vo,
         service_yaml_s,
         jhub_credential,
-        unique_user,
+        jhub_user_id,
         input_string,
         logs_extra,
     )
@@ -626,10 +625,11 @@ def _yaml_replace(
     quota_vo,
     yaml_s,
     jhub_credential,
-    unique_user,
+    jhub_user_id,
     input_string,
     logs_extra,
 ):
+    unique_user = f"{jhub_credential}_{jhub_user_id}"
     replace_indicators = config.get("services", {}).get(
         "replace_indicators", ["<", ">"]
     )
@@ -637,6 +637,7 @@ def _yaml_replace(
     uniqueuserid_keyword = config.get("services", {}).get(
         "replace_uniqueuserid_keyword", "unique_user_id"
     )
+    userid_keyword = config.get("services", {}).get("replace_userid_keyword", "user_id")
     secretname_keyword = config.get("services", {}).get(
         "replace_secretname_keyword", "secret_name"
     )
@@ -661,6 +662,10 @@ def _yaml_replace(
     yaml_s = yaml_s.replace(
         f"{replace_indicators[0]}{uniqueuserid_keyword}{replace_indicators[1]}",
         unique_user,
+    )
+    yaml_s = yaml_s.replace(
+        f"{replace_indicators[0]}{userid_keyword}{replace_indicators[1]}",
+        jhub_user_id,
     )
     yaml_s = yaml_s.replace(
         f"{replace_indicators[0]}{secretname_keyword}{replace_indicators[1]}",
