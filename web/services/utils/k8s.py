@@ -543,9 +543,7 @@ def _yaml_get_service_as_string(
         if stage:
             stages_to_skip = [
                 f"{x}_*"
-                for x in config.get("services", {})
-                .get("replace_stage_specific", {})
-                .keys()
+                for x in config.get("services", {}).get("skip", {}).get("stage", [])
                 if x != stage
             ]
             ignore_files.extend(stages_to_skip)
@@ -554,17 +552,15 @@ def _yaml_get_service_as_string(
             stages_credential_to_skip = [
                 f"{stage}_{x}_*"
                 for x in config.get("services", {})
-                .get("replace_credential_specific", {})
-                .keys()
+                .get("skip", {})
+                .get("credential", [])
                 if x != jhub_credential
             ]
             ignore_files.extend(stages_credential_to_skip)
 
         credential_to_skip = [
             f"{x}_*"
-            for x in config.get("services", {})
-            .get("replace_credential_specific", {})
-            .keys()
+            for x in config.get("services", {}).get("skip", {}).get("credential", [])
             if x != jhub_credential
         ]
         ignore_files.extend(credential_to_skip)
@@ -630,27 +626,41 @@ def _yaml_replace(
     logs_extra,
 ):
     unique_user = f"{jhub_credential}_{jhub_user_id}"
-    replace_indicators = config.get("services", {}).get(
-        "replace_indicators", ["<", ">"]
+    replace_indicators = (
+        config.get("services", {}).get("replace", {}).get("indicators", ["<", ">"])
     )
-    drf_id_keyword = config.get("services", {}).get("replace_drfid_keyword", "id")
-    uniqueuserid_keyword = config.get("services", {}).get(
-        "replace_uniqueuserid_keyword", "unique_user_id"
+    drf_id_keyword = (
+        config.get("services", {}).get("replace", {}).get("drfid_keyword", "id")
     )
-    userid_keyword = config.get("services", {}).get("replace_userid_keyword", "user_id")
-    secretname_keyword = config.get("services", {}).get(
-        "replace_secretname_keyword", "secret_name"
+    uniqueuserid_keyword = (
+        config.get("services", {})
+        .get("replace", {})
+        .get("uniqueuserid_keyword", "unique_user_id")
     )
-    secretcertsname_keyword = config.get("services", {}).get(
-        "replace_secretcertsname_keyword", "secret_certs_name"
+    userid_keyword = (
+        config.get("services", {}).get("replace", {}).get("userid_keyword", "user_id")
     )
-    namespace_keyword = config.get("services", {}).get(
-        "replace_namespace_keyword", "namespace"
+    secretname_keyword = (
+        config.get("services", {})
+        .get("replace", {})
+        .get("secretname_keyword", "secret_name")
     )
-    quota_vo_keyword = config.get("services", {}).get(
-        "replace_quotavo_keyword", "quotavo"
+    secretcertsname_keyword = (
+        config.get("services", {})
+        .get("replace", {})
+        .get("secretcertsname_keyword", "secret_certs_name")
     )
-    input_keyword = config.get("services", {}).get("replace_input_keyword", "input")
+    namespace_keyword = (
+        config.get("services", {})
+        .get("replace", {})
+        .get("namespace_keyword", "namespace")
+    )
+    quota_vo_keyword = (
+        config.get("services", {}).get("replace", {}).get("quotavo_keyword", "quotavo")
+    )
+    input_keyword = (
+        config.get("services", {}).get("replace", {}).get("input_keyword", "input")
+    )
     yaml_s = yaml_s.replace(
         f"{replace_indicators[0]}{input_keyword}{replace_indicators[1]}",
         input_string,
@@ -689,7 +699,8 @@ def _yaml_replace(
     if stage:
         for key, value in (
             config.get("services", {})
-            .get("replace_stage_specific", {})
+            .get("replace", {})
+            .get("stage", {})
             .get(stage, {})
             .items()
         ):
@@ -701,7 +712,8 @@ def _yaml_replace(
     # Replace credential specific keywords
     for key, value in (
         config.get("services", {})
-        .get("replace_credential_specific", {})
+        .get("replace", {})
+        .get("credential", {})
         .get(jhub_credential, {})
         .items()
     ):
