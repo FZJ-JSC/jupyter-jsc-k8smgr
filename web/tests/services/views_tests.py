@@ -5,6 +5,7 @@ from unittest import mock
 from django.http.response import HttpResponse
 from django.urls.base import reverse
 from services.models import ServicesModel
+from services.models import UserJobsModel
 from services.models import UserModel
 from tests.mocks import config_mock
 from tests.mocks import config_mock_services_mapping
@@ -16,6 +17,11 @@ from tests.mocks import k8s_config_load_incluster_config
 from tests.mocks import k8s_utils_create_from_yaml
 from tests.mocks import k8s_V1Secret
 from tests.mocks import mocked_exception
+from tests.mocks import mocked_popen_init
+from tests.mocks import mocked_popen_init_all_fail
+from tests.mocks import mocked_popen_init_cancel_fail
+from tests.mocks import mocked_popen_init_check_fail
+from tests.mocks import mocked_popen_init_forward_fail
 from tests.mocks import services_base
 from tests.mocks import userhomes_base
 from tests.user_credentials import UserCredentials
@@ -56,6 +62,17 @@ class ServiceViewTests(UserCredentials):
             "JUPYTERHUB_STATUS_URL": "http://jhub:8000",
         },
         "start_id": "abcdefgh",
+    }
+
+    simple_userjobs_data = {
+        "target_ports": {
+            "8080": "59998",
+            "8081": "59999",
+        },
+        "service": "abc",
+        "suffix": "2222",
+        "hostname": "jwlogin01i",
+        "target_node": "jwc0050",
     }
 
     def mock_return_HttpResponse(*args, **kwargs):
@@ -958,3 +975,366 @@ class ServiceViewTests(UserCredentials):
             if "credential-stuff:" in x
         ][0]
         self.assertEqual(cred_specific_value, "auth")
+
+    @mock.patch(
+        "services.utils.ssh.subprocess.Popen",
+        side_effect=mocked_popen_init,
+    )
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_userjobs_create(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+        mocked_popen,
+    ):
+        url = reverse("services-list")
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(len(r.data["servername"]), 32)
+
+        data = self.simple_userjobs_data
+        data["service"] = r.data["servername"]
+        url = reverse("userjobs-list")
+        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
+        self.assertEqual(r.status_code, 201)
+
+    @mock.patch(
+        "services.utils.ssh.subprocess.Popen",
+        side_effect=mocked_popen_init,
+    )
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_userjobs_delete(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+        mocked_popen,
+    ):
+        url = reverse("services-list")
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(len(r.data["servername"]), 32)
+
+        data = self.simple_userjobs_data
+        data["service"] = r.data["servername"]
+        url = reverse("userjobs-list")
+        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        url = f"{url}{self.simple_userjobs_data['service']}-{self.simple_userjobs_data['suffix']}/"
+        r = self.client.delete(url, format="json")
+        self.assertEqual(r.status_code, 204)
+
+    @mock.patch(
+        "services.utils.ssh.subprocess.Popen",
+        side_effect=mocked_popen_init,
+    )
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_userjobs_cascade_delete(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+        mocked_popen,
+    ):
+        url = reverse("services-list")
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(len(r.data["servername"]), 32)
+
+        data = self.simple_userjobs_data
+        data["service"] = r.data["servername"]
+        url = reverse("userjobs-list")
+        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
+        self.assertEqual(r.status_code, 201)
+
+        url = reverse("services-list")
+        url = f"{url}{self.simple_userjobs_data['service']}/"
+        r = self.client.delete(url, format="json")
+        self.assertEqual(r.status_code, 204)
+
+        url = reverse("userjobs-list")
+        url = f"{url}{self.simple_userjobs_data['service']}-{self.simple_userjobs_data['suffix']}/"
+        r = self.client.get(url, format="json")
+        self.assertEqual(r.status_code, 404)
+
+    @mock.patch(
+        "services.utils.ssh.subprocess.Popen",
+        side_effect=mocked_popen_init,
+    )
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_userjobs_get(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+        mocked_popen,
+    ):
+        url = reverse("services-list")
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(len(r.data["servername"]), 32)
+
+        data = self.simple_userjobs_data
+        data["service"] = r.data["servername"]
+        url = reverse("userjobs-list")
+        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
+        self.assertEqual(r.status_code, 201)
+
+        url = f"{url}{self.simple_userjobs_data['service']}-{self.simple_userjobs_data['suffix']}/"
+        r = self.client.get(url, format="json")
+        self.assertEqual(r.status_code, 200)
+
+    @mock.patch(
+        "services.utils.ssh.subprocess.Popen",
+        side_effect=mocked_popen_init,
+    )
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_userjobs_create_model_created(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+        mocked_popen,
+    ):
+        url = reverse("services-list")
+        pre_models = UserJobsModel.objects.all()
+        self.assertEqual(len(pre_models), 0)
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(len(r.data["servername"]), 32)
+
+        data = self.simple_userjobs_data
+        data["service"] = r.data["servername"]
+        url = reverse("userjobs-list")
+        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
+
+        models = UserJobsModel.objects.all()
+        self.assertEqual(len(models), 1)
+
+    @mock.patch(
+        "services.utils.ssh.subprocess.Popen",
+        side_effect=mocked_popen_init,
+    )
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_userjobs_create_model_deleted(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+        mocked_popen,
+    ):
+        url = reverse("services-list")
+        pre_models = UserJobsModel.objects.all()
+        self.assertEqual(len(pre_models), 0)
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(len(r.data["servername"]), 32)
+
+        data = self.simple_userjobs_data
+        data["service"] = r.data["servername"]
+        url = reverse("userjobs-list")
+        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
+
+        models = UserJobsModel.objects.all()
+        self.assertEqual(len(models), 1)
+
+        url = f"{url}{self.simple_userjobs_data['service']}-{self.simple_userjobs_data['suffix']}/"
+        r = self.client.delete(url, format="json")
+        models = UserJobsModel.objects.all()
+        self.assertEqual(len(models), 0)
+
+    @mock.patch(
+        "services.utils.ssh.subprocess.Popen",
+        side_effect=mocked_popen_init,
+    )
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_userjobs_create_model_cascade_deleted(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+        mocked_popen,
+    ):
+        url = reverse("services-list")
+        pre_models = UserJobsModel.objects.all()
+        self.assertEqual(len(pre_models), 0)
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(len(r.data["servername"]), 32)
+
+        data = self.simple_userjobs_data
+        data["service"] = r.data["servername"]
+        url = reverse("userjobs-list")
+        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
+
+        models = UserJobsModel.objects.all()
+        self.assertEqual(len(models), 1)
+
+        url = reverse("services-list")
+        url = f"{url}{self.simple_userjobs_data['service']}/"
+        r = self.client.delete(url, format="json")
+        self.assertEqual(r.status_code, 204)
+        models = UserJobsModel.objects.all()
+        self.assertEqual(len(models), 0)
