@@ -55,7 +55,7 @@ if [[ -d /tmp/${USERNAME}_vscode ]]; then
     cp -rp /tmp/${USERNAME}_vscode/* /home/${USERNAME}/web/.vscode/.
     find /home/${USERNAME}/web/.vscode -type f -exec sed -i '' -e "s@<KUBERNETES_SERVICE_HOST>@${KUBERNETES_SERVICE_HOST}@g" -e "s@<KUBERNETES_SERVICE_PORT>@${KUBERNETES_SERVICE_PORT}@g" {} \; 2> /dev/null
 fi
-chmod -R 400 /home/${USERNAME}/web/.vscode/*
+chmod -R 400 /home/${USERNAME}/web/.vscode
 chown -R ${USERNAME}:users /home/${USERNAME}/web/.vscode
 
 if [[ -d /tmp/${USERNAME}_home ]]; then

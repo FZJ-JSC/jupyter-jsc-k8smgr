@@ -162,7 +162,8 @@ class UserJobsViewSet(
                     logs_extra,
                 )
             userjobs_delete_k8s_svc(
-                f"{serializer.validated_data['service'].servername}-{serializer.validated_data['suffix']}",
+                serializer.validated_data["service"].servername,
+                serializer.validated_data["suffix"],
                 logs_extra,
             )
             raise Exception(e)
