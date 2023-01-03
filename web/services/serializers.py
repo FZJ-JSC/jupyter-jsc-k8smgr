@@ -104,13 +104,24 @@ class ServicesSerializer(serializers.ModelSerializer):
                     logs_extra=logs_extra,
                 )
             except Exception as e:
-                log.critical(
-                    "Could not check status of service", extra=logs_extra, exc_info=True
-                )
-                status = {
-                    "running": True,
-                    "details": {"error": e.args[0], "detailed_error": e.args[1]},
-                }
+                if len(e.args) >= 2 and e.args[1].startswith(
+                    "No pod found with app label"
+                ):
+                    log.warning("Pod does not exist", extra=logs_extra, exc_info=True)
+                    status = {
+                        "running": False,
+                        "details": {"error": e.args[0], "detailed_error": e.args[1]},
+                    }
+                else:
+                    log.critical(
+                        "Could not check status of service",
+                        extra=logs_extra,
+                        exc_info=True,
+                    )
+                    status = {
+                        "running": True,
+                        "details": {"error": e.args[0], "detailed_error": e.args[1]},
+                    }
         if not status:
             status = {"running": True}
         ret.update(status)
@@ -125,9 +136,6 @@ class UserJobsSerializer(serializers.ModelSerializer):
     required_keys = ["service", "target_ports", "suffix", "hostname", "target_node"]
 
     def to_internal_value(self, data):
-        for key in self.required_keys:
-            if key not in data.keys():
-                raise ValidationError(f"Missing key: {key}")
         jhub_credential = self.context["request"].user.username
         service_name = data["service"]
         services = (
@@ -135,77 +143,38 @@ class UserJobsSerializer(serializers.ModelSerializer):
             .filter(servername=service_name)
             .all()
         )
-        if len(services) == 0:
-            raise ValidationError(
-                f"Service {service_name} unknown for {jhub_credential}."
-            )
         data["service"] = services.first().pk
         data["userjobs"] = f"{service_name}-{data['suffix']}"
         ret = super().to_internal_value(data)
         ret["jhub_credential"] = jhub_credential
         return ret
 
-    # def is_valid(self, raise_exception=False):
-    #     try:
-    #         self.check_input_keys()
-    #     except ValidationError as exc:
-    #         _errors = exc.detail
-    #     else:
-    #         _errors = {}
-    #     if _errors and raise_exception:
-    #         raise ValidationError(_errors)
-    #     return super().is_valid(raise_exception=raise_exception)
+    def is_valid(self, raise_exception=False):
+        try:
+            for key in self.required_keys:
+                if key not in self.initial_data.keys():
+                    self._validated_data = {}
+                    self._errors = [f"Missing key in input data: {key}"]
+                    raise ValidationError(f"Missing key: {key}")
 
-    # def to_internal_value(self, data):
-    #     servicesmodel = ServicesModel.objects.filter(servername=data["service"])
-    #     model_data = {
-    #         "servername": servername,
-    #         "start_id": data["start_id"],
-    #         "user_options": data["user_options"],
-    #         "jhub_user_id": data["env"]["JUPYTERHUB_USER_ID"],
-    #         "jhub_credential": self.context["request"].user.username,
-    #         "stop_pending": False,
-    #     }
-    #     if "vo" not in model_data["user_options"].keys():
-    #         model_data["user_options"]["vo"] = "default"
-    #     else:
-    #         model_data["user_options"]["vo"] = (
-    #             model_data["user_options"]["vo"]
-    #             .lower()
-    #             .replace(" ", "-")
-    #             .replace("_", "-")
-    #         )
-    #     return super().to_internal_value(model_data)
+            jhub_credential = self.context["request"].user.username
+            service_name = self.initial_data["service"]
+            services = (
+                ServicesModel.objects.filter(jhub_credential=jhub_credential)
+                .filter(servername=service_name)
+                .all()
+            )
+            if len(services) == 0:
+                self._validated_data = []
+                self._errors = [
+                    f"Service {service_name} unknown for {jhub_credential}."
+                ]
+                raise ValidationError(self._errors)
 
-    # def to_representation(self, instance):
-    #     ret = super().to_representation(instance)
-    #     # For create or list we don't want to update status
-    #     if self.context["request"].path == reverse("services-list"):
-    #         return ret
-    #     custom_headers = get_custom_headers(self.context["request"]._request.META)
-    #     logs_extra = instance_dict_and_custom_headers_to_logs_extra(
-    #         instance.__dict__, custom_headers
-    #     )
-    #     logs_extra["start_date"] = ret["start_date"]
-    #     if instance.stop_pending:
-    #         log.info("Service is already stopping. Return false", extra=logs_extra)
-    #         status = {"running": False}
-    #     else:
-    #         try:
-    #             status = status_service(
-    #                 instance.__dict__,
-    #                 custom_headers,
-    #                 logs_extra=logs_extra,
-    #             )
-    #         except Exception as e:
-    #             log.critical(
-    #                 "Could not check status of service", extra=logs_extra, exc_info=True
-    #             )
-    #             status = {
-    #                 "running": True,
-    #                 "details": {"error": e.args[0], "detailed_error": e.args[1]},
-    #             }
-    #     if not status:
-    #         status = {"running": True}
-    #     ret.update(status)
-    #     return ret
+        except ValidationError as exc:
+            _errors = exc.detail
+        else:
+            _errors = {}
+        if _errors and raise_exception:
+            raise ValidationError(_errors)
+        return super().is_valid(raise_exception=raise_exception)
