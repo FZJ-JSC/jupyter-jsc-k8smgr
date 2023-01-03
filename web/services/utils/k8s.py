@@ -59,7 +59,7 @@ def k8s_create_userjobs_svc(servername, suffix, used_ports, logs_extra):
     namespace = _k8s_get_namespace()
     labels = {"userjobs_servername": servername}
     ports = [
-        {"port": wanted, "protocol": "TCP", "targetPort": used[0]}
+        {"port": int(wanted), "protocol": "TCP", "targetPort": int(used[0])}
         for wanted, used in used_ports.items()
     ]
     service_manifest = {
