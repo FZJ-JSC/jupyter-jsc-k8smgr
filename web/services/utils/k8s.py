@@ -53,8 +53,8 @@ def k8s_delete_userjobs_svc(name, logs_extra):
     v1.delete_namespaced_service(name, namespace)
 
 
-def k8s_create_userjos_svc(servername, suffix, used_ports, logs_extra):
-    log.debug("Create UserJobs svc", extra=logs_extra)
+def k8s_create_userjobs_svc(servername, suffix, used_ports, logs_extra):
+    log.debug("Create UserJobs svc ...", extra=logs_extra)
     v1 = _k8s_get_client_core()
     namespace = _k8s_get_namespace()
     labels = {"userjobs_servername": servername}
@@ -75,7 +75,12 @@ def k8s_create_userjos_svc(servername, suffix, used_ports, logs_extra):
             "selector": {"app": f"depl-{servername}"},
         },
     }
+    logs_extra["service_manifest"] = service_manifest
+    log.debug("Create UserJobs Manifest ...", extra=logs_extra)
     v1.create_namespaced_service(body=service_manifest, namespace=namespace)
+    log.debug("Create UserJobs Manifest ... done", extra=logs_extra)
+    del logs_extra["service_manifest"]
+    log.info("Create UserJobs svc ... done", extra=logs_extra)
 
 
 def _get_deployment_main(drf_id, config, min_log, logs_extra):

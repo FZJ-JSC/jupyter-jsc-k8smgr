@@ -171,7 +171,7 @@ def userjobs_create_ssh_tunnels(target_ports, hostname, target_node, logs_extra)
 
 
 def userjobs_create_k8s_svc(servername, suffix, used_ports, logs_extra):
-    k8s.k8s_create_userjos_svc(servername, suffix, used_ports, logs_extra)
+    k8s.k8s_create_userjobs_svc(servername, suffix, used_ports, logs_extra)
 
 
 def userjobs_delete_ssh_tunnels(used_ports, hostname, target_node, logs_extra):
