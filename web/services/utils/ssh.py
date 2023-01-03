@@ -96,8 +96,9 @@ def forward(target_ports, hostname, target_node, logs_extra):
         cmd = base_cmd + [
             "-O",
             "forward",
-            f"0.0.0.0:{port}:{target_node}:{v}",
             f"tunnel_{hostname}",
+            "-L",
+            f"0.0.0.0:{port}:{target_node}:{v}",
         ]
         ret[key] = (port, v)
         with subprocess.Popen(
@@ -130,8 +131,9 @@ def cancel(used_ports, hostname, target_node, logs_extra):
         cmd = base_cmd + [
             "-O",
             "cancel",
-            f"0.0.0.0:{value[0]}:{target_node}:{value[1]}",
             f"tunnel_{hostname}",
+            "-L",
+            f"0.0.0.0:{value[0]}:{target_node}:{value[1]}",
         ]
         with subprocess.Popen(
             cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE, preexec_fn=set_uid
