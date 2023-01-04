@@ -62,6 +62,7 @@ def k8s_create_userjobs_svc(servername, suffix, used_ports, logs_extra):
         {"port": int(wanted), "protocol": "TCP", "targetPort": int(used[0])}
         for wanted, used in used_ports.items()
     ]
+    k8smgr_app_label = os.environ.get("DEPLOYMENT_NAME", "drf-k8smgr")
     service_manifest = {
         "apiVersion": "v1",
         "kind": "Service",
@@ -72,7 +73,7 @@ def k8s_create_userjobs_svc(servername, suffix, used_ports, logs_extra):
         },
         "spec": {
             "ports": ports,
-            "selector": {"app": f"depl-{servername}"},
+            "selector": {"app": k8smgr_app_label},
         },
     }
     logs_extra["service_manifest"] = service_manifest
