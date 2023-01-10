@@ -149,7 +149,6 @@ class UserJobsViewSet(
                 raise Exception("Could not create ssh tunnels")
             userjobs_create_k8s_svc(
                 serializer.validated_data["service"].servername,
-                serializer.validated_data["suffix"],
                 used_ports,
                 logs_extra,
             )

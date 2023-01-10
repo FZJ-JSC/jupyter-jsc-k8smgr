@@ -131,9 +131,9 @@ class ServicesSerializer(serializers.ModelSerializer):
 class UserJobsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserJobsModel
-        fields = ["userjobs", "service", "suffix", "hostname", "target_node"]
+        fields = ["userjobs", "service", "hostname", "target_node"]
 
-    required_keys = ["service", "ports", "suffix", "hostname", "target_node"]
+    required_keys = ["service", "ports", "hostname", "target_node"]
 
     def to_internal_value(self, data):
         jhub_credential = self.context["request"].user.username
@@ -144,7 +144,7 @@ class UserJobsSerializer(serializers.ModelSerializer):
             .all()
         )
         data["service"] = services.first().pk
-        data["userjobs"] = f"{service_name}-{data['suffix']}"
+        data["userjobs"] = service_name
         ret = super().to_internal_value(data)
         ret["jhub_credential"] = jhub_credential
         return ret

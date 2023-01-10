@@ -22,6 +22,5 @@ class UserJobsModel(models.Model):
     service = models.ForeignKey(ServicesModel, on_delete=models.CASCADE)
     used_ports = models.JSONField("used_ports", null=False, default=dict)
     jhub_credential = models.TextField("jhub_credential", default="jupyterhub")
-    suffix = models.TextField("suffix", null=False)
     hostname = models.TextField("hostname", null=False)
     target_node = models.TextField("target_node", null=False)

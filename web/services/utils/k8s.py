@@ -53,7 +53,7 @@ def k8s_delete_userjobs_svc(name, logs_extra):
     v1.delete_namespaced_service(name, namespace)
 
 
-def k8s_create_userjobs_svc(servername, suffix, used_ports, logs_extra):
+def k8s_create_userjobs_svc(servername, used_ports, logs_extra):
     log.debug("Create UserJobs svc ...", extra=logs_extra)
     v1 = _k8s_get_client_core()
     namespace = _k8s_get_namespace()
@@ -68,7 +68,7 @@ def k8s_create_userjobs_svc(servername, suffix, used_ports, logs_extra):
         "kind": "Service",
         "metadata": {
             "labels": labels,
-            "name": f"{servername}-{suffix}",
+            "name": servername,
             "resourceversion": "v1",
         },
         "spec": {

@@ -70,7 +70,6 @@ class ServiceViewTests(UserCredentials):
             "8081": "59999",
         },
         "service": "abc",
-        "suffix": "2222",
         "hostname": "jwlogin01i",
         "target_node": "jwc0050",
     }
@@ -1067,7 +1066,7 @@ class ServiceViewTests(UserCredentials):
         url = reverse("userjobs-list")
         r = self.client.post(url, data=self.simple_userjobs_data, format="json")
         self.assertEqual(r.status_code, 201)
-        url = f"{url}{self.simple_userjobs_data['service']}-{self.simple_userjobs_data['suffix']}/"
+        url = f"{url}{self.simple_userjobs_data['service']}/"
         r = self.client.delete(url, format="json")
         self.assertEqual(r.status_code, 204)
 
@@ -1123,7 +1122,7 @@ class ServiceViewTests(UserCredentials):
         self.assertEqual(r.status_code, 204)
 
         url = reverse("userjobs-list")
-        url = f"{url}{self.simple_userjobs_data['service']}-{self.simple_userjobs_data['suffix']}/"
+        url = f"{url}{self.simple_userjobs_data['service']}/"
         r = self.client.get(url, format="json")
         self.assertEqual(r.status_code, 404)
 
@@ -1173,7 +1172,7 @@ class ServiceViewTests(UserCredentials):
         r = self.client.post(url, data=self.simple_userjobs_data, format="json")
         self.assertEqual(r.status_code, 201)
 
-        url = f"{url}{self.simple_userjobs_data['service']}-{self.simple_userjobs_data['suffix']}/"
+        url = f"{url}{self.simple_userjobs_data['service']}/"
         r = self.client.get(url, format="json")
         self.assertEqual(r.status_code, 200)
 
@@ -1277,7 +1276,7 @@ class ServiceViewTests(UserCredentials):
         models = UserJobsModel.objects.all()
         self.assertEqual(len(models), 1)
 
-        url = f"{url}{self.simple_userjobs_data['service']}-{self.simple_userjobs_data['suffix']}/"
+        url = f"{url}{self.simple_userjobs_data['service']}/"
         r = self.client.delete(url, format="json")
         models = UserJobsModel.objects.all()
         self.assertEqual(len(models), 0)

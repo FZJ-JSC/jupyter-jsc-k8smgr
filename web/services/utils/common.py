@@ -168,13 +168,13 @@ def userjobs_create_ssh_tunnels(ports, hostname, target_node, logs_extra):
     return used_ports, returncode
 
 
-def userjobs_create_k8s_svc(servername, suffix, used_ports, logs_extra):
-    k8s.k8s_create_userjobs_svc(servername, suffix, used_ports, logs_extra)
+def userjobs_create_k8s_svc(servername, used_ports, logs_extra):
+    k8s.k8s_create_userjobs_svc(servername, used_ports, logs_extra)
 
 
 def userjobs_delete_ssh_tunnels(used_ports, hostname, target_node, logs_extra):
     ssh.cancel(used_ports, hostname, target_node, logs_extra)
 
 
-def userjobs_delete_k8s_svc(servername, suffix, logs_extra):
-    k8s.k8s_delete_userjobs_svc(f"{servername}-{suffix}", logs_extra)
+def userjobs_delete_k8s_svc(servername, logs_extra):
+    k8s.k8s_delete_userjobs_svc(servername, logs_extra)
