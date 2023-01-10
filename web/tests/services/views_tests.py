@@ -65,7 +65,7 @@ class ServiceViewTests(UserCredentials):
     }
 
     simple_userjobs_data = {
-        "target_ports": {
+        "ports": {
             "8080": "59998",
             "8081": "59999",
         },

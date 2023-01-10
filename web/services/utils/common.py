@@ -160,12 +160,10 @@ def instance_dict_and_custom_headers_to_logs_extra(instance_dict, custom_headers
     return logs_extra
 
 
-def userjobs_create_ssh_tunnels(target_ports, hostname, target_node, logs_extra):
+def userjobs_create_ssh_tunnels(ports, hostname, target_node, logs_extra):
     log.debug("UserJobs - Create ssh tunnel", extra=logs_extra)
     ssh.check_connection(hostname, logs_extra)
-    used_ports, returncode = ssh.forward(
-        target_ports, hostname, target_node, logs_extra
-    )
+    used_ports, returncode = ssh.forward(ports, hostname, target_node, logs_extra)
     log.debug("UserJobs - Create ssh tunnel done", extra=logs_extra)
     return used_ports, returncode
 
