@@ -115,7 +115,7 @@ class UserJobsViewSet(
     viewsets.GenericViewSet,
 ):
     serializer_class = UserJobsSerializer
-    lookup_field = "userjobs"
+    lookup_field = "service"
 
     permission_classes = [HasGroupPermission]
     required_groups = ["access_to_webservice"]
@@ -127,7 +127,7 @@ class UserJobsViewSet(
     def perform_create(self, serializer):
         custom_headers = get_custom_headers(self.request._request.META)
         logs_extra = initial_data_to_logs_extra(
-            serializer.validated_data["service"].servername,
+            serializer.validated_data["service"],
             serializer.initial_data,
             custom_headers,
         )
@@ -148,7 +148,7 @@ class UserJobsViewSet(
                 )
                 raise Exception("Could not create ssh tunnels")
             userjobs_create_k8s_svc(
-                serializer.validated_data["service"].servername,
+                serializer.validated_data["service"],
                 used_ports,
                 logs_extra,
             )
@@ -161,7 +161,7 @@ class UserJobsViewSet(
                     logs_extra,
                 )
             userjobs_delete_k8s_svc(
-                serializer.validated_data["service"].servername,
+                serializer.validated_data["service"],
                 serializer.validated_data["suffix"],
                 logs_extra,
             )
@@ -180,9 +180,7 @@ class UserJobsViewSet(
         except:
             log.exception("Could not stop ssh tunnel", logs_extra)
         try:
-            userjobs_delete_k8s_svc(
-                instance.service.servername, instance.suffix, logs_extra
-            )
+            userjobs_delete_k8s_svc(instance.service, instance.suffix, logs_extra)
         except:
             log.exception("Could not delete svc resource", logs_extra)
 

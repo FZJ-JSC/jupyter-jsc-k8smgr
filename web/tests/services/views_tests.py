@@ -1,5 +1,6 @@
 import os
 import shutil
+import uuid
 from unittest import mock
 
 from django.http.response import HttpResponse
@@ -1010,13 +1011,7 @@ class ServiceViewTests(UserCredentials):
         k8s_create_from_yaml,
         mocked_popen,
     ):
-        url = reverse("services-list")
-        r = self.client.post(url, data=self.simple_request_data, format="json")
-        self.assertEqual(r.status_code, 201)
-        self.assertEqual(len(r.data["servername"]), 32)
-
         data = self.simple_userjobs_data
-        data["service"] = r.data["servername"]
         url = reverse("userjobs-list")
         r = self.client.post(url, data=self.simple_userjobs_data, format="json")
         self.assertEqual(r.status_code, 201)
@@ -1056,75 +1051,13 @@ class ServiceViewTests(UserCredentials):
         k8s_create_from_yaml,
         mocked_popen,
     ):
-        url = reverse("services-list")
-        r = self.client.post(url, data=self.simple_request_data, format="json")
-        self.assertEqual(r.status_code, 201)
-        self.assertEqual(len(r.data["servername"]), 32)
-
         data = self.simple_userjobs_data
-        data["service"] = r.data["servername"]
         url = reverse("userjobs-list")
         r = self.client.post(url, data=self.simple_userjobs_data, format="json")
         self.assertEqual(r.status_code, 201)
         url = f"{url}{self.simple_userjobs_data['service']}/"
         r = self.client.delete(url, format="json")
         self.assertEqual(r.status_code, 204)
-
-    @mock.patch(
-        "services.utils.ssh.subprocess.Popen",
-        side_effect=mocked_popen_init,
-    )
-    @mock.patch(
-        target="services.utils.k8s.k8s_utils.create_from_yaml",
-        side_effect=k8s_utils_create_from_yaml,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.V1Secret",
-        side_effect=k8s_V1Secret,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.ApiClient",
-        side_effect=k8s_ApiClient,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.CoreV1Api",
-        side_effect=k8s_client_CoreV1Api,
-    )
-    @mock.patch(
-        target="services.utils.k8s.config.load_incluster_config",
-        side_effect=k8s_config_load_incluster_config,
-    )
-    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
-    def test_userjobs_cascade_delete(
-        self,
-        config_mocked,
-        k8s_config,
-        k8s_client,
-        k8s_api_client,
-        k8s_secret,
-        k8s_create_from_yaml,
-        mocked_popen,
-    ):
-        url = reverse("services-list")
-        r = self.client.post(url, data=self.simple_request_data, format="json")
-        self.assertEqual(r.status_code, 201)
-        self.assertEqual(len(r.data["servername"]), 32)
-
-        data = self.simple_userjobs_data
-        data["service"] = r.data["servername"]
-        url = reverse("userjobs-list")
-        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
-        self.assertEqual(r.status_code, 201)
-
-        url = reverse("services-list")
-        url = f"{url}{self.simple_userjobs_data['service']}/"
-        r = self.client.delete(url, format="json")
-        self.assertEqual(r.status_code, 204)
-
-        url = reverse("userjobs-list")
-        url = f"{url}{self.simple_userjobs_data['service']}/"
-        r = self.client.get(url, format="json")
-        self.assertEqual(r.status_code, 404)
 
     @mock.patch(
         "services.utils.ssh.subprocess.Popen",
@@ -1161,13 +1094,7 @@ class ServiceViewTests(UserCredentials):
         k8s_create_from_yaml,
         mocked_popen,
     ):
-        url = reverse("services-list")
-        r = self.client.post(url, data=self.simple_request_data, format="json")
-        self.assertEqual(r.status_code, 201)
-        self.assertEqual(len(r.data["servername"]), 32)
-
         data = self.simple_userjobs_data
-        data["service"] = r.data["servername"]
         url = reverse("userjobs-list")
         r = self.client.post(url, data=self.simple_userjobs_data, format="json")
         self.assertEqual(r.status_code, 201)
@@ -1278,62 +1205,5 @@ class ServiceViewTests(UserCredentials):
 
         url = f"{url}{self.simple_userjobs_data['service']}/"
         r = self.client.delete(url, format="json")
-        models = UserJobsModel.objects.all()
-        self.assertEqual(len(models), 0)
-
-    @mock.patch(
-        "services.utils.ssh.subprocess.Popen",
-        side_effect=mocked_popen_init,
-    )
-    @mock.patch(
-        target="services.utils.k8s.k8s_utils.create_from_yaml",
-        side_effect=k8s_utils_create_from_yaml,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.V1Secret",
-        side_effect=k8s_V1Secret,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.ApiClient",
-        side_effect=k8s_ApiClient,
-    )
-    @mock.patch(
-        target="services.utils.k8s.client.CoreV1Api",
-        side_effect=k8s_client_CoreV1Api,
-    )
-    @mock.patch(
-        target="services.utils.k8s.config.load_incluster_config",
-        side_effect=k8s_config_load_incluster_config,
-    )
-    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
-    def test_userjobs_create_model_cascade_deleted(
-        self,
-        config_mocked,
-        k8s_config,
-        k8s_client,
-        k8s_api_client,
-        k8s_secret,
-        k8s_create_from_yaml,
-        mocked_popen,
-    ):
-        url = reverse("services-list")
-        pre_models = UserJobsModel.objects.all()
-        self.assertEqual(len(pre_models), 0)
-        r = self.client.post(url, data=self.simple_request_data, format="json")
-        self.assertEqual(r.status_code, 201)
-        self.assertEqual(len(r.data["servername"]), 32)
-
-        data = self.simple_userjobs_data
-        data["service"] = r.data["servername"]
-        url = reverse("userjobs-list")
-        r = self.client.post(url, data=self.simple_userjobs_data, format="json")
-
-        models = UserJobsModel.objects.all()
-        self.assertEqual(len(models), 1)
-
-        url = reverse("services-list")
-        url = f"{url}{self.simple_userjobs_data['service']}/"
-        r = self.client.delete(url, format="json")
-        self.assertEqual(r.status_code, 204)
         models = UserJobsModel.objects.all()
         self.assertEqual(len(models), 0)

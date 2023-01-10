@@ -131,20 +131,12 @@ class ServicesSerializer(serializers.ModelSerializer):
 class UserJobsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserJobsModel
-        fields = ["userjobs", "service", "hostname", "target_node"]
+        fields = ["service", "hostname", "target_node"]
 
     required_keys = ["service", "ports", "hostname", "target_node"]
 
     def to_internal_value(self, data):
         jhub_credential = self.context["request"].user.username
-        service_name = data["service"]
-        services = (
-            ServicesModel.objects.filter(jhub_credential=jhub_credential)
-            .filter(servername=service_name)
-            .all()
-        )
-        data["service"] = services.first().pk
-        data["userjobs"] = service_name
         ret = super().to_internal_value(data)
         ret["jhub_credential"] = jhub_credential
         return ret
@@ -156,21 +148,6 @@ class UserJobsSerializer(serializers.ModelSerializer):
                     self._validated_data = {}
                     self._errors = [f"Missing key in input data: {key}"]
                     raise ValidationError(f"Missing key: {key}")
-
-            jhub_credential = self.context["request"].user.username
-            service_name = self.initial_data["service"]
-            services = (
-                ServicesModel.objects.filter(jhub_credential=jhub_credential)
-                .filter(servername=service_name)
-                .all()
-            )
-            if len(services) == 0:
-                self._validated_data = []
-                self._errors = [
-                    f"Service {service_name} unknown for {jhub_credential}."
-                ]
-                raise ValidationError(self._errors)
-
         except ValidationError as exc:
             _errors = exc.detail
         else:
