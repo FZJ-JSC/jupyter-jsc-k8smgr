@@ -110,7 +110,7 @@ def forward(ports, hostname, target_node, logs_extra):
             logs_extra["stderr"] = stderr
             logs_extra["returncode"] = returncode
             logs_extra["cmd"] = cmd
-            log.debug("Forward port done", extra=logs_extra)
+            log.debug("Forward ports done", extra=logs_extra)
             del logs_extra["stdout"]
             del logs_extra["stderr"]
             del logs_extra["returncode"]
@@ -121,7 +121,7 @@ def forward(ports, hostname, target_node, logs_extra):
 
 
 def cancel(used_ports, hostname, target_node, logs_extra):
-    log.debug("Forward ports", logs_extra)
+    log.debug("Cancel ports", logs_extra)
     base_cmd = [
         "ssh",
         "-F",
@@ -144,7 +144,7 @@ def cancel(used_ports, hostname, target_node, logs_extra):
             logs_extra["stderr"] = stderr
             logs_extra["returncode"] = returncode
             logs_extra["cmd"] = cmd
-            log.debug("Forward port done", extra=logs_extra)
+            log.debug("Cancel ports done", extra=logs_extra)
             del logs_extra["stdout"]
             del logs_extra["stderr"]
             del logs_extra["returncode"]
