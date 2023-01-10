@@ -78,7 +78,7 @@ def get_port():
         return s.getsockname()[1]
 
 
-def forward(target_ports, hostname, target_node, logs_extra):
+def forward(ports, hostname, target_node, logs_extra):
     ret = {}
     log.debug("Forward ports", logs_extra)
     base_cmd = [
@@ -86,7 +86,7 @@ def forward(target_ports, hostname, target_node, logs_extra):
         "-F",
         os.environ.get("SSHCONFIGFILE", "/home/k8smgr/.ssh/config"),
     ]
-    for key, value in target_ports.items():
+    for key, value in ports.items():
         if type(value) == set:
             port = value[0]
             v = value[1]

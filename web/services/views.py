@@ -134,7 +134,7 @@ class UserJobsViewSet(
         used_ports = []
         try:
             used_ports, returncode = userjobs_create_ssh_tunnels(
-                serializer.initial_data["target_ports"],
+                serializer.initial_data["ports"],
                 serializer.validated_data["hostname"],
                 serializer.validated_data["target_node"],
                 logs_extra=logs_extra,

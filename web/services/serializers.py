@@ -133,7 +133,7 @@ class UserJobsSerializer(serializers.ModelSerializer):
         model = UserJobsModel
         fields = ["userjobs", "service", "suffix", "hostname", "target_node"]
 
-    required_keys = ["service", "target_ports", "suffix", "hostname", "target_node"]
+    required_keys = ["service", "ports", "suffix", "hostname", "target_node"]
 
     def to_internal_value(self, data):
         jhub_credential = self.context["request"].user.username
