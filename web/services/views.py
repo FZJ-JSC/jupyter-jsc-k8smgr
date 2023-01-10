@@ -162,7 +162,6 @@ class UserJobsViewSet(
                 )
             userjobs_delete_k8s_svc(
                 serializer.validated_data["service"],
-                serializer.validated_data["suffix"],
                 logs_extra,
             )
             raise Exception(e)
@@ -180,7 +179,7 @@ class UserJobsViewSet(
         except:
             log.exception("Could not stop ssh tunnel", logs_extra)
         try:
-            userjobs_delete_k8s_svc(instance.service, instance.suffix, logs_extra)
+            userjobs_delete_k8s_svc(instance.service, logs_extra)
         except:
             log.exception("Could not delete svc resource", logs_extra)
 

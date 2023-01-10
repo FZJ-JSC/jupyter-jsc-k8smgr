@@ -45,9 +45,7 @@ class K8SServicesConfig(AppConfig):
                         "Could not cancel tunnels for userjob", extra=logs_extra
                     )
                 try:
-                    k8s_delete_userjobs_svc(
-                        f"{userjob.service.servername}-{userjob.suffix}", logs_extra
-                    )
+                    k8s_delete_userjobs_svc(userjob.service, logs_extra)
                 except:
                     log.exception("Could not remove userjob-svc", extra=logs_extra)
                 userjob.delete()
