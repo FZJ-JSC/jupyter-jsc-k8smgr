@@ -7,6 +7,7 @@ from services.utils import _config
 from services.utils import get_error_message
 from services.utils import k8s
 from services.utils import MgrExceptionError
+from services.utils import ssh
 
 log = logging.getLogger(LOGGER_NAME)
 assert log.__class__.__name__ == "ExtraLoggerClass"
@@ -132,7 +133,7 @@ def initial_data_to_logs_extra(servername, initial_data, custom_headers):
         logs_extra["env"]["JUPYTERHUB_API_TOKEN"] = "***"
     if "access_token" in logs_extra.get("auth_state", {}).keys():
         logs_extra["auth_state"]["access_token"] = "***"
-    if "JPY_API_TOKEN" in logs_extra["env"]:  # deprecated in JupyterHub
+    if "JPY_API_TOKEN" in logs_extra.get("env", {}).keys():  # deprecated in JupyterHub
         logs_extra["env"]["JPY_API_TOKEN"] = "***"
     if "access-token" in logs_extra.keys():
         logs_extra["access-token"] = "***"
@@ -157,3 +158,23 @@ def instance_dict_and_custom_headers_to_logs_extra(instance_dict, custom_headers
     if "uuidcode" not in logs_extra.keys():
         logs_extra["uuidcode"] = uuid.uuid4().hex
     return logs_extra
+
+
+def userjobs_create_ssh_tunnels(ports, hostname, target_node, logs_extra):
+    log.debug("UserJobs - Create ssh tunnel", extra=logs_extra)
+    ssh.check_connection(hostname, logs_extra)
+    used_ports, returncode = ssh.forward(ports, hostname, target_node, logs_extra)
+    log.debug("UserJobs - Create ssh tunnel done", extra=logs_extra)
+    return used_ports, returncode
+
+
+def userjobs_create_k8s_svc(servername, used_ports, logs_extra):
+    k8s.k8s_create_userjobs_svc(servername, used_ports, logs_extra)
+
+
+def userjobs_delete_ssh_tunnels(used_ports, hostname, target_node, logs_extra):
+    ssh.cancel(used_ports, hostname, target_node, logs_extra)
+
+
+def userjobs_delete_k8s_svc(servername, logs_extra):
+    k8s.k8s_delete_userjobs_svc(servername, logs_extra)

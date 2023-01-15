@@ -15,3 +15,11 @@ class UserModel(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     jhub_user_id = models.IntegerField("jhub_user_id", null=False)
     jhub_credential = models.TextField("jhub_credential", default="jupyterhub")
+
+
+class UserJobsModel(models.Model):
+    service = models.TextField("userjobs", null=False)
+    used_ports = models.JSONField("used_ports", null=False, default=dict)
+    jhub_credential = models.TextField("jhub_credential", default="jupyterhub")
+    hostname = models.TextField("hostname", null=False)
+    target_node = models.TextField("target_node", null=False)

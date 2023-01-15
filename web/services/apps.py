@@ -5,6 +5,9 @@ import requests
 from django.apps import AppConfig
 from jupyterjsc_k8smgr.settings import LOGGER_NAME
 from services.utils import _config
+from services.utils.k8s import k8s_delete_userjobs_svc
+from services.utils.ssh import cancel
+from services.utils.ssh import forward
 
 log = logging.getLogger(LOGGER_NAME)
 assert log.__class__.__name__ == "ExtraLoggerClass"
@@ -13,6 +16,42 @@ assert log.__class__.__name__ == "ExtraLoggerClass"
 class K8SServicesConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "services"
+
+    def restart_userjobs_tunnels(self):
+        from services.models import UserJobsModel
+
+        logs_extra = {"uuidcode": "StartUp"}
+        log.info("Start all tunnels for userjobs saved in database", extra=logs_extra)
+        userjobs = UserJobsModel.objects.all()
+        for userjob in userjobs:
+            try:
+                forward(
+                    userjob.used_ports,
+                    userjob.hostname,
+                    userjob.target_node,
+                    logs_extra,
+                )
+            except:
+                log.exception("Could not create tunnels for userjob", extra=logs_extra)
+                try:
+                    cancel(
+                        userjob.used_ports,
+                        userjob.hostname,
+                        userjob.target_node,
+                        logs_extra,
+                    )
+                except:
+                    log.exception(
+                        "Could not cancel tunnels for userjob", extra=logs_extra
+                    )
+                try:
+                    k8s_delete_userjobs_svc(userjob.service, logs_extra)
+                except:
+                    log.exception("Could not remove userjob-svc", extra=logs_extra)
+                userjob.delete()
+        log.info(
+            "Start all tunnels for userjobs saved in database done", extra=logs_extra
+        )
 
     def restart_tunnels(self):
         config = _config()
@@ -119,6 +158,10 @@ class K8SServicesConfig(AppConfig):
             self.setup_db()
             try:
                 self.restart_tunnels()
+            except:
+                log.exception("Unexpected error during startup")
+            try:
+                self.restart_userjobs_tunnels()
             except:
                 log.exception("Unexpected error during startup")
 

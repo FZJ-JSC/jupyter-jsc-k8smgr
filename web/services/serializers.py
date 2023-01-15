@@ -7,6 +7,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from .models import ServicesModel
+from .models import UserJobsModel
 from .utils import get_custom_headers
 from .utils.common import instance_dict_and_custom_headers_to_logs_extra
 from .utils.common import status_service
@@ -103,14 +104,54 @@ class ServicesSerializer(serializers.ModelSerializer):
                     logs_extra=logs_extra,
                 )
             except Exception as e:
-                log.critical(
-                    "Could not check status of service", extra=logs_extra, exc_info=True
-                )
-                status = {
-                    "running": True,
-                    "details": {"error": e.args[0], "detailed_error": e.args[1]},
-                }
+                if len(e.args) >= 2 and e.args[1].startswith(
+                    "No pod found with app label"
+                ):
+                    log.warning("Pod does not exist", extra=logs_extra, exc_info=True)
+                    status = {
+                        "running": False,
+                        "details": {"error": e.args[0], "detailed_error": e.args[1]},
+                    }
+                else:
+                    log.critical(
+                        "Could not check status of service",
+                        extra=logs_extra,
+                        exc_info=True,
+                    )
+                    status = {
+                        "running": True,
+                        "details": {"error": e.args[0], "detailed_error": e.args[1]},
+                    }
         if not status:
             status = {"running": True}
         ret.update(status)
         return ret
+
+
+class UserJobsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserJobsModel
+        fields = ["service", "hostname", "target_node"]
+
+    required_keys = ["service", "ports", "hostname", "target_node"]
+
+    def to_internal_value(self, data):
+        jhub_credential = self.context["request"].user.username
+        ret = super().to_internal_value(data)
+        ret["jhub_credential"] = jhub_credential
+        return ret
+
+    def is_valid(self, raise_exception=False):
+        try:
+            for key in self.required_keys:
+                if key not in self.initial_data.keys():
+                    self._validated_data = {}
+                    self._errors = [f"Missing key in input data: {key}"]
+                    raise ValidationError(f"Missing key: {key}")
+        except ValidationError as exc:
+            _errors = exc.detail
+        else:
+            _errors = {}
+        if _errors and raise_exception:
+            raise ValidationError(_errors)
+        return super().is_valid(raise_exception=raise_exception)
