@@ -736,6 +736,19 @@ def _yaml_replace(
     # Replace stage specific keywords, if stage is defined
     stage = os.environ.get("STAGE", "").lower()
     if stage:
+        # First replace stage+credential specific
+        for key, value in (
+            config.get("services", {})
+            .get("replace", {})
+            .get("stage_credential", {})
+            .get(stage, {})
+            .get(jhub_credential, {})
+            .items()
+        ):
+            yaml_s = yaml_s.replace(
+                f"{replace_indicators[0]}{key}{replace_indicators[1]}",
+                value,
+            )
         for key, value in (
             config.get("services", {})
             .get("replace", {})
