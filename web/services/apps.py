@@ -58,7 +58,10 @@ class K8SServicesConfig(AppConfig):
         logs_extra = {"uuidcode": "StartUp"}
         for jhub in config.get("tunnel", []):
             try:
-                restart_url = jhub.get("restart_url", "")
+                stage = os.environ.get("STAGE", "").lower()
+                restart_url = jhub.get("stage", {}).get(stage, {}).get("restart_url", None)
+                if not restart_url:
+                    restart_url = jhub.get("restart_url", "")
                 restart_hostname = jhub.get("hostname", "")
                 # defined in entrypoint.sh
                 restart_cred_env_name = jhub.get("cred_env_name", "TUNNEL_BASIC")
@@ -70,7 +73,7 @@ class K8SServicesConfig(AppConfig):
                         f"Tunnel url ({restart_url}) or tunnel credential ({restart_cred}) is missing. Cannot restart tunnels.",
                         extra=logs_extra,
                     )
-                    return
+                    continue
                 headers = {
                     "Content-Type": "application/json",
                     "Authorization": restart_cred,
