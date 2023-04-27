@@ -893,6 +893,8 @@ def _create_service_resource(service_yaml_file, logs_extra):
 
 def _delete_service_yaml(drf_id, config, logs_extra):
     service_yaml_file = _get_yaml_file_name(drf_id, config)
+    filename = config.get("services", {}).get("yaml_filename_update", "update.yaml")
+    update_yaml_file = _get_yaml_file_name(drf_id, config, filename=filename)
     k8s_client = _k8s_get_client_core()
     k8s_api_client = _k8s_get_api_client()
     k8s_app_api = client.AppsV1Api(k8s_api_client)
@@ -904,20 +906,26 @@ def _delete_service_yaml(drf_id, config, logs_extra):
         "Secret": k8s_client.delete_namespaced_secret,
     }
 
-    with lockfile.LockFile(service_yaml_file):
-        with open(service_yaml_file) as f:
-            all_services = yaml.safe_load_all(f)
-            for service in all_services:
-                try:
-                    kind = service["kind"]
-                    name = service["metadata"]["name"]
-                    namespace = service["metadata"]["namespace"]
-                    log.debug(f"Delete {kind} {name} in {namespace}", extra=logs_extra)
-                    k8s_client_funcs[kind](name=name, namespace=namespace)
-                except Exception as e:
-                    log.critical(
-                        "Could not delete resource", exc_info=True, extra=logs_extra
-                    )
+    for file in [service_yaml_file, update_yaml_file]:
+        if os.path.isfile(file):
+            with lockfile.LockFile(file):
+                with open(file) as f:
+                    all_services = yaml.safe_load_all(f)
+                    for service in all_services:
+                        try:
+                            kind = service["kind"]
+                            name = service["metadata"]["name"]
+                            namespace = service["metadata"]["namespace"]
+                            log.debug(
+                                f"Delete {kind} {name} in {namespace}", extra=logs_extra
+                            )
+                            k8s_client_funcs[kind](name=name, namespace=namespace)
+                        except Exception as e:
+                            log.critical(
+                                "Could not delete resource",
+                                exc_info=True,
+                                extra=logs_extra,
+                            )
 
     secret_name = _k8s_get_secret_name(drf_id)
     secret_namespace = _k8s_get_namespace()
