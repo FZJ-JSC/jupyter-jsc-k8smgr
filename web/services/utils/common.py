@@ -62,6 +62,19 @@ def start_service(
         raise MgrExceptionError(*e_args)
 
 
+def update_service(instance_dict, logs_extra):
+    log.debug("Service update", extra=logs_extra)
+    drf_id = f"{instance_dict['servername']}-{instance_dict['start_id']}"
+    config = _config()
+    try:
+        k8s.update_service(drf_id, config, logs_extra)
+        log.debug("Service update finished", extra=logs_extra)
+    except Exception as e:
+        log.warning("Could not update service.", extra=logs_extra, exc_info=True)
+        e_args = ("Could not update service.", str(e))
+        raise MgrExceptionError(*e_args)
+
+
 def status_service(instance_dict, custom_headers, logs_extra):
     log.debug("Service status check", extra=logs_extra)
 

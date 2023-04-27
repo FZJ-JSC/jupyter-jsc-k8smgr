@@ -19,6 +19,12 @@ log = logging.getLogger(LOGGER_NAME)
 assert log.__class__.__name__ == "ExtraLoggerClass"
 
 
+def update_service(drf_id, config, logs_extra):
+    filename = config.get("services", {}).get("yaml_filename_update", "update.yaml")
+    update_yaml_file = _get_yaml_file_name(drf_id, config, filename=filename)
+    _create_service_resource(update_yaml_file, logs_extra)
+
+
 def start_service(
     servername,
     drf_id,
@@ -539,16 +545,38 @@ def _create_service_yaml(
         )
     _create_service_resource(service_yaml_file, logs_extra)
 
+    # We've created service.yaml, no we want to prepare update.yaml, if it exists.
+    # This allows us to update the service later during the starting phase (e.g. adding
+    # a service)
+    filename = config.get("services", {}).get("yaml_filename_update", "update.yaml")
+    update_yaml_file = _get_yaml_file_name(drf_id, config, filename=filename)
+    if os.path.isfile(update_yaml_file):
+        with lockfile.LockFile(update_yaml_file):
+            with open(update_yaml_file, "r") as f:
+                update_yaml_s = f.read()
+        update_yaml_s = _yaml_replace(
+            drf_id,
+            config,
+            quota_vo,
+            update_yaml_s,
+            jhub_credential,
+            jhub_user_id,
+            input_string,
+            logs_extra,
+        )
+        with lockfile.LockFile(update_yaml_file):
+            with open(update_yaml_file, "w") as f:
+                f.write(update_yaml_s)
 
-def _get_yaml_file_name(drf_id, config):
+
+def _get_yaml_file_name(drf_id, config, filename=None):
     services_base = (
         config.get("services", {}).get("base", "/tmp/services/services").rstrip("/")
     )
     services_service_path = f"{services_base}/{drf_id}"
-    services_yaml_filename = config.get("services", {}).get(
-        "yaml_filename", "service.yaml"
-    )
-    service_yaml_file = f"{services_service_path}/{services_yaml_filename}"
+    if not filename:
+        filename = config.get("services", {}).get("yaml_filename", "service.yaml")
+    service_yaml_file = f"{services_service_path}/{filename}"
     return service_yaml_file
 
 
