@@ -24,6 +24,7 @@ from tests.mocks import mocked_popen_init_cancel_fail
 from tests.mocks import mocked_popen_init_check_fail
 from tests.mocks import mocked_popen_init_forward_fail
 from tests.mocks import services_base
+from tests.mocks import services_descriptions
 from tests.mocks import userhomes_base
 from tests.user_credentials import UserCredentials
 
@@ -410,6 +411,128 @@ class ServiceViewTests(UserCredentials):
         self.assertTrue(
             os.path.isdir(f"{services_base}/{model.servername}-{model.start_id}")
         )
+
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_update_yaml_exists_in_service_dir(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+    ):
+        url = reverse("services-list")
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        model = ServicesModel.objects.first()
+        self.assertTrue(
+            os.path.isfile(
+                f"{services_base}/{model.servername}-{model.start_id}/update.yaml"
+            )
+        )
+
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_update_yaml_servername_replaced(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+    ):
+        url = reverse("services-list")
+        update_yaml_skel = f"{services_descriptions}/{self.user_authorized_username}/{self.simple_request_data['user_options']['service']}/update.yaml"
+        self.assertTrue(os.path.isfile(update_yaml_skel))
+        with open(update_yaml_skel, "r") as f:
+            update_yaml_skel_s = f.read()
+
+        self.assertTrue("<servername>" in update_yaml_skel_s)
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        model = ServicesModel.objects.first()
+        update_yaml = f"{services_base}/{model.servername}-{model.start_id}/update.yaml"
+        self.assertTrue(os.path.isfile(update_yaml))
+        with open(update_yaml, "r") as f:
+            update_yaml_s = f.read()
+        self.assertTrue("<servername>" not in update_yaml_s)
+
+    @mock.patch(
+        target="services.utils.k8s.k8s_utils.create_from_yaml",
+        side_effect=k8s_utils_create_from_yaml,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.V1Secret",
+        side_effect=k8s_V1Secret,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.ApiClient",
+        side_effect=k8s_ApiClient,
+    )
+    @mock.patch(
+        target="services.utils.k8s.client.CoreV1Api",
+        side_effect=k8s_client_CoreV1Api,
+    )
+    @mock.patch(
+        target="services.utils.k8s.config.load_incluster_config",
+        side_effect=k8s_config_load_incluster_config,
+    )
+    @mock.patch(target="services.utils.common._config", side_effect=config_mock)
+    def test_update_service(
+        self,
+        config_mocked,
+        k8s_config,
+        k8s_client,
+        k8s_api_client,
+        k8s_secret,
+        k8s_create_from_yaml,
+    ):
+        url = reverse("services-list")
+        r = self.client.post(url, data=self.simple_request_data, format="json")
+        self.assertEqual(r.status_code, 201)
+        service_url = f"{url}{r.data['servername']}/"
+        r = self.client.patch(service_url)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.data["running"])
 
     @mock.patch(
         target="services.utils.k8s.k8s_utils.create_from_yaml",

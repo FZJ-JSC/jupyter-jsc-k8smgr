@@ -15,6 +15,7 @@ from .utils.common import initial_data_to_logs_extra
 from .utils.common import instance_dict_and_custom_headers_to_logs_extra
 from .utils.common import start_service
 from .utils.common import stop_service
+from .utils.common import update_service
 from .utils.common import userjobs_create_k8s_svc
 from .utils.common import userjobs_create_ssh_tunnels
 from .utils.common import userjobs_delete_k8s_svc
@@ -27,6 +28,7 @@ assert log.__class__.__name__ == "ExtraLoggerClass"
 class ServicesViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     mixins.ListModelMixin,
     viewsets.GenericViewSet,
@@ -105,6 +107,16 @@ class ServicesViewSet(
     @request_decorator
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    @request_decorator
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        custom_headers = get_custom_headers(self.request._request.META)
+        logs_extra = instance_dict_and_custom_headers_to_logs_extra(
+            instance.__dict__, custom_headers
+        )
+        update_service(instance.__dict__, logs_extra)
+        return super().retrieve(request, *args, **kwargs)
 
 
 class UserJobsViewSet(

@@ -26,7 +26,7 @@ def config_mock():
                 },
                 "credential": {"authorized": {"credential_stuff": "auth"}},
                 "indicators": ["<", ">"],
-                "servername_keyword": "servername",
+                "drfid_keyword": "servername",
                 "uniqueuserid_keyword": "unique_user_id",
                 "secretname_keyword": "secret_name",
                 "namespace_keyword": "namespace",
@@ -60,7 +60,7 @@ def config_mock_services_mapping():
             "restart_count_max": 3,
             "replace": {
                 "indicators": ["<", ">"],
-                "servername_keyword": "servername",
+                "drfid_keyword": "servername",
                 "uniqueuserid_keyword": "unique_user_id",
                 "secretname_keyword": "secret_name",
                 "namespace_keyword": "namespace",
@@ -92,7 +92,7 @@ def config_mock_userhome_mapping():
             "restart_count_max": 3,
             "replace": {
                 "indicators": ["<", ">"],
-                "servername_keyword": "servername",
+                "drfid_keyword": "servername",
                 "uniqueuserid_keyword": "unique_user_id",
                 "secretname_keyword": "secret_name",
                 "namespace_keyword": "namespace",
