@@ -55,7 +55,6 @@ class ServiceViewTests(UserCredentials):
         "user_options": {
             "system": "HDF-Cloud",
             "service": "JupyterLab/JupyterLab",
-            "vo": "myvo",
         },
         "auth_state": {"access_token": "ZGVtb3VzZXI6dGVzdDEyMw=="},
         "env": {

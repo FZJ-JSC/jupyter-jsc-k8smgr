@@ -72,15 +72,6 @@ class ServicesSerializer(serializers.ModelSerializer):
             "jhub_credential": self.context["request"].user.username,
             "stop_pending": False,
         }
-        if "vo" not in model_data["user_options"].keys():
-            model_data["user_options"]["vo"] = "default"
-        else:
-            model_data["user_options"]["vo"] = (
-                model_data["user_options"]["vo"]
-                .lower()
-                .replace(" ", "-")
-                .replace("_", "-")
-            )
         return super().to_internal_value(model_data)
 
     def to_representation(self, instance):

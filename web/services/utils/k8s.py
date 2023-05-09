@@ -513,19 +513,11 @@ def _create_service_yaml(
         logs_extra,
     )
 
-    vo = validated_data["user_options"]["vo"]
-    quota_vo = config.get("userhomes", {}).get("quota_vo_mapping", {}).get(vo, vo)
-    log.debug(
-        f"Use {quota_vo} as ruleset for userhome quota, if it's configured in service.yaml",
-        extra=logs_extra,
-    )
-
     input_string = _create_input_string(service_yaml_file, input_dir)
 
     service_yaml_s = _yaml_replace(
         drf_id,
         config,
-        quota_vo,
         service_yaml_s,
         jhub_credential,
         jhub_user_id,
@@ -557,7 +549,6 @@ def _create_service_yaml(
         update_yaml_s = _yaml_replace(
             drf_id,
             config,
-            quota_vo,
             update_yaml_s,
             jhub_credential,
             jhub_user_id,
@@ -685,7 +676,6 @@ def _create_input_string(service_yaml_file, input_dir):
 def _yaml_replace(
     drf_id,
     config,
-    quota_vo,
     yaml_s,
     jhub_credential,
     jhub_user_id,
@@ -722,9 +712,6 @@ def _yaml_replace(
         .get("replace", {})
         .get("namespace_keyword", "namespace")
     )
-    quota_vo_keyword = (
-        config.get("services", {}).get("replace", {}).get("quotavo_keyword", "quotavo")
-    )
     input_keyword = (
         config.get("services", {}).get("replace", {}).get("input_keyword", "input")
     )
@@ -755,10 +742,6 @@ def _yaml_replace(
     yaml_s = yaml_s.replace(
         f"{replace_indicators[0]}{namespace_keyword}{replace_indicators[1]}",
         _k8s_get_namespace(),
-    )
-    yaml_s = yaml_s.replace(
-        f"{replace_indicators[0]}{quota_vo_keyword}{replace_indicators[1]}",
-        quota_vo,
     )
 
     # Replace stage specific keywords, if stage is defined
