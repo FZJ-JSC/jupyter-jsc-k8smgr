@@ -16,10 +16,7 @@
     "userhomes": {
         "base": "/tmp/userhomes",
         "skel": "/tmp/files/services_descriptions/userhomes_skel",
-        "skel_ignore_files": [".*.swp"],
-        "quota_vo_mapping": {
-            "abc": "default"
-        }
+        "skel_ignore_files": [".*.swp"]
     },
     "tunnel": {},
     "error_messages": {"services.utils.common.start_service_2": "Custom error"}
