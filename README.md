@@ -72,6 +72,8 @@ This endpoint allows users, who have started a service via K8sMgr, to create a s
 ## Configuration
 You can define which services will be started when accessing the K8s Manager REST API.
 
+### Config.json
+
 In `config.json` you can customize the general behavior and pathes.
 
 | Tag | Type | Default | Description |
@@ -111,3 +113,9 @@ In `config.json` you can customize the general behavior and pathes.
 | startup | Dict | {} | You can use this feature to create users in the database automatically during startup. Required env variables in this example: JUPYTERHUB_USER_PASS=<password> (<jhub_credential_in_capslock>_USER_PASS=...) |
 | startup.create_user | Dict | {} | - |
 | startup.create_user._credential\_name_ | List of Strings | - | available groups: "access_to_webservice" : allows you to start/stop Jupyterlabs. "access_to_logging": allows the JupyterHub to update the k8smgr logging configuraiton (You can do it manually at your Django Admin Endpoint) |
+
+### Service Descriptions
+In this directory, you can define the service definitions for each JupyterHub, service and service_options. You can find a full example [here](...)
+
+### Userhomes Skeleton
+When a user starts a service for the first time, you can define a skeleton directory, which will be used to create the users persistent storage. (comparable with `/etc/skel` in Linux distributions). You can find a full example [here](...)
