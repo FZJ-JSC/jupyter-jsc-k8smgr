@@ -10,7 +10,8 @@ This endpoint will be used to start/poll/stop user services.
 Path: `/api/services/`  
 Headers Required: 
  - Authentication (Credential of connected JupyterHub. Token or base64 encrypted username:password)
- - uuidcode: ID/Name of the service  
+ - uuidcode: ID/Name of the service   
+    
 Body required:
  - start_id: 8 digit id, different for each start attempt
  - user_options: {}
