@@ -471,6 +471,12 @@ def _create_user_home(config, validated_data, jhub_credential, logs_extra):
     userhome_skel_base = (
         config.get("userhomes", {}).get("skel", "/etc/skel").rstrip("/")
     )
+    userhome_uid = (
+        config.get("userhomes", {}).get("uid", 1000)
+    )
+    userhome_gid = (
+        config.get("userhomes", {}).get("gid", 1000)
+    )
     userhome_skel = f"{userhome_skel_base}/{jhub_credential_home}{service_suffix}"
 
     userhome_user_path = f"{userhome_base}/{user_home_dir}/{jhub_user_id}"
@@ -483,6 +489,10 @@ def _create_user_home(config, validated_data, jhub_credential, logs_extra):
             dst=userhome_user_path,
             ignore=shutil.ignore_patterns(*ignore_files),
         )
+        for dirpath, dirnames, filenames in os.walk(userhome_user_path):
+            shutil.chown(dirpath, userhome_uid, userhome_gid)
+            for filename in filenames:
+                shutil.chown(os.path.join(dirpath, filename), userhome_uid, userhome_gid)
     else:
         log.debug(
             f"Home directory {userhome_user_path} already exists.", extra=logs_extra
