@@ -68,7 +68,7 @@ def k8s_create_userjobs_svc(servername, used_ports, logs_extra):
         {"port": int(wanted), "protocol": "TCP", "targetPort": int(used[0])}
         for wanted, used in used_ports.items()
     ]
-    k8smgr_app_label = os.environ.get("DEPLOYMENT_NAME", "drf-k8smgr")
+    k8smgr_name_label = os.environ.get("DEPLOYMENT_NAME", "drf-k8smgr")
     service_manifest = {
         "apiVersion": "v1",
         "kind": "Service",
@@ -79,7 +79,7 @@ def k8s_create_userjobs_svc(servername, used_ports, logs_extra):
         },
         "spec": {
             "ports": ports,
-            "selector": {"app": k8smgr_app_label},
+            "selector": {"name": k8smgr_name_label},
         },
     }
     logs_extra["service_manifest"] = service_manifest
@@ -137,15 +137,15 @@ def _get_deployment_main(drf_id, config, min_log, logs_extra):
 
 def _get_pod(k8s_client, namespace, deployment_main, min_log, logs_extra):
     # Look for main pod in deployment_main
-    app_label = deployment_main["spec"]["selector"]["matchLabels"]["app"]
+    name_label = deployment_main["spec"]["selector"]["matchLabels"]["name"]
     pods = k8s_client.list_namespaced_pod(
-        namespace=namespace, label_selector=f"app={app_label}"
+        namespace=namespace, label_selector=f"name={name_label}"
     ).to_dict()
     pod_list = [x for x in pods.get("items", [])]
 
     if len(pod_list) != 1:
-        log.critical(f"No pod found with app label {app_label}", extra=logs_extra)
-        raise Exception(f"No pod found with app label {app_label}")
+        log.critical(f"No pod found with name label {name_label}", extra=logs_extra)
+        raise Exception(f"No pod found with name label {name_label}")
 
     pod = pod_list[0]
 
@@ -155,7 +155,7 @@ def _get_pod(k8s_client, namespace, deployment_main, min_log, logs_extra):
         trace_logs_extra = copy.deepcopy(logs_extra)
         trace_logs_extra["pod"] = trace_logs_extra_pods_dict
         log.trace(
-            f"Check pod status - namespace={namespace} label_selector=app={app_label}",
+            f"Check pod status - namespace={namespace} label_selector=name={name_label}",
             extra=trace_logs_extra,
         )
 
